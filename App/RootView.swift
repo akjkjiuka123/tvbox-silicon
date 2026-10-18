@@ -210,17 +210,20 @@ struct RootView: View {
                 ForEach(tabs) { item in
                     Tab(value: item) { tabPage(item) } label: { tabLabel(item) }
                         #if os(iOS)
-                        // tvOS tab bars have no badges; there the launch sheet and Settings carry the news.
-                        .badge(showsUpdateBadge(item) && !updates.available.isEmpty ? Text(L10n.text("New")) : nil)
+                        .badge(tabBadge(item))
                         #endif
                 }
             }
             .tabViewStyle(.sidebarAdaptable)
         } else {
-            // tvOS 17 has no Tab or sidebar: the classic tab bar along the top.
+            // tvOS 17 and iOS 17 have no Tab or sidebar: the classic tab bar, along the top on Apple TV and at the
+            // bottom on iPad too.
             TabView(selection: $store.section) {
                 ForEach(tabs) { item in
                     tabPage(item).tabItem { tabLabel(item) }.tag(item)
+                        #if os(iOS)
+                        .badge(tabBadge(item))
+                        #endif
                 }
             }
         }
@@ -254,6 +257,11 @@ struct RootView: View {
     }
 
     #if os(iOS)
+    // tvOS tab bars have no badges; there the launch sheet and Settings carry the news.
+    private func tabBadge(_ item: AppSection) -> Text? {
+        showsUpdateBadge(item) && !updates.available.isEmpty ? Text(L10n.text("New")) : nil
+    }
+
     /// Software Update lives in Settings, so More carries the badge only while Settings is inside it.
     private func showsUpdateBadge(_ item: AppSection) -> Bool {
         item == .more ? phoneTabs && inMore.contains(.settings) : item.showsUpdateBadge

@@ -17,7 +17,7 @@ extension View {
     }
 }
 
-/// A Liquid Glass recipe. On macOS 26, iOS 26 and tvOS 26 it is real glass; on macOS 15, iOS 18 and tvOS 17–18,
+/// A Liquid Glass recipe. On macOS 26, iOS 26 and tvOS 26 it is real glass; on macOS 15, iOS 17–18 and tvOS 17–18,
 /// which have no glass, `glassSurface` draws a material with the same tint instead.
 struct GlassStyle {
     var tint: Color?
@@ -81,9 +81,23 @@ extension View {
     }
     #endif
 
-    // tvOS 17 stand-ins for tvOS 18 APIs. macOS 15 and iOS 18 always take the first branch.
+    // iOS 17 and tvOS 17 stand-ins for iOS 18 and tvOS 18 APIs. macOS 15 always takes the first branch.
 
-    /// `onScrollVisibilityChange`; before tvOS 18 the visible share comes from the view's bounds
+    /// Calls `action` when someone starts scrolling by hand. Before iOS 18 there is no scroll phase,
+    /// so a drag on the scroll view stands in.
+    @ViewBuilder func onScrollByHand(_ action: @escaping () -> Void) -> some View {
+        if #available(iOS 18, tvOS 18, *) {
+            onScrollPhaseChange { _, phase in if phase == .interacting { action() } }
+        } else {
+            #if os(tvOS)
+            self
+            #else
+            simultaneousGesture(DragGesture(minimumDistance: 8).onChanged { _ in action() })
+            #endif
+        }
+    }
+
+    /// `onScrollVisibilityChange`; before iOS 18 and tvOS 18 the visible share comes from the view's bounds
     /// against its scroll view's.
     @ViewBuilder func onScrolledIntoView(threshold: Double, _ action: @escaping (Bool) -> Void) -> some View {
         if #available(iOS 18, tvOS 18, *) {
@@ -98,13 +112,27 @@ extension View {
         }
     }
 
-    /// The breathing symbol effect; tvOS 17 has no breathe, so the symbol pulses instead.
+    /// The breathing symbol effect; iOS 17 and tvOS 17 have no breathe, so the symbol pulses instead.
     @ViewBuilder func breathingSymbol() -> some View {
         if #available(iOS 18, tvOS 18, *) {
             symbolEffect(.breathe, options: .repeat(.periodic(delay: 2.5)))
         } else {
             symbolEffect(.pulse, options: .repeating.speed(0.4))
         }
+    }
+}
+
+extension Color {
+    /// `mix(with:by:)`; before iOS 18 and tvOS 18 a plain blend in sRGB.
+    func blend(with other: Color, by fraction: Double) -> Color {
+        if #available(iOS 18, tvOS 18, *) { return mix(with: other, by: fraction) }
+        let environment = EnvironmentValues()
+        let from = resolve(in: environment), to = other.resolve(in: environment)
+        // Resolved components are linear; blending gamma-encoded values looks closer to mix's perceptual default.
+        func encoded(_ linear: Float) -> Double { Double(pow(max(0, linear), 1 / 2.2)) }
+        func mixed(_ a: Float, _ b: Float) -> Double { encoded(a) + (encoded(b) - encoded(a)) * fraction }
+        return Color(.sRGB, red: mixed(from.red, to.red), green: mixed(from.green, to.green), blue: mixed(from.blue, to.blue),
+                     opacity: Double(from.opacity + (to.opacity - from.opacity) * Float(fraction)))
     }
 }
 

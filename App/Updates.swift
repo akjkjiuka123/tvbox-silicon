@@ -489,7 +489,7 @@ private struct ReleaseBackdrop: View {
                     [0, 1], [0.5, 1], [1, 1],
                 ], colors: Self.top + Self.middle + [.black, .black, .black])
             } else {
-                // No mesh gradients before tvOS 18: the top row's colours drift sideways over the middle row's.
+                // No mesh gradients before iOS 18 and tvOS 18: the top row's colours drift sideways over the middle row's.
                 LinearGradient(colors: Self.top, startPoint: UnitPoint(x: CGFloat(drift), y: 0), endPoint: UnitPoint(x: 1 + CGFloat(drift), y: 0))
                     .mask { LinearGradient(colors: [.black, .clear], startPoint: .top, endPoint: UnitPoint(x: 0.5, y: 0.6)) }
                     .background { LinearGradient(colors: Self.middle, startPoint: .leading, endPoint: .trailing) }
