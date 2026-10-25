@@ -16,6 +16,13 @@ private final class MockProtocol: URLProtocol, @unchecked Sendable {
             body = request.value(forHTTPHeaderField: "User-Agent") == HTTPClient.subscriptionUserAgent
                 ? #"{"sites":[{"key":"中文","type":4,"api":"./api"}]}"#
                 : "<!doctype html><html>Landing page</html>"
+        } else if path == "/short-links" {
+            status = 200
+            body = #"{"sites":[{"key":"py","type":3,"api":"https://example.com/s/py"},{"key":"jar","type":3,"api":"https://example.com/s/jar"},{"key":"gone","type":3,"api":"https://example.com/failure"},{"key":"csp","type":3,"api":"csp_Test"}]}"#
+        } else if path == "/s/py" {
+            status = 200; body = "# -*- coding: utf-8 -*-\nimport sys\nsys.path.append('..')\nfrom base.spider import Spider as BaseSpider\n"
+        } else if path == "/s/jar" {
+            status = 200; body = "PK\u{03}\u{04}from base.spider import Spider"
         } else if path == "/headers" {
             status = request.value(forHTTPHeaderField: "User-Agent") == "Custom" ? 200 : 403
             body = "#EXTM3U\n#EXTINF:-1,Channel\nhttps://example.com/live.m3u8"
@@ -262,6 +269,27 @@ private final class OfflineProtocol: URLProtocol, @unchecked Sendable {
     #expect(config.origin.host == "xn--z7x900a.net")
     let (browserData, _) = try await client().get(url)
     #expect(String(decoding: browserData, as: UTF8.self).contains("Landing page"))
+}
+@Test func pythonSpidersBehindShortLinksRunAsPython() async throws {
+    guard case .subscription(let config) = try await client().subscriptionImport(URL(string: "https://example.com/short-links")!) else {
+        Issue.record("not a subscription"); return
+    }
+    let runtimes = Dictionary(uniqueKeysWithValues: config.sites.map { ($0.key, $0.runtime) })
+    #expect(runtimes == ["py": .python, "jar": .jar, "gone": .jar, "csp": .jar])
+    // What was learned survives the saved copy, and a merge that renames a clashing key.
+    let saved = try JSONDecoder().decode(Subscription.self, from: JSONEncoder().encode(config))
+    #expect(saved.sites[0].runtime == .python)
+    var other = Site(key: "py", name: "py", type: 3, api: "https://example.org/s/py", raw: [:])
+    other.detectedRuntime = .python
+    let merged = try #require(Subscription.merge([saved, Subscription(origin: URL(string: "https://example.org/tv.json")!, importedAt: Date(), sites: [other], lives: [], raw: [:])]))
+    #expect(merged.sites.filter { $0.runtime == .python }.count == 2)
+}
+@Test func onlyBaseSpiderScriptsSniffAsPython() {
+    #expect(Site.sniffedRuntime(Data("from base.spider import Spider\n".utf8)) == .python)
+    #expect(Site.sniffedRuntime(Data("\t from base import spider\n".utf8)) == .python)
+    #expect(Site.sniffedRuntime(Data("# from base.spider import Spider\n".utf8)) == nil)
+    #expect(Site.sniffedRuntime(Data("var rule = {}; // from base.spider import".utf8)) == nil)
+    #expect(Site.sniffedRuntime(Data("<html>from base.spider import Spider</html>".utf8)) == nil)
 }
 
 @MainActor @Test func searchResultsLoadLaterPagesUntilASourceRunsDry() async throws {

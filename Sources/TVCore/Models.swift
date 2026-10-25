@@ -143,7 +143,7 @@ public enum WebAddress {
 /// How a source runs, in preference order. `SourceStrategy` lists, searches, and defaults to lower
 /// ranks first: a standard JSON API is one HTTP request, Python and Node start in well under a
 /// second, and a JAR needs the JVM plus DEX conversion on first use.
-public enum SourceRuntime: Int, Comparable, Sendable {
+public enum SourceRuntime: Int, Comparable, Codable, Sendable {
     case api, python, javascript, jar, unsupported
     public static func < (lhs: SourceRuntime, rhs: SourceRuntime) -> Bool { lhs.rawValue < rhs.rawValue }
 }
@@ -156,6 +156,8 @@ public struct Site: Identifiable, Codable, Hashable, Sendable {
     public let raw: [String: JSONValue]
     /// The subscription this source came from, once several are merged; see `Subscription.merge`.
     public var provenance: SourceProvenance? = nil
+    /// What a type 3 api that names no kind of file turned out to hold; see `Subscription.sniffingScripts`.
+    public var detectedRuntime: SourceRuntime? = nil
     public var id: String { key }
     public var native: Bool { (type == 1 || type == 4) && !missingAPI }
     /// Merged subscriptions sometimes carry entries with an empty api; they cannot run anywhere.
@@ -179,14 +181,15 @@ public struct Site: Identifiable, Codable, Hashable, Sendable {
         return try raw["ext"].map(resolve)
     }
     /// Classified like TVBox: a `.js` api runs in the JavaScript host, a `.py` api (or a legacy
-    /// `py_` key whose ext is the script) in the Python host, and any other type 3 api is a JAR class.
+    /// `py_` key whose ext is the script) in the Python host, and any other type 3 api is a JAR class,
+    /// unless its download showed otherwise.
     public var runtime: SourceRuntime {
         if native { return .api }
         guard type == 3, !missingAPI else { return .unsupported }
         let path = api.lowercased()
         if path.hasSuffix(".js") || path.contains(".js?") { return .javascript }
         if path.contains(".py") || (api.hasPrefix("py_") && raw["ext"]?.string?.lowercased().contains(".py") == true) { return .python }
-        return .jar
+        return detectedRuntime ?? .jar
     }
     /// The script a JavaScript or Python source runs, relative to the subscription.
     public func scriptURL(origin: URL) throws -> URL {

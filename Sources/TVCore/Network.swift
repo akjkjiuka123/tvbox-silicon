@@ -23,7 +23,7 @@ public struct HTTPClient: Sendable {
     }
     public func subscription(_ url: URL) async throws -> Subscription {
         let (data, finalURL) = try await get(url, headers: ["User-Agent": Self.subscriptionUserAgent])
-        return try Subscription.parse(data, origin: finalURL)
+        return try await Subscription.parse(data, origin: finalURL).sniffingScripts(http: self)
     }
     public func channels(_ source: LiveSource) async throws -> [Channel] {
         if let platform = source.platform { return try await LiveCatalog.channels(platform) }

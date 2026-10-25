@@ -68,7 +68,7 @@ extension Subscription {
                 if !keys.insert(site.key).inserted {
                     let renamed = site.key + "@" + part.tag
                     guard keys.insert(renamed).inserted else { continue }
-                    site = Site(key: renamed, name: site.name, type: site.type, api: site.api, raw: site.raw)
+                    site = Site(key: renamed, name: site.name, type: site.type, api: site.api, raw: site.raw, detectedRuntime: site.detectedRuntime)
                 }
                 site.provenance = provenance
                 sites.append(site)
@@ -143,7 +143,7 @@ extension HTTPClient {
         let (data, finalURL) = try await get(url, headers: ["User-Agent": Self.subscriptionUserAgent])
         if let servers = AListServer.list(from: data) { return .alist(servers) }
         if let entries = Subscription.directory(data, origin: finalURL) { return .directory(entries) }
-        do { return .subscription(try Subscription.parse(data, origin: finalURL)) }
+        do { return .subscription(try await Subscription.parse(data, origin: finalURL).sniffingScripts(http: self)) }
         catch {
             // An AList server answers its address with its web page.
             if let server = await AList.probe(url, session: session) { return .alist([server]) }
