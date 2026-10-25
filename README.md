@@ -100,7 +100,7 @@ Physical iPhone, iPad and Apple TV builds need your own signing team in Xcode. T
 | `App/` | SwiftUI screens and platform playback |
 | `Sources/TVCore/` | Subscriptions, networking, catalogs, localization, runtime boundaries |
 | `Runtime/` | JVM, JavaScript and Python plugin hosts, and the embedded JVM for iOS and tvOS |
-| `Vendor/` | Vendored DEX interpreter and QuickJS |
+| `Vendor/` | Vendored DEX interpreter and QuickJS; the FFmpeg build record |
 | `Services/` | Cloudflare Workers for error reports, feedback and the App Review demo server |
 | `website/` | The [yingxia.getmegaportal.com](https://yingxia.getmegaportal.com) site, plus `releases.json`, the Mac appcasts and the AltStore source |
 | `Docs/` | Install guide, developer guide, runtime status, third-party notices |

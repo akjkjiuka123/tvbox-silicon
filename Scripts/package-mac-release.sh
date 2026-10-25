@@ -33,6 +33,7 @@ APP_BUILT="$DERIVED/Build/Products/Release/TVBox-macOS.app"
 if [ "$BUILD" = 1 ]; then
   for h in JavaHost ScriptHost PythonHost; do test -d "build/$h" || { echo "missing build/$h; run Scripts/build-*-host.sh" >&2; exit 1; }; done
   Scripts/build-universal-hosts.sh
+  Scripts/build-apple-ffmpeg.sh
   xcodegen generate >/dev/null
   xcodebuild -project TVBox.xcodeproj -scheme TVBox-macOS -configuration Release -derivedDataPath "$DERIVED" \
     ARCHS="arm64 x86_64" ONLY_ACTIVE_ARCH=NO CODE_SIGN_IDENTITY=- CODE_SIGNING_REQUIRED=NO DEVELOPMENT_TEAM= build | tail -3

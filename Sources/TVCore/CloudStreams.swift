@@ -41,11 +41,18 @@ public enum CloudStreams {
         return (stream.counter.value, stream.host)
     }
 
-    /// Whether the file is Matroska/WebM, which AVFoundation can't open, judged from its first bytes.
-    /// False when they can't be read: the player reports network failures itself.
-    public static func isMatroska(_ url: URL) async -> Bool {
-        guard let stream = CloudStreamStore.shared.stream(url) else { return false }
-        return await stream.isMatroska()
+    /// Whether the file is one AVFoundation can't open but `Remux` can (MKV, AVI, FLV, ...), judged from its
+    /// first bytes. False when they can't be read: the player reports network failures itself.
+    public static func needsRemux(_ url: URL) async -> Bool {
+        guard let stream = CloudStreamStore.shared.stream(url), let head = await stream.head() else { return false }
+        return Remux.handles(head)
+    }
+
+    /// The file's bytes for `Remux`, exactly as stored.
+    public static func remuxSource(for url: URL) async -> RemuxSource? {
+        guard let stream = CloudStreamStore.shared.stream(url) else { return nil }
+        await stream.keepSampleEntries()
+        return CloudRemuxSource(stream: stream)
     }
 
     public static func stop(_ url: URL) {
@@ -167,13 +174,18 @@ actor CloudByteStream {
     }()
 
     private let session: URLSession
+    /// Whether `playableSampleEntries` retags the bytes: for AVPlayer's own MP4 reading, not for `Remux`.
+    private var rewritesSampleEntries: Bool
 
-    init(source: CloudStreams.Source, session: URLSession = CloudByteStream.session,
+    init(source: CloudStreams.Source, session: URLSession = CloudByteStream.session, rewritesSampleEntries: Bool = true,
          refresh: @escaping @Sendable () async -> CloudStreams.Source?) {
         self.source = source; self.session = session; self.refresh = refresh; host = source.url.host()
+        self.rewritesSampleEntries = rewritesSampleEntries
+        sourceLength = source.length
     }
 
     var length: Int { source.length }
+    nonisolated let sourceLength: Int
     private var chunks: Int { (source.length + Self.chunkSize - 1) / Self.chunkSize }
 
     func contentType() async throws -> String {
@@ -184,9 +196,13 @@ actor CloudByteStream {
         return value
     }
 
-    func isMatroska() async -> Bool {
-        guard let head = try? await chunk(0) else { return false }
-        return [UInt8](head.prefix(4)) == [0x1A, 0x45, 0xDF, 0xA3]
+    func head() async -> Data? { try? await chunk(0).prefix(16) }
+
+    /// From now on the bytes stay as stored; chunks already retagged are fetched again.
+    func keepSampleEntries() {
+        guard rewritesSampleEntries else { return }
+        rewritesSampleEntries = false
+        cache.removeAll(); recent.removeAll()
     }
 
     /// Up to `count` bytes at `offset`, never past the chunk that holds it.
@@ -270,7 +286,7 @@ actor CloudByteStream {
                     Diagnostics.shared.record(.debug, "cloud.stream", "rate bytesPerSecond=\(Int(Double(rate.bytes) / seconds)) readers=\(readers) inflight=\(inflight.count)")
                     rate = (Date(), 0)
                 }
-                let playable = CloudStreams.playableSampleEntries(data)
+                let playable = rewritesSampleEntries ? CloudStreams.playableSampleEntries(data) : data
                 cache[index] = playable
                 recent.removeAll { $0 == index }; recent.append(index)
                 while recent.count > Self.cacheChunks { cache[recent.removeFirst()] = nil }

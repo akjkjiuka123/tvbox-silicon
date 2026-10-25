@@ -54,17 +54,14 @@ actor QuarkFiles {
                          modified: updated.map { Date(timeIntervalSince1970: $0 / 1000) })
     }
 
-    /// The original when Apple devices can open its container, else the drive's transcoded copy.
-    /// An original that turns out to be Matroska whatever its name says goes the transcoded way too,
-    /// and so does a video the drive won't hand over as it is: free accounts may not download large
-    /// files ("download file size limit"), but may play the transcoded copy.
+    /// The original when it plays as stored (MKV and the like through `Remux`), else the drive's transcoded
+    /// copy, which is smaller and lower in quality. That copy also stands in for a video the drive won't hand
+    /// over as it is: free accounts may not download large files ("download file size limit"), but may play it.
     func stream(_ id: String, name: String) async throws -> URL {
-        if CloudFile.playsNatively(name) {
+        if CloudFile.playsOriginal(name) {
             do {
                 let source = try await original(id, name: name)
-                let address = CloudStreams.register(source) { [self] in try? await original(id, name: name) }
-                guard await CloudStreams.isMatroska(address) else { return address }
-                CloudStreams.stop(address)
+                return CloudStreams.register(source) { [self] in try? await original(id, name: name) }
             } catch TVError.unsupported(let reason) where CloudFile.kind(of: name) == .video {
                 Diagnostics.shared.record(.info, "files", "\(service) original refused, using the transcoded copy: \(reason)")
             }

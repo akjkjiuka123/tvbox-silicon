@@ -2,6 +2,7 @@
 set -euo pipefail
 cd "$(dirname "$0")/.."
 mkdir -p build
+Scripts/build-apple-ffmpeg.sh
 swift test
 Scripts/test-apple-runtime-bridge.sh
 # The apps embed build/JavaHost: it must be the sources' version, and its own tests must pass.

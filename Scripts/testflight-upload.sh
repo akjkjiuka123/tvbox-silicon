@@ -46,6 +46,9 @@ if ! { Scripts/build-java-host.sh && Scripts/sync-apple-javahost.sh iphoneos app
   exit 1
 fi
 
+echo "== FFmpeg"
+Scripts/build-apple-ffmpeg.sh
+
 for platform in iOS tvOS; do
   scheme=TVBox-$platform
   case $platform in
