@@ -46,22 +46,30 @@ struct HongguoTests {
             globalThis.req = url => { searched = url; return { code: 200, content: JSON.stringify({ searchList: [], hasMore: false }) }; };
             spider.search(' 总裁 ', false, '2');
             checks.searchRequest = searched === 'https://hongguoduanju.com/api/search/result?query=%E6%80%BB%E8%A3%81&page=2';
-            let answers = [502, 502, 200], asked = 0;
             const answer = code => ({ code, content: code === 200 ? JSON.stringify({ searchList: [{ video_data: series }], hasMore: false }) : '{"code":"upstream_unavailable"}' });
-            globalThis.req = () => answer(answers[asked++]);
-            checks.retry = spider.search('总裁', false, '1').list.length === 1 && asked === 3;
-            answers = [502, 502, 502, 200]; asked = 0; rejected = false;
+            // Retrying belongs to the native race; the script asks once and fails on the race's answer.
+            let raced, asked = 0;
+            globalThis.req = (url, options) => { raced = options; asked++; return answer(200); };
+            checks.race = spider.search('总裁', false, '1').list.length === 1 && raced.racers === 4 && raced.hedge === 2000 && raced.timeout === 8000;
+            globalThis.req = () => { asked++; return answer(502); };
+            asked = 0; rejected = false;
             try { spider.search('总裁', false, '1'); } catch { rejected = true; }
-            const gaveUp = rejected && asked === 3;
-            answers = [404, 200]; asked = 0; rejected = false;
-            try { spider.search('总裁', false, '1'); } catch { rejected = true; }
-            checks.retryLimit = gaveUp && rejected && asked === 1;
+            checks.noScriptRetry = rejected && asked === 1;
+            const categoryPage = page({ isSuccess: true, categoryRoute: { contentType: 'real-drama' }, recommendList: [series], pagination: { totalPages: 3 } });
+            const requested = [];
+            globalThis.req = url => { requested.push(url); return { code: 200, content: categoryPage }; };
+            spider.category('real-drama', '1'); spider.category('real-drama', '2');
+            checks.firstPage = requested[0] === 'https://hongguoduanju.com/category/real-drama' && requested[1] === 'https://hongguoduanju.com/category/real-drama?page=2';
             const list = catalog(page({ isSuccess: true, categoryRoute: { contentType: 'real-drama' }, recommendList: [series, series], pagination: { totalPages: 3 } }), 'real-drama', 2);
             checks.catalog = list.list.length === 1 && list.page === 2 && list.pagecount === 3;
             const rank = `<article><span>1</span><h2 id="rank-title-${sid}">Title</h2><a href="/detail?series_id=${sid}"><img src="https://example.com/a.jpg"></a></article><nav aria-label="榜单分页"><a href="/rank/hot-drama?page=3">3</a></nav>`;
             checks.ranking = catalog(rank, 'hot-drama', 1).pagecount === 3;
             const seo = '<script type="application/ld+json">' + JSON.stringify({ '@type': 'VideoObject', contentUrl: `https://hongguoduanju.com/video/public/${vids[0]}/360p.mp4` }) + '</script>';
             checks.noWrongVideo = webMedia(player + seo, sid, vids[3]) === null;
+            const own = `https://hongguoduanju.com/video/public/${vids[3]}/360p.mp4`;
+            const ownSeo = '<script type="application/ld+json">' + JSON.stringify({ '@type': 'VideoObject', '@id': `https://hongguoduanju.com/player/${sid}#video`, contentUrl: own }) + '</script>';
+            const preview = page({ isSuccess: true, series_id: sid, vid: vids[3], seriesDetail: series, protectedPlayback: true, publicVideoSeo: { available: true } });
+            checks.preview = webMedia(player + ownSeo, sid, vids[3]) === own && webMedia(preview + ownSeo, sid, vids[3]) === null;
             rejected = false; try { routerData('<script>window._ROUTER_DATA = {broken</script>'); } catch { rejected = true; }
             checks.malformed = rejected;
             checks.sm3 = sm3('abc').toString('hex') === '66c7f0f462eeedd9d1f2d46bdc10e4e24167c4875cf2f7a2297da02b8f4ba8e0';
@@ -80,23 +88,38 @@ struct HongguoTests {
             const encrypted = Buffer.from(nativeCrypto({ op: 'aes', encrypt: true, key: material.subarray(0, 16).toString('base64'), iv: material.subarray(16, 32).toString('base64'), dataText: media }).data, 'base64');
             const spade = Buffer.concat([Buffer.from([0xa8, 0, 1, 0]), encrypted]).toString('base64');
             checks.spade = decryptSpadeUrl(spade, seed) === media;
-            let calls = 0, wrongEpisode = false, badDestination = false;
-            globalThis.req = (url, options) => {
+            const backup = 'https://v9-reading.fqnovelvod.com/video.mp4';
+            const backupSpade = Buffer.concat([Buffer.from([0xa8, 0, 1, 0]), Buffer.from(nativeCrypto({ op: 'aes', encrypt: true, key: material.subarray(0, 16).toString('base64'), iv: material.subarray(16, 32).toString('base64'), dataText: backup }).data, 'base64')]).toString('base64');
+            let calls = 0, wrongEpisode = false, badDestination = false, refused = false;
+            const appAnswer = (url, options) => {
                 calls++;
                 if (options.method === 'POST') {
                     const body = JSON.parse(options.body);
                     if (body.mixed_video_id_map['1004'][0] !== vids[3] || !options.headers['x-medusa'] || !options.headers['x-gorgon'] || options.redirect !== false) throw new Error('Invalid signed request');
                     return { code: 200, content: JSON.stringify({ code: 0, data: { [wrongEpisode ? vids[0] : vids[3]]: { video_model: JSON.stringify({ fallback_api: badDestination ? 'https://127.0.0.1/info' : 'https://vod.snssdk.com/info' }) } } }) };
                 }
-                return { code: 200, content: JSON.stringify({ video_info: { data: { key_seed: seed.toString('base64'), video_list: {
+                return { code: 200, content: JSON.stringify({ video_info: { code: refused ? 10001 : 0, data: { key_seed: seed.toString('base64'), video_list: {
                     unsupported: { codec_type: 'bytevc2', quality_desc: '2160p', main_url: media },
-                    selected: { codec_type: 'h264', quality_desc: '1080p', main_url: spade, spade_a: raw.toString('base64') }
+                    selected: { codec_type: 'h264', quality_desc: '1080p', main_url: spade, backup_url_1: backupSpade, backup_url_list: [spade, 'not base64'], spade_a: raw.toString('base64') }
                 } } } }) };
             };
+            globalThis.req = appAnswer;
             const playback = await fetchAppPlayUrl(vids[3]);
             checks.app = calls === 2 && playback.contentKey === key && playback.url === media && playback.quality === '1080p';
+            checks.backups = JSON.stringify(playback.backups) === JSON.stringify([backup]);
             const sourcePlayback = await spider.play('Hongguo', sid + '/' + vids[3]);
             checks.mediaHeaders = sourcePlayback.header['User-Agent'].startsWith('com.phoenix.read/') && !('Referer' in sourcePlayback.header);
+            checks.sourceBackups = JSON.stringify(sourcePlayback.hongguoBackups) === JSON.stringify([backup]);
+            const ids = [];
+            globalThis.req = (url, options) => { if (options.method === 'POST') ids.push(url.match(/[?&]device_id=([0-9]+)/)?.[1]); throw new Error('offline'); };
+            for (let i = 0; i < 2; i++) { try { await fetchAppPlayUrl(vids[3]); } catch { /* Only the identities matter here. */ } }
+            checks.freshIdentity = ids.length === 2 && ids.every(id => /^[0-9]{16,}$/.test(id)) && ids[0] !== ids[1];
+            refused = true; calls = 0; rejected = false;
+            globalThis.req = appAnswer;
+            try { await fetchAppPlayUrl(vids[3]); } catch (error) { rejected = /暂未提供/.test(error.message); }
+            checks.refusal = rejected && calls === 2;
+            refused = false;
+            globalThis.req = appAnswer;
             wrongEpisode = true; calls = 0; rejected = false;
             try { await fetchAppPlayUrl(vids[3]); } catch { rejected = true; }
             checks.exactEpisode = rejected && calls === 1;
@@ -111,7 +134,7 @@ struct HongguoTests {
         let envelope = try await session.call([:])
         let json = try #require(envelope["result"]?.string, "\(envelope)")
         let checks = try #require(JSONDecoder().decode([String: JSONValue].self, from: Data(json.utf8))["checks"]?.object)
-        #expect(checks.count == 22)
+        #expect(checks.count == 28)
         for (name, result) in checks { #expect(result == .bool(true), "\(name)") }
     }
 
@@ -147,7 +170,7 @@ struct HongguoTests {
         try fixture.encrypted.write(to: file)
         let server = LocalMediaServer()
         let url = try await server.address(of: file, root: root)
-        let stream = HongguoByteStream(url: url, key: hex("2b7e151628aed2a6abf7158809cf4f3c"), headers: [:], http: HTTPClient())
+        let stream = HongguoByteStream(urls: [url], key: hex("2b7e151628aed2a6abf7158809cf4f3c"), headers: [:], http: HTTPClient())
         let index = try await stream.metadata()
         #expect(index.duration == 180)
         #expect(index.samples.count == 180)
@@ -181,7 +204,7 @@ struct HongguoTests {
         try fixture.encrypted.write(to: file)
         let server = LocalMediaServer()
         let url = try await server.address(of: file, root: root)
-        let stream = HongguoByteStream(url: url, key: hex("2b7e151628aed2a6abf7158809cf4f3c"), headers: [:], http: HTTPClient())
+        let stream = HongguoByteStream(urls: [url], key: hex("2b7e151628aed2a6abf7158809cf4f3c"), headers: [:], http: HTTPClient())
         let index = try await stream.metadata()
         let before = await stream.statistics
         let future = Task { try await stream.read(at: index.samples[90].bytes.lowerBound, count: 100) }
@@ -199,7 +222,7 @@ struct HongguoTests {
         configuration.protocolClasses = [HongguoRangeProtocol.self]
         let session = URLSession(configuration: configuration)
         defer { session.invalidateAndCancel() }
-        let reader = HongguoRangeReader(url: URL(string: "https://fixture.example/\(response)")!, headers: [:], http: HTTPClient(session: session))
+        let reader = HongguoRangeReader(urls: [URL(string: "https://fixture.example/\(response)")!], headers: [:], http: HTTPClient(session: session))
         await #expect(throws: (any Error).self) { try await reader.read(0..<32) }
     }
 
@@ -210,7 +233,7 @@ struct HongguoTests {
         let session = URLSession(configuration: configuration)
         defer { session.invalidateAndCancel() }
         let url = URL(string: "https://fixture.example/\(policy)?test=\(UUID())")!
-        let reader = HongguoRangeReader(url: url, headers: ["User-Agent": "com.phoenix.read/test"], http: HTTPClient(session: session))
+        let reader = HongguoRangeReader(urls: [url], headers: ["User-Agent": "com.phoenix.read/test"], http: HTTPClient(session: session))
         if policy == "always-forbidden" {
             await #expect(throws: (any Error).self) { try await reader.read(0..<32) }
         } else {
@@ -228,6 +251,58 @@ struct HongguoTests {
             #expect(ranges == (policy == "always-forbidden" ? ["bytes=0-31", "bytes=0-31"] : ["bytes=0-31", "bytes=0-31", "bytes=32-63"]))
             #expect(requests.dropFirst().allSatisfy { $0.value(forHTTPHeaderField: "Referer") == Hongguo.mediaReferer })
         }
+    }
+
+    @Test func streamingMovesToTheBackupNodeWhenOneFails() async throws {
+        let configuration = URLSessionConfiguration.ephemeral
+        configuration.protocolClasses = [HongguoRangeProtocol.self]
+        let session = URLSession(configuration: configuration)
+        defer { session.invalidateAndCancel() }
+        let failing = URL(string: "https://fixture.example/always-forbidden?test=\(UUID())")!
+        let backup = URL(string: "https://fixture.example/backup?test=\(UUID())")!
+        let reader = HongguoRangeReader(urls: [failing, backup], headers: [:], http: HTTPClient(session: session))
+        #expect(try await reader.read(0..<32).data.count == 32)
+        #expect(try await reader.read(32..<64).data.count == 32)
+        // The failed node had its Referer retry and is not asked again for later ranges.
+        #expect(HongguoRangeProtocol.requests(for: failing).count == 2)
+        let requests = HongguoRangeProtocol.requests(for: backup)
+        #expect(requests.map { $0.value(forHTTPHeaderField: "Range") } == ["bytes=0-31", "bytes=32-63"])
+        #expect(requests.allSatisfy { $0.value(forHTTPHeaderField: "Referer") == nil })
+    }
+
+    @Test func scriptRequestsRaceAStalledOrFailedConnection() {
+        final class Tries: @unchecked Sendable { let lock = NSLock(); var started = 0; var cancelled = 0 }
+        // The first try stalls: the second starts after the hedge and wins; both are then cancelled.
+        let stalled = Tries()
+        var start = Date()
+        var result = ScriptHTTP.race(racers: 3, hedge: 0.2) { finish in
+            let attempt = stalled.lock.withLock { stalled.started += 1; return stalled.started }
+            if attempt == 2 { DispatchQueue.global().async { finish(raceReply(200)) } }
+            return { stalled.lock.withLock { stalled.cancelled += 1 } }
+        }
+        #expect((result.1 as? HTTPURLResponse)?.statusCode == 200)
+        #expect(stalled.started == 2 && stalled.cancelled == 2)
+        #expect(Date().timeIntervalSince(start) < 1.5)
+        // A failure starts the next try at once, without waiting for the hedge; a 4xx answer is final.
+        let failing = Tries()
+        start = Date()
+        result = ScriptHTTP.race(racers: 4, hedge: 10) { finish in
+            let attempt = failing.lock.withLock { failing.started += 1; return failing.started }
+            DispatchQueue.global().async { finish(attempt == 1 ? (nil, nil, URLError(.timedOut)) : raceReply(attempt == 2 ? 502 : 404)) }
+            return {}
+        }
+        #expect((result.1 as? HTTPURLResponse)?.statusCode == 404)
+        #expect(failing.started == 3)
+        #expect(Date().timeIntervalSince(start) < 1.5)
+        // When nothing wins, every try is used and the last failure comes back.
+        let losing = Tries()
+        result = ScriptHTTP.race(racers: 2, hedge: 10) { finish in
+            losing.lock.withLock { losing.started += 1 }
+            DispatchQueue.global().async { finish(raceReply(503)) }
+            return {}
+        }
+        #expect((result.1 as? HTTPURLResponse)?.statusCode == 503)
+        #expect(losing.started == 2)
     }
 
     private func hex(_ value: String) -> Data {
@@ -258,6 +333,10 @@ struct HongguoTests {
         let moov = movie(movieAtEnd ? 8 : movie(0).count + 8), mdat = box("mdat", Data(repeating: encrypted, count: sampleCount))
         return (movieAtEnd ? mdat + moov : moov + mdat, plain)
     }
+}
+
+private func raceReply(_ status: Int) -> ScriptHTTP.Reply {
+    (Data(), HTTPURLResponse(url: URL(string: "https://fixture.example/")!, statusCode: status, httpVersion: nil, headerFields: nil), nil)
 }
 
 private extension Data {

@@ -274,6 +274,37 @@ enum ScriptHTTP {
     }
     private static let following = URLSession(configuration: .ephemeral)
     private static let stopping = URLSession(configuration: .ephemeral, delegate: Redirects(), delegateQueue: nil)
+    typealias Reply = (Data?, URLResponse?, Error?)
+
+    /// Starts one try, and another each time `hedge` seconds pass without an answer or a try fails, up to
+    /// `racers` tries. The first HTTP answer below 500 wins and the other tries are cancelled; when none
+    /// wins, the last failure is returned. `start` begins a try and returns how to cancel it. Blocks.
+    static func race(racers: Int, hedge: TimeInterval, start: (@escaping @Sendable (Reply) -> Void) -> (() -> Void)) -> Reply {
+        final class State: @unchecked Sendable { let lock = NSLock(); var winner: Reply?; var last: Reply?; var running = 0 }
+        let state = State(), signal = DispatchSemaphore(value: 0)
+        var cancels: [() -> Void] = []
+        func launch() {
+            state.lock.withLock { state.running += 1 }
+            cancels.append(start { reply in
+                state.lock.withLock {
+                    state.running -= 1
+                    let status = (reply.1 as? HTTPURLResponse)?.statusCode ?? 0
+                    if reply.2 == nil, (1..<500).contains(status), state.winner == nil { state.winner = reply } else { state.last = reply }
+                }
+                signal.signal()
+            })
+        }
+        launch()
+        while true {
+            _ = signal.wait(timeout: .now() + hedge)
+            let (won, running) = state.lock.withLock { (state.winner != nil, state.running) }
+            if won { break }
+            // Here the wait timed out or a try failed: both start the next try.
+            if cancels.count < racers { launch() } else if running == 0 { break }
+        }
+        cancels.forEach { $0() }
+        return state.lock.withLock { state.winner ?? state.last ?? (nil, nil, URLError(.unknown)) }
+    }
 
     static func perform(_ json: String) throws -> String {
         let options = try JSONDecoder().decode([String: JSONValue].self, from: Data(json.utf8))
@@ -289,11 +320,24 @@ enum ScriptHTTP {
             if let encoded = options["bodyBase64"]?.string { request.httpBody = Data(base64Encoded: encoded) ?? Data() }
             else if let body = options["body"]?.string { request.httpBody = Data(body.utf8) }
         }
-        let session = options["redirect"].map { if case .bool(false) = $0 { return true } else { return false } } == true ? stopping : following
-        let semaphore = DispatchSemaphore(value: 0)
-        nonisolated(unsafe) var result: (Data?, URLResponse?, Error?)
-        session.dataTask(with: request) { data, response, error in result = (data, response, error); semaphore.signal() }.resume()
-        semaphore.wait()
+        let stopsRedirects = options["redirect"].map { if case .bool(false) = $0 { return true } else { return false } } == true
+        let racers = min(4, max(1, options["racers"]?.int ?? 1))
+        let result: Reply
+        if racers > 1 {
+            let hedge = Double(options["hedge"]?.int ?? 0) / 1000
+            result = race(racers: racers, hedge: hedge > 0 ? hedge : 2.5) { finish in
+                // Each try gets its own connection: a stalled HTTP/2 connection must not carry the next one.
+                let session = URLSession(configuration: .ephemeral, delegate: stopsRedirects ? Redirects() : nil, delegateQueue: nil)
+                session.dataTask(with: request) { data, response, error in finish((data, response, error)) }.resume()
+                return { session.invalidateAndCancel() }
+            }
+        } else {
+            let semaphore = DispatchSemaphore(value: 0)
+            nonisolated(unsafe) var reply: Reply = (nil, nil, nil)
+            (stopsRedirects ? stopping : following).dataTask(with: request) { data, response, error in reply = (data, response, error); semaphore.signal() }.resume()
+            semaphore.wait()
+            result = reply
+        }
         let host = url.host ?? ""
         var answer: [String: Any] = ["url": (result.1?.url ?? url).absoluteString, "host": host]
         if let error = result.2 {

@@ -128,6 +128,8 @@ function request(address, options = {}) {
     const payload = { url: String(address), method: String(options.method || 'GET').toUpperCase(), headers,
         body: body == null ? null : String(body), bodyBase64: options.bodyBase64 == null ? null : String(options.bodyBase64),
         timeout: Number(options.timeout || 20000),
+        // Yingxia extension: race up to `racers` connections, `hedge` ms apart (see ScriptHTTP.race).
+        racers: Number(options.racers || 1), hedge: Number(options.hedge || 0),
         redirect: !(options.redirect === 0 || options.redirect === false), encoding: options.encoding || 'utf-8',
         binary: options.buffer === 1 || options.buffer === 2 || options.buffer === 3 };
     const answer = JSON.parse(host('http', JSON.stringify(payload)));

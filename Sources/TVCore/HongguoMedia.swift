@@ -193,7 +193,7 @@ actor HongguoMedia {
     private let server = LocalMediaServer()
     private let root = URL.cachesDirectory.appending(path: "com.tvbox.yingxia/HongguoMedia")
 
-    func prepare(url: URL, key: String, headers: [String: String], http: HTTPClient) async throws -> URL {
+    func prepare(url: URL, backups: [URL] = [], key: String, headers: [String: String], http: HTTPClient) async throws -> URL {
         guard key.count == 32, key.allSatisfy(\.isHexDigit) else { throw HongguoMP4.Failure.invalid }
         let bytes = stride(from: 0, to: 32, by: 2).compactMap { offset -> UInt8? in
             let start = key.index(key.startIndex, offsetBy: offset)
@@ -204,6 +204,24 @@ actor HongguoMedia {
         let target = root.appending(path: UUID().uuidString + ".mp4")
         var complete = false
         defer { if !complete { try? FileManager.default.removeItem(at: target) } }
+        // The backups are the same file on other CDN nodes; try them in turn.
+        let candidates = [url] + backups
+        for (index, candidate) in candidates.enumerated() {
+            do {
+                try await download(candidate, headers: headers, http: http, to: target)
+                break
+            } catch {
+                if error is CancellationError || Task.isCancelled || index + 1 == candidates.count { throw error }
+                Diagnostics.shared.record(.info, "hongguo.media", "node \(index) failed (\(error.localizedDescription)); trying backup \(index + 1) of \(backups.count)")
+            }
+        }
+        try HongguoMP4.decrypt(file: target, key: Data(bytes))
+        let address = try await server.address(of: target, root: root)
+        complete = true
+        return address
+    }
+
+    private func download(_ url: URL, headers: [String: String], http: HTTPClient, to target: URL) async throws {
         var request = URLRequest(url: url, timeoutInterval: 90)
         headers.forEach { request.setValue($1, forHTTPHeaderField: $0) }
         var (temporary, response) = try await http.session.download(for: request)
@@ -217,10 +235,6 @@ actor HongguoMedia {
         guard let response = response as? HTTPURLResponse, response.statusCode == 200 else { throw HongguoMP4.Failure.invalid }
         try Task.checkCancellation()
         try FileManager.default.moveItem(at: temporary, to: target)
-        try HongguoMP4.decrypt(file: target, key: Data(bytes))
-        let address = try await server.address(of: target, root: root)
-        complete = true
-        return address
     }
 
     private func prune() {

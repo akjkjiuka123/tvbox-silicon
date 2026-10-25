@@ -15,14 +15,14 @@ public enum HongguoStreams {
         public let bufferedThrough: Double
     }
 
-    static func register(url: URL, key: String, headers: [String: String], http: HTTPClient) throws -> URL {
+    static func register(url: URL, backups: [URL] = [], key: String, headers: [String: String], http: HTTPClient) throws -> URL {
         guard key.count == 32 else { throw HongguoMP4.Failure.invalid }
         let bytes = stride(from: 0, to: 32, by: 2).compactMap { offset -> UInt8? in
             let start = key.index(key.startIndex, offsetBy: offset)
             return UInt8(key[start..<key.index(start, offsetBy: 2)], radix: 16)
         }
         guard bytes.count == 16 else { throw HongguoMP4.Failure.invalid }
-        return HongguoStreamStore.shared.add(HongguoByteStream(url: url, key: Data(bytes), headers: headers, http: http))
+        return HongguoStreamStore.shared.add(HongguoByteStream(urls: [url] + backups, key: Data(bytes), headers: headers, http: http))
     }
 
     public static func asset(for url: URL) -> AVURLAsset? {
@@ -70,17 +70,43 @@ private final class HongguoStreamStore: @unchecked Sendable {
 
 /// Validates Range before consuming the body. A server that ignores Range must not silently
 /// turn a 128 KB playback request into a full-episode download.
+/// The app API also lists backup links: the same file on other CDN nodes. When a node fails,
+/// this and every later range moves to the next one.
 actor HongguoRangeReader {
-    let url: URL
+    let urls: [URL]
     let headers: [String: String]
     let http: HTTPClient
     private var usesReferer = false
+    private var mirror = 0
+    private var length: Int?
 
-    init(url: URL, headers: [String: String], http: HTTPClient) {
-        self.url = url; self.headers = headers; self.http = http
+    init(urls: [URL], headers: [String: String], http: HTTPClient) {
+        precondition(!urls.isEmpty)
+        self.urls = urls; self.headers = headers; self.http = http
     }
 
     func read(_ range: Range<Int>) async throws -> (data: Data, length: Int) {
+        while true {
+            let index = mirror
+            do {
+                let reply = try await read(range, from: urls[index])
+                // Every node must serve the same file.
+                if let length, reply.length != length { throw HongguoMP4.Failure.invalid }
+                length = reply.length
+                return reply
+            } catch {
+                if error is CancellationError || Task.isCancelled { throw error }
+                guard index + 1 < urls.count else { throw error }
+                // Another range may already have moved on while this one waited.
+                if mirror == index {
+                    mirror = index + 1; usesReferer = false
+                    Diagnostics.shared.record(.info, "hongguo.stream", "node \(index) failed (\(error.localizedDescription)); trying backup \(index + 1) of \(urls.count - 1)")
+                }
+            }
+        }
+    }
+
+    private func read(_ range: Range<Int>, from url: URL) async throws -> (data: Data, length: Int) {
         guard range.lowerBound >= 0, !range.isEmpty, range.count <= 16 << 20 else { throw HongguoMP4.Failure.invalid }
         var request = URLRequest(url: url, cachePolicy: .reloadIgnoringLocalCacheData, timeoutInterval: 20)
         headers.forEach { request.setValue($1, forHTTPHeaderField: $0) }
@@ -100,7 +126,7 @@ actor HongguoRangeReader {
             bytes.task.cancel()
             try Task.checkCancellation()
             usesReferer = true
-            return try await read(range)
+            return try await read(range, from: url)
         }
         if let status = httpResponse?.statusCode, status >= 400 {
             var detail = Data()
@@ -145,8 +171,8 @@ actor HongguoByteStream {
     private var received = 0
     private var requests = 0
 
-    init(url: URL, key: Data, headers: [String: String], http: HTTPClient) {
-        reader = HongguoRangeReader(url: url, headers: headers, http: http)
+    init(urls: [URL], key: Data, headers: [String: String], http: HTTPClient) {
+        reader = HongguoRangeReader(urls: urls, headers: headers, http: http)
         self.key = key
     }
 

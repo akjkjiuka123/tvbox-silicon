@@ -329,11 +329,12 @@ public struct CatalogClient: Sendable {
             if site.key == Hongguo.siteKey, let key = result["hongguoKey"]?.string, !key.isEmpty {
                 do {
                     let remote = try WebAddress.resolve(choices[0].address)
+                    let backups = (result["hongguoBackups"]?.array ?? []).compactMap { $0.string.flatMap { try? WebAddress.resolve($0) } }
                     let address: URL
                     if forDownload {
-                        address = try await HongguoMedia.shared.prepare(url: remote, key: key, headers: headers, http: http)
+                        address = try await HongguoMedia.shared.prepare(url: remote, backups: backups, key: key, headers: headers, http: http)
                     } else {
-                        address = try HongguoStreams.register(url: remote, key: key, headers: headers, http: http)
+                        address = try HongguoStreams.register(url: remote, backups: backups, key: key, headers: headers, http: http)
                     }
                     choices = [PlaybackChoice(id: 0, name: episode.name, address: address.absoluteString)]
                     headers = [:]

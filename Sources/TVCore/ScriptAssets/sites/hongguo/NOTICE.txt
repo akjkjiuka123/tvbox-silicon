@@ -10,6 +10,10 @@ randomness and hashes; synchronous bounded HTTP without Node or Electron;
 exports for protocol regression tests. Ephemeral device IDs remain ephemeral.
 No fixed user cookies, captured device identities or signing services are used.
 
+Updated 2026-10-25 from the same repository at commit
+195f276baf497e6ba969adece90b25e84198d3ac (v3.3): a new synthetic identity per
+signed request, backup media links, and the status of the second API answer.
+
 Upstream attribution follows:
 
 App playback source and signature attribution
