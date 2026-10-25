@@ -1,6 +1,6 @@
 # Plan: Python sources on iPhone, iPad and Apple TV
 
-Status: proposed, not started · Updated: October 25, 2026 · Issue: #125
+Status: in progress, phase 1 done · Updated: October 25, 2026 · Issue: #125
 
 ## Goal
 
