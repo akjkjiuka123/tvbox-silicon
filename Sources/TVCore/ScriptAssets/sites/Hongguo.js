@@ -12,12 +12,11 @@ const fail = key => { throw new Error(labels[key] || 'Hongguo is temporarily una
 const validID = value => typeof value === 'string' && /^[0-9]{1,30}$/.test(value);
 
 function html(url) {
-    // The site's gateway now and then answers 502 "upstream_unavailable"; asking again right away usually works.
-    let result;
-    for (let attempt = 0; attempt < 3; attempt++) {
-        result = globalThis.req(url, { headers, timeout: 15000 });
-        if (!(result.code >= 500)) break;
-    }
+    // From mainland China, a third to a half of new connections to the site stall (no body, or a body
+    // that stops) and never recover, and its gateway now and then answers 502 "upstream_unavailable".
+    // So up to four connections race, 2 s apart; a failed one starts the next at once, and the first
+    // answer below 500 wins. On the direct path this took 23 of 24 loads, against 15 of 24 before.
+    const result = globalThis.req(url, { headers, timeout: 8000, racers: 4, hedge: 2000 });
     if (result.code !== 200 || !result.content || result.content.length > 8 * 1024 * 1024) fail('unavailable');
     return result.content;
 }
@@ -133,6 +132,8 @@ export function search(text, page) {
 export function webMedia(text, id, vid) {
     const data = loader(text, item => item.seriesDetail?.series_id === id);
     if (String(data.vid) !== vid) return null;
+    // A protected episode's public file is a 10 s preview, even though the metadata gives the full duration.
+    if (data.protectedPlayback === true || data.publicVideoSeo?.available === false) return null;
     // Prefer exact-episode structured video metadata, not a recommendation's main_url.
     for (const match of text.matchAll(/<script\b[^>]*type=["']application\/ld\+json["'][^>]*>([\s\S]*?)<\/script>/gi)) {
         let root; try { root = JSON.parse(match[1]); } catch { continue; }
@@ -159,7 +160,8 @@ export default {
     category(id, pg) {
         if (!categories.includes(id)) fail('changed');
         const page = Math.max(1, parseInt(pg, 10) || 1);
-        return catalog(html(`${SITE}/${id.startsWith('hot-') ? 'rank' : 'category'}/${id}?page=${page}`), id, page);
+        // `?page=1` redirects to the bare path, an extra round trip.
+        return catalog(html(`${SITE}/${id.startsWith('hot-') ? 'rank' : 'category'}/${id}${page > 1 ? `?page=${page}` : ''}`), id, page);
     },
     search(query, quick, pg) {
         const page = Math.max(1, parseInt(pg, 10) || 1);
@@ -174,7 +176,7 @@ export default {
         // App playback provides full-series sources and higher quality when available.
         try {
             const result = await fetchAppPlayUrl(vid);
-            return { parse: 0, url: result.url, hongguoKey: result.contentKey, header: result.headers };
+            return { parse: 0, url: result.url, hongguoKey: result.contentKey, hongguoBackups: result.backups, header: result.headers };
         } catch { /* Use the exact episode's public webpage when the app endpoint is unavailable. */ }
         try {
             const url = webMedia(html(`${SITE}/player/${id}/${vid}`), id, vid);
