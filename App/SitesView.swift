@@ -4,11 +4,11 @@ import TVCore
 struct SitesView: View {
     @Environment(Store.self) private var store
     @State private var query = ""
-    /// A group is open only when its id is here, so a group that shows up later starts folded.
-    /// Reset with the page, not with a pushed source: the state lives here and `prepared` keeps the default fold to once per visit.
-    @State private var expanded: Set<String> = Self.defaultExpanded
+    /// Groups the viewer folded. Every group starts open, subscriptions and hidden sources included,
+    /// so nothing on the page needs finding. Reset with the page, not with a pushed source: the state
+    /// lives here and `prepared` keeps the reset to once per visit.
+    @State private var collapsed: Set<String> = []
     @State private var prepared = false
-    private static let defaultExpanded: Set<String> = ["pinned", "builtIn"]
     /// The fold as it was when a search began; restored when the search is cleared.
     @State private var foldBeforeSearch: Set<String>?
     @State private var arranging = false
@@ -24,7 +24,7 @@ struct SitesView: View {
                         }
                         ForEach(groups) { group in
                             groupHeader(group)
-                            if expanded.contains(group.id) {
+                            if !collapsed.contains(group.id) {
                                 LazyVGrid(columns: Layout.cardColumns, spacing: Layout.cardSpacing) {
                                     ForEach(group.sites) { site in
                                         RouteLink { SiteView(site: site, origin: config.origin, jarURL: config.spiderURL) } label: { SiteCard(site: site, dimmed: group.kind == .hidden) }.tileButton()
@@ -67,10 +67,10 @@ struct SitesView: View {
         }
         .onChange(of: query) { old, new in
             if old.isEmpty && !new.isEmpty {
-                foldBeforeSearch = expanded
-                expanded.formUnion(store.sourceGroups(includeHidden: false).map(\.id))
+                foldBeforeSearch = collapsed
+                collapsed = []
             } else if !old.isEmpty && new.isEmpty, let saved = foldBeforeSearch {
-                expanded = saved
+                collapsed = saved
                 foldBeforeSearch = nil
             }
         }
@@ -78,10 +78,10 @@ struct SitesView: View {
 
     @ViewBuilder
     private func groupHeader(_ group: SourceGroup) -> some View {
-        let open = expanded.contains(group.id)
+        let open = !collapsed.contains(group.id)
         let header = Button {
             withAnimation(.snappy(duration: 0.3)) {
-                if open { expanded.remove(group.id) } else { expanded.insert(group.id) }
+                if open { collapsed.insert(group.id) } else { collapsed.remove(group.id) }
             }
         } label: {
             HStack(spacing: 8) {
@@ -114,9 +114,9 @@ struct SitesView: View {
         #endif
     }
 
-    /// The default view of the page: subscription groups and hidden sources folded.
+    /// The default view of the page: every group open.
     private func applyDefaultFold() {
-        expanded = Self.defaultExpanded
+        collapsed = []
         foldBeforeSearch = nil
     }
 }
@@ -157,7 +157,7 @@ extension SourceHealth.Status {
         case .unknown: ""
         case .healthy: L10n.text("Responding normally")
         case .unstable: L10n.text("Slow or unreliable lately")
-        case .failing: L10n.text("Failing; searched last for now")
+        case .failing: L10n.text("Failing; skipped in search for now")
         }
     }
 }
@@ -796,6 +796,9 @@ struct VideoDetailView: View {
     /// Play takes over focus from the loading placeholder; otherwise nothing is focused once details load.
     @FocusState private var playFocused: Bool
     @State private var containerWidth: CGFloat = 0
+    @State private var heroWidth: CGFloat = 0
+    /// The cover's width over height once it loads; landscape covers are common (Bilibili, short dramas).
+    @State private var artAspect: CGFloat?
     /// The episode whose playback is being prepared; its row and the Play button show progress.
     @State private var loadingEpisode: Episode.ID?
     /// A failed or blocked playback attempt, shown as an inline banner beside the artwork.
@@ -922,7 +925,16 @@ struct VideoDetailView: View {
             }
         }
     }
-    private var splitLayout: Bool { detail != nil && isWide }
+    /// The two-column watch page. On a Mac or iPad it only pays off with a long episode list and room for both
+    /// columns; otherwise the rail sat mostly empty beside a squeezed hero, so the page stacks instead.
+    private var splitLayout: Bool {
+        guard let detail, isWide else { return false }
+        #if os(tvOS)
+        return true
+        #else
+        return containerWidth >= 1100 && detail.episodes.filter { $0.flag == activeFlag }.count > 12
+        #endif
+    }
     @ViewBuilder private var loadingCard: some View {
         if busy {
             // Keyed by the step, so the timer restarts when details turn into resolving a link.
@@ -1081,7 +1093,7 @@ struct VideoDetailView: View {
         #if os(tvOS)
         52
         #else
-        34
+        heroWidth < 600 ? 26 : 32
         #endif
     }
     /// The details, with the list's poster when the details came without one.
@@ -1174,35 +1186,57 @@ struct VideoDetailView: View {
         .accessibilityLabel(title).help(title)
         .accessibilityIdentifier("detail.favorite")
     }
-    /// Stands in for a watch-page player: a 16:9 stage with the artwork, title and the primary action.
+    /// Stands in for a watch-page player: the cover over a blur of itself, the title and the primary action.
+    /// Apple TV keeps a 16:9 stage; elsewhere the stage is a banner, so a full-width page is not half hero.
     private var hero: some View {
-        Color.clear.aspectRatio(16.0 / 9.0, contentMode: .fit)
+        heroStage
             .overlay {
                 GeometryReader { proxy in
+                    let inset: CGFloat = heroInset
+                    let aspect = min(max(artAspect ?? 2.0 / 3.0, 0.6), 1.8)
+                    // A landscape cover may take at most ~45% of the stage, so the title keeps its room.
+                    let artWidth = min(max(proxy.size.height - inset * 2, 60) * aspect, proxy.size.width * 0.45)
                     ZStack {
                         PosterImage(url: video.poster, headers: video.posterHeaders)
                             .frame(width: proxy.size.width, height: proxy.size.height).clipped()
                             .blur(radius: 40).scaleEffect(1.35)
                             .overlay(Color.black.opacity(0.5))
-                        HStack(alignment: .center, spacing: 32) {
-                            Color.clear.aspectRatio(2.0 / 3.0, contentMode: .fit)
-                                .overlay { PosterImage(url: video.poster, headers: video.posterHeaders) }
+                        HStack(alignment: .center, spacing: inset) {
+                            PosterImage(url: video.poster, headers: video.posterHeaders, aspect: $artAspect)
+                                .frame(width: artWidth, height: artWidth / aspect)
                                 .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
                                 .shadow(color: .black.opacity(0.45), radius: 20, y: 10)
-                                .frame(height: max(proxy.size.height - 56, 60))
-                            VStack(alignment: .leading, spacing: 14) {
-                                Text(video.name).font(.system(size: heroTitleSize, weight: .bold)).lineLimit(3).fixedSize(horizontal: false, vertical: true)
-                                if !video.remarks.isEmpty { Text(video.remarks).font(.title3).foregroundStyle(.white.opacity(0.75)) }
+                            VStack(alignment: .leading, spacing: 12) {
+                                Text(video.name).font(.system(size: heroTitleSize, weight: .bold))
+                                    .lineLimit(3).minimumScaleFactor(0.7).fixedSize(horizontal: false, vertical: true)
+                                if !video.remarks.isEmpty {
+                                    Text(video.remarks).font(.title3).foregroundStyle(.white.opacity(0.75)).lineLimit(2)
+                                }
                                 playControl.padding(.top, 6)
                             }
-                            Spacer(minLength: 0)
+                            .frame(maxWidth: .infinity, alignment: .leading)
                         }
-                        .padding(28).frame(width: proxy.size.width, height: proxy.size.height, alignment: .leading)
+                        .padding(inset).frame(width: proxy.size.width, height: proxy.size.height, alignment: .leading)
                     }
                 }
             }
             .foregroundStyle(.white).environment(\.colorScheme, .dark)
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
+    }
+    @ViewBuilder private var heroStage: some View {
+        #if os(tvOS)
+        Color.clear.aspectRatio(16.0 / 9.0, contentMode: .fit)
+        #else
+        Color.clear.frame(maxWidth: .infinity).frame(height: min(max(heroWidth * 9 / 16, 260), 340))
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { heroWidth = $0 }
+        #endif
+    }
+    private var heroInset: CGFloat {
+        #if os(tvOS)
+        28
+        #else
+        heroWidth < 600 ? 20 : 28
+        #endif
     }
     private var header: some View {
         VStack(alignment: .leading, spacing: 18) {
@@ -1276,8 +1310,11 @@ struct VideoDetailView: View {
         }
     }
     private func episodeList(_ items: [Episode]) -> some View {
-        let longNames = isWide || (items.map { $0.name.count }.max() ?? 0) > 9
-        return LazyVGrid(columns: longNames ? [GridItem(.flexible())] : [GridItem(.adaptive(minimum: episodeMin), spacing: 8)], spacing: longNames ? 4 : 8) {
+        // A chip fits about six characters before it truncates (《一…); longer names get rows.
+        let longNames = splitLayout || (items.map { $0.name.count }.max() ?? 0) > 6
+        // Under a full-width banner, long names fill columns rather than one stretched list.
+        let rowColumns = isWide && !splitLayout ? [GridItem(.adaptive(minimum: 320), spacing: 8)] : [GridItem(.flexible())]
+        return LazyVGrid(columns: longNames ? rowColumns : [GridItem(.adaptive(minimum: episodeMin), spacing: 8)], spacing: longNames ? 4 : 8) {
             ForEach(items) { episode in
                 let saved = download(episode)
                 Group {

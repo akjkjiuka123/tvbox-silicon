@@ -688,7 +688,10 @@
 "%lld subscriptions could not be refreshed; their last copies stay in use." = "%lld subscriptions could not be refreshed; their last copies stay in use.";
 "Responding normally" = "Responding normally";
 "Slow or unreliable lately" = "Slow or unreliable lately";
-"Failing; searched last for now" = "Failing; searched last for now";
+"Failing; skipped in search for now" = "Failing; skipped in search for now";
+"Skipped after repeated failures; back in search at %@" = "Skipped after repeated failures; back in search at %@";
+
+"Skipped after repeated failures" = "Skipped after repeated failures";
 "Sign in to Douyin to search its live rooms." = "Sign in to Douyin to search its live rooms.";
 "Douyin no longer accepts this sign-in. Sign in again in Settings." = "Douyin no longer accepts this sign-in. Sign in again in Settings.";
 "The Apple TV didn't answer. Make sure both are on the same Wi-Fi and try again." = "The Apple TV didn't answer. Make sure both are on the same Wi-Fi and try again.";

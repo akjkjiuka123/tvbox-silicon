@@ -39,6 +39,23 @@ enum QALaunch {
                 || UserDefaults.standard.string(forKey: "qaPlayLive") != nil
                 || UserDefaults.standard.string(forKey: "qaPlayURL") != nil else { return }
         if UserDefaults.standard.bool(forKey: "qaResetHistory") { store.playbackHistory.clear() }
+        #if os(macOS)
+        // `-qaWindowSnapshot <png> [-qaWindowSize 1230x830] [-qaSnapshotDelay 20]`: draws the main window into a PNG
+        // itself, for a Mac with no display or no screen-recording permission.
+        if let path = UserDefaults.standard.string(forKey: "qaWindowSnapshot") {
+            Task { @MainActor in
+                let size = (UserDefaults.standard.string(forKey: "qaWindowSize") ?? "").split(separator: "x").compactMap { Double($0) }
+                try? await Task.sleep(for: .seconds(1))
+                if size.count == 2 { NSApp.windows.first { $0.isVisible }?.setContentSize(NSSize(width: size[0], height: size[1])) }
+                let delay = UserDefaults.standard.object(forKey: "qaSnapshotDelay") == nil ? 20 : UserDefaults.standard.double(forKey: "qaSnapshotDelay")
+                try? await Task.sleep(for: .seconds(delay))
+                guard let view = NSApp.windows.first(where: { $0.isVisible })?.contentView?.superview,
+                      let rep = view.bitmapImageRepForCachingDisplay(in: view.bounds) else { return }
+                view.cacheDisplay(in: view.bounds, to: rep)
+                try? rep.representation(using: .png, properties: [:])?.write(to: URL(fileURLWithPath: path))
+            }
+        }
+        #endif
         // `-qaEnhance up,smooth` saves the Picture settings (unlike passing the keys, which would pin them
         // and stop the player's menu from switching them).
         if let enhance = UserDefaults.standard.string(forKey: "qaEnhance") {
@@ -194,8 +211,10 @@ enum QALaunch {
                 }
             case "detail":
                 if parts.count == 3, let site = config.sites.first(where: { $0.key == parts[1] }),
-                   let video = Video(json: ["vod_id": .string(parts[2]), "vod_name": .string("测试影片 \(parts[2])"),
-                                            "vod_pic": .string("http://127.0.0.1:8765/poster.png"), "vod_remarks": .string("更新至 36 集")],
+                   // `-qaVideoName`, `-qaVideoPoster` and `-qaVideoRemarks` stand in for the list card a real video opens from.
+                   let video = Video(json: ["vod_id": .string(parts[2]), "vod_name": .string(UserDefaults.standard.string(forKey: "qaVideoName") ?? "测试影片 \(parts[2])"),
+                                            "vod_pic": .string(UserDefaults.standard.string(forKey: "qaVideoPoster") ?? "http://127.0.0.1:8765/poster.png"),
+                                            "vod_remarks": .string(UserDefaults.standard.string(forKey: "qaVideoRemarks") ?? "更新至 36 集")],
                                      origin: config.origin) {
                     VideoDetailView(video: video, client: CatalogClient(site: site, origin: config.origin, jarURL: config.spiderURL))
                 }

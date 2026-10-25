@@ -687,7 +687,10 @@
 "%lld subscriptions could not be refreshed; their last copies stay in use." = "%lld 件の配信設定を更新できませんでした。前回のデータを引き続き使用します。";
 "Responding normally" = "正常に応答しています";
 "Slow or unreliable lately" = "最近遅いか不安定です";
-"Failing; searched last for now" = "失敗が続いているため、しばらく最後に検索します";
+"Failing; skipped in search for now" = "失敗が続いているため、しばらく検索しません";
+"Skipped after repeated failures; back in search at %@" = "失敗が続いたためスキップしました。%@ に検索を再開します";
+
+"Skipped after repeated failures" = "失敗が続いたためスキップしました";
 "Sign in to Douyin to search its live rooms." = "ライブルームを検索するにはDouyinにサインインしてください。";
 "Douyin no longer accepts this sign-in. Sign in again in Settings." = "Douyinがこのサインインを受け付けなくなりました。設定でもう一度サインインしてください。";
 "The Apple TV didn't answer. Make sure both are on the same Wi-Fi and try again." = "Apple TVから応答がありません。同じWi-Fiに接続されているか確かめて、もう一度お試しください。";

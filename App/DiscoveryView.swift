@@ -183,7 +183,7 @@ struct GlobalSearchView: View {
                  ? L10n.text("%lld of %lld sources didn't respond, so results may be incomplete.", model.failures.count, model.total)
                  : L10n.text("Try another keyword."))
         } actions: {
-            if !model.failures.isEmpty {
+            if !model.failures.isEmpty || !model.paused.isEmpty {
                 HStack(spacing: 16) {
                     Button(L10n.text("Retry failed sources")) { model.resume(config: config, retryFailures: true) }
                         .controlButton(prominent: true)
@@ -302,10 +302,10 @@ struct GlobalSearchView: View {
         } else if model.completed < model.total {
             Button { model.resume(config: config) } label: { searchActionLabel(L10n.text("Continue search"), symbol: "arrow.clockwise") }.searchAction()
         }
-        if !model.failures.isEmpty {
+        if !model.failures.isEmpty || !model.paused.isEmpty {
             Button { showFailures = true } label: {
                 Label {
-                    Text(L10n.text("%lld unavailable", model.failures.count))
+                    Text(L10n.text("%lld unavailable", model.failures.count + model.paused.count))
                 } icon: {
                     Image(systemName: "exclamationmark.triangle.fill").foregroundStyle(Brand.amber)
                 }
@@ -395,6 +395,13 @@ struct GlobalSearchView: View {
         #endif
     }
 
+    private func pauseNote(_ site: Site) -> String {
+        guard let until = store.subscription.flatMap({ SourceHealth.shared.pausedUntil(site, origin: $0.origin) }) else {
+            return L10n.text("Skipped after repeated failures")
+        }
+        return L10n.text("Skipped after repeated failures; back in search at %@", until.formatted(date: .omitted, time: .shortened))
+    }
+
     private var failureDetails: some View {
         NavigationStack {
             List {
@@ -406,6 +413,13 @@ struct GlobalSearchView: View {
                         if health == .failing { Text(health.summary).font(.caption).foregroundStyle(Brand.rose) }
                     }
                 }
+                // Sources this search left out for failing; the retry below asks them too.
+                ForEach(model.paused) { site in
+                    VStack(alignment: .leading, spacing: 6) {
+                        HStack(spacing: 6) { Text(site.name).font(.headline); SourceHealthDot(status: .failing) }
+                        Text(pauseNote(site)).font(.caption).foregroundStyle(Brand.rose)
+                    }
+                }
             }
             .screenTitle(L10n.text("Unavailable Sources"))
             .screenBackdrop()
@@ -415,7 +429,7 @@ struct GlobalSearchView: View {
                     Button(L10n.text("Retry failed sources")) {
                         if let config = store.subscription { model.resume(config: config, retryFailures: true) }
                         showFailures = false
-                    }.controlButton(prominent: true).disabled(model.busy || model.failures.isEmpty)
+                    }.controlButton(prominent: true).disabled(model.busy || (model.failures.isEmpty && model.paused.isEmpty))
                     Spacer()
                     Button(L10n.text("Done")) { showFailures = false }.controlButton()
                 }.padding(32).controlBackdrop()
@@ -427,7 +441,7 @@ struct GlobalSearchView: View {
                     Button(L10n.text("Retry failed sources")) {
                         if let config = store.subscription { model.resume(config: config, retryFailures: true) }
                         showFailures = false
-                    }.disabled(model.busy || model.failures.isEmpty)
+                    }.disabled(model.busy || (model.failures.isEmpty && model.paused.isEmpty))
                 }
             }
             #endif
@@ -599,8 +613,12 @@ struct RecommendationsView: View {
     private var model: RecommendationModel { store.recommendationModel }
     private var sites: [Site] { fixedSite.map { [$0] } ?? store.recommendationSites(config) }
     /// Until the user picks a source, default to the first in strategy order, so opening the app
-    /// does not start the JVM when a standard API or script source is available.
-    private var site: Site? { sites.first(where: { $0.key == sourceKey }) ?? sites.first }
+    /// does not start the JVM when a standard API or script source is available. A source paused for
+    /// failing (`SourceHealth.paused`) is passed over unless it is the viewer's pick.
+    private var site: Site? {
+        sites.first(where: { $0.key == sourceKey })
+            ?? sites.first(where: { !SourceHealth.shared.paused($0, origin: config.origin) }) ?? sites.first
+    }
     private var requestID: String { "\(config.origin)|\(config.importedAt)|\(site?.key ?? "")|\(revision)" }
 
     private var recommendationControls: some View {
