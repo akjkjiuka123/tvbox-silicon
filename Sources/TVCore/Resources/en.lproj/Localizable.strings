@@ -444,6 +444,7 @@
 "Download Manually" = "Download Manually";
 "The update couldn't be installed: %@" = "The update couldn't be installed: %@";
 "This update can't be installed from within Yingxia yet. Download it instead." = "This update can't be installed from within Yingxia yet. Download it instead.";
+"Yingxia couldn't relaunch to finish the update. Quit Yingxia and open it again." = "Yingxia couldn't relaunch to finish the update. Quit Yingxia and open it again.";
 "Install Updates Automatically" = "Install Updates Automatically";
 "Yingxia downloads updates in the background and installs them the next time it quits." = "Yingxia downloads updates in the background and installs them the next time it quits.";
 "Continue" = "Continue";
