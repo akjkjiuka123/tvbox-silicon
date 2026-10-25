@@ -112,6 +112,7 @@
 "%@: this source cannot run in this version." = "%@: this source cannot run in this version.";
 "The API did not return video details." = "The API did not return video details.";
 "This source requires web video detection or additional parsing. Only resolved media URLs are supported." = "This source requires web video detection or additional parsing. Only resolved media URLs are supported.";
+"Video detection timed out before a playable address appeared." = "Video detection timed out before a playable address appeared.";
 "The API did not return a single playback URL." = "The API did not return a single playback URL.";
 "This source requires additional parsing that is not yet supported." = "This source requires additional parsing that is not yet supported.";
 "The playlist exceeds 20 MB. Use a smaller subscription." = "The playlist exceeds 20 MB. Use a smaller subscription.";
@@ -311,6 +312,7 @@
 "Sign In to Quark" = "Sign In to Quark";
 "Sign In to UC" = "Sign In to UC";
 "Quark Cookie" = "Quark Cookie";
+"Quark Mobile Ticket (optional)" = "Quark Mobile Ticket (optional)";
 "UC Cookie" = "UC Cookie";
 "UC Token (optional)" = "UC Token (optional)";
 "Aliyun Refresh Token" = "Aliyun Refresh Token";

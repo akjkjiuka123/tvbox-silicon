@@ -4,6 +4,8 @@ import Observation
 /// Subscription-qualified keys survive imports and cannot pin an unrelated site's reused key.
 @MainActor @Observable public final class PinnedSources {
     private var keys: [String]
+    /// Bumps when the pin list changes, so a cached source row can be reused until then.
+    public private(set) var revision = 0
     private let defaults: UserDefaults
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -11,10 +13,12 @@ import Observation
     }
     private func key(_ site: Site, origin: URL) -> String { EpisodeSkipSettings.scope(origin: site.origin(or: origin), source: site.sourceKey, video: "") }
     public func contains(_ site: Site, origin: URL) -> Bool { keys.contains(key(site, origin: origin)) }
+    public var isEmpty: Bool { keys.isEmpty }
     public func toggle(_ site: Site, origin: URL) {
         let key = key(site, origin: origin)
         if keys.contains(key) { keys.removeAll { $0 == key } } else { keys.append(key) }
         defaults.set(keys, forKey: "pinnedSources.v1")
+        revision += 1
     }
     public func arrange(_ sites: [Site], origin: URL) -> [Site] {
         let rank = Dictionary(keys.enumerated().map { ($0.element, $0.offset) }, uniquingKeysWith: min)

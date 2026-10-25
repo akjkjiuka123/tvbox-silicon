@@ -112,6 +112,7 @@
 "%@: this source cannot run in this version." = "%@，此版本尚不能执行该点播源。";
 "The API did not return video details." = "接口没有返回影片详情。";
 "This source requires web video detection or additional parsing. Only resolved media URLs are supported." = "此线路需要网页嗅探或额外解析，当前播放器只接受已解析的媒体地址。";
+"Video detection timed out before a playable address appeared." = "嗅探超时，没有拿到可播放的地址。";
 "The API did not return a single playback URL." = "接口没有返回单一播放地址。";
 "This source requires additional parsing that is not yet supported." = "此源需要额外解析，暂不支持。";
 "The playlist exceeds 20 MB. Use a smaller subscription." = "列表超过 20 MB，请使用较小的订阅。";
@@ -310,6 +311,7 @@
 "Sign In to Quark" = "登录夸克网盘";
 "Sign In to UC" = "登录 UC 网盘";
 "Quark Cookie" = "夸克 Cookie";
+"Quark Mobile Ticket (optional)" = "夸克手机票据（可选）";
 "UC Cookie" = "UC Cookie";
 "UC Token (optional)" = "UC Token（可选）";
 "Aliyun Refresh Token" = "阿里云盘 Refresh Token";

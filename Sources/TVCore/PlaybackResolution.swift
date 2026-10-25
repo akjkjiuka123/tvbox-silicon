@@ -24,6 +24,18 @@ public struct PlaybackPlan: Sendable {
     public let headers: [String: String]
     public let group: String
     public let requiresWebDetection: Bool
+    /// Site click when that is non-empty, otherwise the play result click.
+    public let click: String
+    /// `json:` or `parse:` copied off the front of the address. Empty when the prefix is already joined on, or there is none.
+    public let webPlayURL: String
+    public init(choices: [PlaybackChoice], headers: [String: String], group: String, requiresWebDetection: Bool, click: String = "", webPlayURL: String = "") {
+        self.choices = choices
+        self.headers = headers
+        self.group = group
+        self.requiresWebDetection = requiresWebDetection
+        self.click = click
+        self.webPlayURL = webPlayURL
+    }
 }
 
 /// Resolves the Bili spider's proxy identifiers: Bilibili's DASH streams as HLS (`BilibiliStreams`),

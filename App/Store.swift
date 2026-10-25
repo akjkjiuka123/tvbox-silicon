@@ -56,6 +56,20 @@ import TVCore
     var hiddenSections: [AppSection] { extrasUnlocked ? [] : [.music] }
     private let defaults: UserDefaults
     private let http = HTTPClient()
+    /// Rebuilt source rows are expensive (every source is classified and copied) and Watch Now reads
+    /// them many times while drawing one frame. The stamp is the inputs, so a later frame reuses the row.
+    /// Not observed: views fill these while drawing, and a write would draw every reader again.
+    @ObservationIgnored private var siteListStamp = ""
+    @ObservationIgnored private var automaticCache: [Site]?
+    @ObservationIgnored private var orderedCache: [Site]?
+    @ObservationIgnored private var recommendationCache: [Site]?
+    @ObservationIgnored private var groupsCache: [Bool: [SourceGroup]] = [:]
+    /// What the cached rows were built from: the merged subscription, which subscriptions are on, and the viewer's pins, hides, and order.
+    private func currentSiteListStamp() -> String {
+        let imported = subscription?.importedAt.timeIntervalSince1970 ?? 0
+        let entries = subscriptions.map { "\($0.address)=\($0.enabled)" }.joined(separator: "\n")
+        return "\(subscription?.origin.absoluteString ?? "")|\(imported)|\(subscription?.sites.count ?? 0)|\(entries)|\(pinnedSources.revision)|\(hiddenSources.revision)|\(sourceOrder.revision)"
+    }
     private var persistsChanges: Bool {
         #if DEBUG
         return !defaults.bool(forKey: "qaIsolatedData")
@@ -79,6 +93,9 @@ import TVCore
         #endif
         pinnedSources = PinnedSources(defaults: playbackDefaults)
         hiddenSources = HiddenSources(defaults: playbackDefaults)
+        #if os(macOS) || os(iOS)
+        WebSniff.install(WKWebSniffer())
+        #endif
         sourceOrder = SourceOrder(defaults: playbackDefaults)
         favorites = Favorites(defaults: defaults)
         SourceHideReports.report = { [hiddenSources] site, origin, error in
@@ -123,8 +140,8 @@ import TVCore
                 ?? Site.builtInSites.first(where: { $0.key == item.source.siteKey }) else {
             throw TVError.unsupported(L10n.text("%@ is no longer in your subscription, so this download can't continue.", item.source.siteName))
         }
-        let client = CatalogClient(site: site, origin: config?.origin ?? URL(string: "https://example.invalid/")!, jarURL: config?.spiderURL)
-            .with(parses: config?.parseServices ?? [])
+        let base = CatalogClient(site: site, origin: config?.origin ?? URL(string: "https://example.invalid/")!, jarURL: config?.spiderURL)
+        let client = config.map { base.applying($0) } ?? base
         let plan = try await client.preparePlayback(item.source.episode, forDownload: true)
         let channel = try await client.resolvePlayback(plan, choice: plan.choices[0])
         // A cloud-drive file downloads straight from its CDN, as it plays: through the plugin's
@@ -340,16 +357,50 @@ import TVCore
         playFile(cloud, in: CloudFilesFolder(drive: drive, id: file.folderID, name: file.folderName, files: [cloud]))
     }
 
+    /// The Watch Now source row: pinned, then built-in, then the sources page's subscription order.
+    func recommendationSites(_ config: Subscription) -> [Site] {
+        let stamp = currentSiteListStamp()
+        if stamp == siteListStamp, let cached = recommendationCache { return cached }
+        let leading = automaticSites(config)
+        let pinned = leading.filter { pinnedSources.contains($0, origin: config.origin) }
+        let builtIn = leading.filter { $0.isBuiltIn && !pinnedSources.contains($0, origin: config.origin) }
+        let groups = sourceGroups(includeHidden: false)
+        let result = SourceGroups.homeRow(pinned: pinned, builtIn: builtIn, groups: groups)
+        rememberSiteLists(stamp)
+        recommendationCache = result
+        return result
+    }
+
     /// The sources to show, in the viewer's own order while it is on.
     func orderedSites(_ config: Subscription) -> [Site] {
+        let stamp = currentSiteListStamp()
+        if stamp == siteListStamp, let cached = orderedCache { return cached }
         let sites = automaticSites(config)
-        return sourceOrder.enabled ? sourceOrder.arrange(sites, origin: config.origin) : sites
+        let arranged = sourceOrder.enabled ? sourceOrder.arrange(sites, origin: config.origin) : sites
+        rememberSiteLists(stamp)
+        orderedCache = arranged
+        return arranged
     }
 
     /// The order the app picks: built-in sources, then `SourceStrategy`'s, with pinned sources first. Hidden sources stay out.
     func automaticSites(_ config: Subscription) -> [Site] {
+        let stamp = currentSiteListStamp()
+        if stamp == siteListStamp, let cached = automaticCache { return cached }
         let sites = SourceLists.browsable(config.sites, jarURL: config.spiderURL) { hiddenSources.contains($0, origin: config.origin) }
-        return pinnedSources.arrange(sites.filter(\.isBuiltIn) + sites.filter { !$0.isBuiltIn }, origin: config.origin)
+        let arranged = pinnedSources.arrange(sites.filter(\.isBuiltIn) + sites.filter { !$0.isBuiltIn }, origin: config.origin)
+        rememberSiteLists(stamp)
+        automaticCache = arranged
+        return arranged
+    }
+
+    /// Drops cached rows when their inputs changed. Each list fills itself, so a caller that only needs one does not build the others.
+    private func rememberSiteLists(_ stamp: String) {
+        guard stamp != siteListStamp else { return }
+        siteListStamp = stamp
+        automaticCache = nil
+        orderedCache = nil
+        recommendationCache = nil
+        groupsCache = [:]
     }
 
     /// Turns the viewer's own source order on or off. The first time, it starts from the order on
@@ -370,9 +421,14 @@ import TVCore
 
     /// The sources page's sections: pinned, built-in, then one per subscription.
     func sourceGroups(includeHidden: Bool) -> [SourceGroup] {
+        let stamp = currentSiteListStamp()
+        if stamp == siteListStamp, let cached = groupsCache[includeHidden] { return cached }
         guard let config = subscription else { return [] }
         let pins = pinnedSources.arrange(config.sites, origin: config.origin).filter { pinnedSources.contains($0, origin: config.origin) }
-        return SourceGroups.make(entries: subscriptions, documents: documents, builtIns: config.sites.filter(\.isBuiltIn), builtInOrigin: config.origin, mergedSites: config.sites, pinOrder: pins, userHidden: { hiddenSources.contains($0, origin: config.origin) }, includeHidden: includeHidden, jarURL: config.spiderURL)
+        let groups = SourceGroups.make(entries: subscriptions, documents: documents, builtIns: config.sites.filter(\.isBuiltIn), builtInOrigin: config.origin, mergedSites: config.sites, pinOrder: pins, userHidden: { hiddenSources.contains($0, origin: config.origin) }, includeHidden: includeHidden, jarURL: config.spiderURL)
+        rememberSiteLists(stamp)
+        groupsCache[includeHidden] = groups
+        return groups
     }
 
     func catalogChannel(_ resolved: Channel, video: Video, episode: Episode, client: CatalogClient,
@@ -505,7 +561,7 @@ import TVCore
         }
         let previousPlayback = playing
         do {
-            let client = CatalogClient(site: site, origin: config.origin, jarURL: config.spiderURL).with(parses: config.parseServices)
+            let client = CatalogClient(site: site, origin: config.origin, jarURL: config.spiderURL).applying(config)
             // Plugin/API sources resolve an episode again. Direct-file APIs must refresh
             // their detail first so an expiring media address never becomes a resume shortcut.
             var video = try await client.detail(entry.context.videoID, cached: site.type == 3 || site.type == 4)

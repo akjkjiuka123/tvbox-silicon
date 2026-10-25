@@ -26,3 +26,20 @@ import Testing
         ParseService(name: "web", type: 0, url: "https://web.example/?url=", headers: [:]),
     ])
 }
+
+@Test func sniffSubscriptionReadsAdsRulesAndParseFlags() throws {
+    let config = try Subscription.parse(Data(#"""
+    {"sites":[{"key":"a","api":"https://example.com/api","type":1}],
+     "ads":["ads.example","tracker"],
+     "rules":[{"hosts":"player.example","regex":["token"],"script":["open()"],"exclude":[".html"],"click":[".close"]},
+              {"hosts":["other.example"],"regex":"one"}],
+     "parses":[{"name":"mix","type":4,"url":"csp_Mix","click":"parseClick()","ext":{"flag":["线路1","线路2"],"header":{"Referer":"https://jx.example"}}}]}
+    """#.utf8), origin: URL(string: "https://example.com/tv.json")!)
+    #expect(config.sniffAds == ["ads.example", "tracker"])
+    #expect(config.sniffRules.count == 2)
+    #expect(config.sniffRules[0] == SniffRule(hosts: ["player.example"], regex: ["token"], script: ["open()"], exclude: [".html"], click: [".close"]))
+    #expect(config.sniffRules[1].regex == ["one"])
+    #expect(config.parseServices == [
+        ParseService(name: "mix", type: 4, url: "csp_Mix", headers: ["Referer": "https://jx.example"], flags: ["线路1", "线路2"], click: "parseClick()")
+    ])
+}

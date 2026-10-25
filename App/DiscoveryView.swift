@@ -633,9 +633,11 @@ struct RecommendationsView: View {
     /// The source category shown instead of its recommendations; nil shows the recommendations.
     @State private var category: String?
     @State private var categoryPage = 1
+    /// The source `category` belongs to. A source change clears it inside the load task, which is the last writer.
+    @State private var categorySite: String?
     @State private var browser = CatalogBrowser()
     private var model: RecommendationModel { store.recommendationModel }
-    private var sites: [Site] { fixedSite.map { [$0] } ?? store.orderedSites(config) }
+    private var sites: [Site] { fixedSite.map { [$0] } ?? store.recommendationSites(config) }
     /// Until the user picks a source, default to the first in strategy order, so opening the app
     /// does not start the JVM when a standard API or script source is available.
     private var site: Site? { sites.first(where: { $0.key == sourceKey }) ?? sites.first }
@@ -659,6 +661,9 @@ struct RecommendationsView: View {
                                 LazyVStack(alignment: .leading, spacing: 4) {
                                     ForEach(sites) { candidate in
                                         Button {
+                                            // Leaving this source drops its open category before the new home loads.
+                                            category = nil
+                                            categoryPage = 1
                                             sourceKey = candidate.key
                                             revision = 0
                                             forceRefresh = false
@@ -728,6 +733,9 @@ struct RecommendationsView: View {
             if fixedSite == nil, let site, sites.count > 1 {
                 HStack(spacing: 10) {
                     SourceStrip(items: sites.map { .init(id: $0.key, name: $0.name) }, selection: site.key) { key in
+                        // Clear before the key changes. The load task opens a category-only home after it returns;
+                        // an onChange that also clears would run after a cached load and wipe that category.
+                        if key != sourceKey { category = nil; categoryPage = 1 }
                         sourceKey = key; revision = 0; forceRefresh = false
                     }
                     recommendationControls.fixedSize()
@@ -782,9 +790,14 @@ struct RecommendationsView: View {
             // `-qaSourcePicker 1` opens the recommendation source picker, for screenshots.
             if UserDefaults.standard.bool(forKey: "qaSourcePicker"), fixedSite == nil { choosingSource = true }
             #endif
+            let requested = site?.key
             guard let site else { model.reset(); return }
+            // Reset here, while this task is the last writer. A later onChange would clear the category
+            // a cached home opens below: that home has no posters, so the page would say it has none.
+            if categorySite != requested { category = nil; categoryPage = 1; categorySite = requested }
             let refresh = forceRefresh; forceRefresh = false
             await model.load(client: CatalogClient(site: site, origin: config.origin, jarURL: config.spiderURL), subscriptionDate: config.importedAt, force: refresh)
+            guard !Task.isCancelled, site.key == requested else { return }
             // A source whose home names only categories (list sites) opens its first one.
             if category == nil, !model.busy, model.error == nil, model.items.isEmpty, let first = model.categories.first {
                 category = first.id; categoryPage = 1
@@ -796,7 +809,6 @@ struct RecommendationsView: View {
                                client: CatalogClient(site: loadedSite, origin: config.origin, jarURL: config.spiderURL))
         }
         .onDisappear { browser.cancel() }
-        .onChange(of: site?.key) { category = nil; categoryPage = 1 }
     }
 
     private func categoryChips(_ loadedSite: Site) -> some View {

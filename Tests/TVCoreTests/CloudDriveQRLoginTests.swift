@@ -37,6 +37,30 @@ private func cloudLoginSession(_ domain: String) -> URLSession {
     #expect(login.serviceTicket == "mobile-service-ticket")
 }
 
+@Test func quarkMobileTicketEncodesReservedCharacters() async throws {
+    let config = URLSessionConfiguration.ephemeral
+    config.protocolClasses = [EncodedTicketProtocol.self]
+    let session = URLSession(configuration: config)
+    defer { session.invalidateAndCancel() }
+    let ticket = try await CloudDriveQRLogin.quarkMobileTicket("a+b/c=", session: session)
+    #expect(ticket == "mobile-ok")
+}
+
+private final class EncodedTicketProtocol: URLProtocol, @unchecked Sendable {
+    override class func canInit(with request: URLRequest) -> Bool { true }
+    override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
+    override func startLoading() {
+        let raw = request.url?.absoluteString ?? ""
+        let encoded = raw.contains("st=a%2Bb%2Fc%3D") && !raw.contains("st=a+")
+        let body = encoded ? #"{"success":true,"data":{"serviceTicket":"mobile-ok"}}"# : #"{"success":true,"data":{}}"#
+        let response = HTTPURLResponse(url: request.url!, statusCode: 200, httpVersion: "HTTP/1.1", headerFields: [:])!
+        client?.urlProtocol(self, didReceive: response, cacheStoragePolicy: .notAllowed)
+        client?.urlProtocol(self, didLoad: Data(body.utf8))
+        client?.urlProtocolDidFinishLoading(self)
+    }
+    override func stopLoading() {}
+}
+
 @Test func quarkIncompleteTicketExchangeDoesNotReportSuccessfulLogin() async {
     let session = cloudLoginSession("quark.cn")
     defer { session.invalidateAndCancel() }

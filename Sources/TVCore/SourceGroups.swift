@@ -53,6 +53,15 @@ public enum SourceGroups {
         }
         return groups
     }
+
+    /// The Watch Now source row. Pinned and built-in sources keep the order they were given.
+    /// Every other source follows the sources page: one subscription after another, in that page's order.
+    /// Hidden sources stay in their group on the sources page and do not join this row.
+    public static func homeRow(pinned: [Site], builtIn: [Site], groups: [SourceGroup]) -> [Site] {
+        let placed = Set((pinned + builtIn).map(\.id))
+        let directory = groups.filter { $0.kind != .hidden }.flatMap(\.sites)
+        return pinned + builtIn + directory.filter { !placed.contains($0.id) }
+    }
 }
 
 public enum SubscriptionOrder {

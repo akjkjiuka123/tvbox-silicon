@@ -4,6 +4,8 @@ import Observation
 /// Subscription-qualified hides. The same key scheme as `PinnedSources`.
 @MainActor @Observable public final class HiddenSources {
     private var keys: [String]
+    /// Bumps when a source is hidden or shown, so a cached source row can be reused until then.
+    public private(set) var revision = 0
     private let defaults: UserDefaults
     private static let storageKey = "hiddenSources.v1"
     private static let backfillKey = "hiddenSources.backfill.v1"
@@ -23,6 +25,7 @@ import Observation
         let key = key(site, origin: origin)
         if keys.contains(key) { keys.removeAll { $0 == key } } else { keys.append(key) }
         defaults.set(keys, forKey: Self.storageKey)
+        revision += 1
     }
 
     public func insert(_ site: Site, origin: URL) {
@@ -30,6 +33,7 @@ import Observation
         guard !keys.contains(key) else { return }
         keys.append(key)
         defaults.set(keys, forKey: Self.storageKey)
+        revision += 1
     }
 
     /// Writes a hide when this counted failure leaves the source red. Success, cancellation,

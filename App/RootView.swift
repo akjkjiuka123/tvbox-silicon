@@ -45,8 +45,7 @@ struct RootView: View {
     @AppStorage(PhoneTabs.storageKey) private var storedTabs = ""
     #endif
     #if os(macOS)
-    /// Pushed pages in the detail column. Cleared on section change: inside NavigationSplitView the
-    /// column keeps its pushed views even when the root stack's identity changes.
+    /// Pushed pages in the detail column. Cleared on section change: the stack keeps them when its root is replaced.
     @State private var detailPath = NavigationPath()
     @State private var nowPlayingShown = false
     @State private var hidesToolbar = false
@@ -96,7 +95,9 @@ struct RootView: View {
                     .navigationSplitViewColumnWidth(min: 190, ideal: 216, max: 260)
             } detail: {
                 // The music bar floats over every page while a song is loaded, as in Music.
-                NavigationStack(path: $detailPath) { content(store.section).musicBar().routeDestinations() }.id(store.section)
+                // The stack stays put across sections. Rebuilding it resets the sidebar column, so a
+                // section change collapsed the sidebar while the new page was still a placeholder.
+                NavigationStack(path: $detailPath) { content(store.section).musicBar().routeDestinations() }
             }
             .onChange(of: store.section) { detailPath = NavigationPath() }
             .overlay {

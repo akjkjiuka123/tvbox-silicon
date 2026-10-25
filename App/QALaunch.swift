@@ -107,7 +107,7 @@ enum QALaunch {
             let key = String(page.dropFirst("play-source:".count))
             do {
                 guard let site = config.sites.first(where: { $0.key == key }) else { throw QASweep.Failure(message: "Source not found") }
-                let client = CatalogClient(site: site, origin: config.origin, jarURL: config.spiderURL).with(parses: config.parseServices)
+                let client = CatalogClient(site: site, origin: config.origin, jarURL: config.spiderURL).applying(config)
                 var videos: [Video]
                 if let query = UserDefaults.standard.string(forKey: "qaVideoQuery") {
                     videos = try await QASweep.limit(60) { try await client.list(category: nil, query: query, page: 1).videos }
@@ -329,7 +329,7 @@ enum QASweep {
             record.stage = "support"; record.error = site.compatibility
             return record
         }
-        let client = CatalogClient(site: site, origin: config.origin, jarURL: config.spiderURL).with(parses: config.parseServices)
+        let client = CatalogClient(site: site, origin: config.origin, jarURL: config.spiderURL).applying(config)
         do {
             let homeLimit = UserDefaults.standard.double(forKey: "qaSweepHomeTimeout")
             let home = try await limit(homeLimit > 0 ? homeLimit : 120) { try await client.home() }

@@ -6,9 +6,11 @@ import Observation
 /// Keys are subscription-qualified like `PinnedSources`, so the order survives re-imports.
 @MainActor @Observable public final class SourceOrder {
     public var enabled: Bool {
-        didSet { defaults.set(enabled, forKey: "sourceOrder.enabled") }
+        didSet { defaults.set(enabled, forKey: "sourceOrder.enabled"); revision += 1 }
     }
     private var keys: [String]
+    /// Bumps when the saved order or its switch changes, so a cached source row can be reused until then.
+    public private(set) var revision = 0
     private let defaults: UserDefaults
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -35,5 +37,6 @@ import Observation
         let ordered = sites.map { key($0, origin: origin) }, listed = Set(ordered)
         keys = ordered + keys.filter { !listed.contains($0) }
         defaults.set(keys, forKey: "sourceOrder.v1")
+        revision += 1
     }
 }

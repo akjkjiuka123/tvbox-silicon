@@ -112,6 +112,7 @@
 "%@: this source cannot run in this version." = "%@：このバージョンではこのソースを実行できません。";
 "The API did not return video details." = "API から動画の詳細が返されませんでした。";
 "This source requires web video detection or additional parsing. Only resolved media URLs are supported." = "このソースには Web 動画検出または追加の解析が必要です。解決済みのメディア URL のみに対応しています。";
+"Video detection timed out before a playable address appeared." = "動画検出がタイムアウトし、再生できるアドレスが見つかりませんでした。";
 "The API did not return a single playback URL." = "API から単一の再生 URL が返されませんでした。";
 "This source requires additional parsing that is not yet supported." = "このソースは未対応の追加解析を必要とします。";
 "The playlist exceeds 20 MB. Use a smaller subscription." = "再生リストが 20 MB を超えています。より小さい配信設定を使用してください。";
@@ -310,6 +311,7 @@
 "Sign In to Quark" = "Quark にログイン";
 "Sign In to UC" = "UC にログイン";
 "Quark Cookie" = "Quark Cookie";
+"Quark Mobile Ticket (optional)" = "Quark Mobile Ticket（任意）";
 "UC Cookie" = "UC Cookie";
 "UC Token (optional)" = "UC Token（任意）";
 "Aliyun Refresh Token" = "Aliyun Refresh Token";

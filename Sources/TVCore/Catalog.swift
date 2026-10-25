@@ -135,6 +135,9 @@ public struct CatalogClient: Sendable {
     public let jarURL: URL?
     /// The subscription's parse services, used when a source hands back a web player page.
     public private(set) var parses: [ParseService] = []
+    public private(set) var sniffAds: [String] = []
+    public private(set) var sniffRules: [SniffRule] = []
+    public private(set) var sniffer: (any WebSniffing)?
     /// A merged source runs against its own subscription, whatever `origin` and `jarURL` the caller has.
     public init(site: Site, origin: URL, http: HTTPClient = HTTPClient(), jarURL: URL? = nil) {
         self.site = site; self.origin = site.origin(or: origin); self.http = http; self.jarURL = site.spider(or: jarURL)
@@ -143,6 +146,17 @@ public struct CatalogClient: Sendable {
     public var reportContext: String { "source=\(site.key) api=\(site.api) type=\(site.type)" }
     public func with(parses: [ParseService]) -> CatalogClient {
         var client = self; client.parses = parses; return client
+    }
+    public func applying(_ subscription: Subscription) -> CatalogClient {
+        var client = with(parses: subscription.parseServices)
+        client.sniffAds = subscription.sniffAds
+        client.sniffRules = subscription.sniffRules
+        return client
+    }
+    public func with(sniffer: any WebSniffing) -> CatalogClient {
+        var client = self
+        client.sniffer = sniffer
+        return client
     }
     public func requestURL(_ params: [String: String]) throws -> URL {
         guard site.native else { throw TVError.unsupported(L10n.text("%@: this source cannot run in this version.", site.compatibility)) }
@@ -286,6 +300,12 @@ public struct CatalogClient: Sendable {
         return try await resolvePlayback(plan, choice: plan.choices[0])
     }
 
+    static func playbackClick(site: Site, result: [String: JSONValue]?) -> String {
+        let siteClick = site.raw["click"]?.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        if !siteClick.isEmpty { return siteClick }
+        return result?["click"]?.string?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+    }
+
     public func preparePlayback(_ episode: Episode, forDownload: Bool = false) async throws -> PlaybackPlan {
         var headers = site.raw["header"]?.object?.compactMapValues(\.string) ?? [:]
         if site.type == 4 || site.type == 3 {
@@ -298,6 +318,12 @@ public struct CatalogClient: Sendable {
                     let fields = try? JSONDecoder().decode([String: String].self, from: data) { headers.merge(fields) { _, new in new } }
             if let ua = result["UA"]?.string ?? result["ua"]?.string, !ua.isEmpty { headers["User-Agent"] = ua }
             let prefix = result["playUrl"]?.string ?? ""
+            let click = Self.playbackClick(site: site, result: result)
+            if prefix.hasPrefix("json:") || prefix.hasPrefix("parse:") {
+                let choices = PlaybackChoice.parse(result["url"], prefix: "", fallbackName: episode.name)
+                guard !choices.isEmpty else { throw TVError.unsupported(L10n.text("The API did not return a single playback URL.")) }
+                return PlaybackPlan(choices: choices, headers: headers, group: episode.flag, requiresWebDetection: true, click: click, webPlayURL: prefix)
+            }
             var choices = PlaybackChoice.parse(result["url"], prefix: prefix, fallbackName: episode.name)
             guard !choices.isEmpty else { throw TVError.unsupported(L10n.text("The API did not return a single playback URL.")) }
             if site.key == Hongguo.siteKey, let key = result["hongguoKey"]?.string, !key.isEmpty {
@@ -317,22 +343,76 @@ public struct CatalogClient: Sendable {
                 }
             }
             return PlaybackPlan(choices: choices, headers: headers, group: episode.flag,
-                                requiresWebDetection: (result["parse"]?.int ?? 0) != 0 || (result["jx"]?.int ?? 0) != 0 || !prefix.isEmpty)
+                                requiresWebDetection: (result["parse"]?.int ?? 0) != 0 || (result["jx"]?.int ?? 0) != 0 || !prefix.isEmpty, click: click, webPlayURL: "")
         }
         let prefix = site.raw["playUrl"]?.string ?? ""
-        return PlaybackPlan(choices: [PlaybackChoice(id: 0, name: episode.name, address: prefix + episode.address)], headers: headers, group: episode.flag, requiresWebDetection: !prefix.isEmpty)
+        let click = Self.playbackClick(site: site, result: nil)
+        if prefix.hasPrefix("json:") || prefix.hasPrefix("parse:") {
+            return PlaybackPlan(choices: [PlaybackChoice(id: 0, name: episode.name, address: episode.address)], headers: headers, group: episode.flag, requiresWebDetection: true, click: click, webPlayURL: prefix)
+        }
+        return PlaybackPlan(choices: [PlaybackChoice(id: 0, name: episode.name, address: prefix + episode.address)], headers: headers, group: episode.flag, requiresWebDetection: !prefix.isEmpty, click: click, webPlayURL: "")
     }
 
+    /// Playback routing, in TVBox order, with one extra step Yingxia already had.
+    ///
+    /// A direct media address plays immediately. `json:` asks that one JSON service and
+    /// stops, even when the answer is empty. `parse:` runs the named parser: type 0 sniffs
+    /// `parser + page`, type 1 asks that JSON service, type 2 and 3 fail, and type 4 races
+    /// every type 0 and type 1 parser. A flag list on a parser limits that type to the
+    /// parsers that contain the episode flag; if none contain it, that type uses them all.
+    /// Any other page runs the HTML and JSON fast path first, then sniffs the page.
+    /// The 15 second clock belongs to the sniffer, not to this function.
+    ///
+    /// A client sniffer wins. Otherwise the process-wide `WebSniff.current` is used.
+    /// Neither exists on Apple TV, which throws the existing web-detection error.
+    /// This does not call a spider `isVideoFormat`.
     public func resolvePlayback(_ plan: PlaybackPlan, choice: PlaybackChoice) async throws -> Channel {
         if site.key == Hongguo.siteKey, let url = URL(string: choice.address), url.scheme == HongguoStreams.scheme {
             return Channel(name: choice.name, group: plan.group, url: url, headers: [:])
         }
-        guard !plan.requiresWebDetection || Self.isDirectMedia(choice.address) else {
-            if let found = await WebPlayback.resolve(page: choice.address, headers: plan.headers, parses: parses, http: http) {
+        if !plan.requiresWebDetection || Self.isDirectMedia(choice.address) {
+            return try await playResolved(plan, choice: choice)
+        }
+        let playURL = plan.webPlayURL
+        if playURL.hasPrefix("json:") {
+            let service = String(playURL.dropFirst("json:".count))
+            if let found = await WebPlayback.askJSON(service: service, page: choice.address, headers: plan.headers, http: http) {
                 return Channel(name: choice.name, group: plan.group, url: found.url, headers: found.headers)
             }
-            throw TVError.unsupported(L10n.text("This source requires web video detection or additional parsing. Only resolved media URLs are supported."))
+            throw Self.webDetectionError
         }
+        if playURL.hasPrefix("parse:") {
+            let name = String(playURL.dropFirst("parse:".count))
+            guard let item = parses.first(where: { $0.name == name }) else { throw Self.webDetectionError }
+            switch item.type {
+            case 0:
+                return try await sniff(plan, choice: choice, target: item.url + choice.address, headers: item.headers.isEmpty ? plan.headers : item.headers, click: plan.click)
+            case 1:
+                let headers = item.headers.isEmpty ? plan.headers : item.headers
+                if let found = await WebPlayback.askJSON(service: item.url, page: choice.address, headers: headers, http: http) {
+                    return Channel(name: choice.name, group: plan.group, url: found.url, headers: found.headers)
+                }
+                throw Self.webDetectionError
+            case 4:
+                if let found = await superParse(plan, page: choice.address) {
+                    return Channel(name: choice.name, group: plan.group, url: found.url, headers: found.headers)
+                }
+                throw Self.webDetectionError
+            default:
+                throw Self.webDetectionError
+            }
+        }
+        if let found = await WebPlayback.resolve(page: choice.address, headers: plan.headers, parses: parses, http: http) {
+            return Channel(name: choice.name, group: plan.group, url: found.url, headers: found.headers)
+        }
+        return try await sniff(plan, choice: choice, target: choice.address, headers: plan.headers, click: plan.click)
+    }
+
+    private static let webDetectionError = TVError.unsupported(L10n.text("This source requires web video detection or additional parsing. Only resolved media URLs are supported."))
+    /// The sniffer ran and the 15 second clock ended with no playable address.
+    private static let sniffTimeoutError = TVError.unsupported(L10n.text("Video detection timed out before a playable address appeared."))
+
+    private func playResolved(_ plan: PlaybackPlan, choice: PlaybackChoice) async throws -> Channel {
         let address = Self.unwrapPluginProxy(choice.address)
         if address.lowercased().hasPrefix("magnet:") { throw TVError.unsupported(L10n.text("This source returned a magnet link. Torrent playback is not supported.")) }
         if Self.isPluginProxy(address) {
@@ -342,6 +422,56 @@ public struct CatalogClient: Sendable {
             throw TVError.unsupported(L10n.text("This source needs a playback proxy that is not supported yet."))
         }
         return Channel(name: choice.name, group: plan.group, url: try WebAddress.resolve(address), headers: plan.headers)
+    }
+
+    private func sniff(_ plan: PlaybackPlan, choice: PlaybackChoice, target: String, headers: [String: String], click: String) async throws -> Channel {
+        let detect = !target.contains("player/?url=")
+        guard let sniffer = sniffer ?? WebSniff.current else { throw Self.webDetectionError }
+        guard let found = await sniffer.sniff(url: target, headers: headers, click: click, detect: detect, ads: sniffAds, rules: sniffRules) else {
+            throw Self.sniffTimeoutError
+        }
+        if found.url.absoluteString.lowercased().hasPrefix("magnet:") {
+            throw TVError.unsupported(L10n.text("This source returned a magnet link. Torrent playback is not supported."))
+        }
+        return Channel(name: choice.name, group: plan.group, url: found.url, headers: found.headers)
+    }
+
+    /// Every type 0 and type 1 parser races, a few at a time: a web parser is a hidden page and window,
+    /// and a dead JSON service holds its slot until the HTTP timeout.
+    private func superParse(_ plan: PlaybackPlan, page: String) async -> (url: URL, headers: [String: String])? {
+        let json = Self.parsers(parses, type: 1, flag: plan.group)
+        let webs = Self.parsers(parses, type: 0, flag: plan.group)
+        let active = sniffer ?? WebSniff.current
+        let http = self.http, ads = sniffAds, rules = sniffRules
+        return await withTaskGroup(of: (web: Bool, found: (url: URL, headers: [String: String])?).self) { group in
+            var pendingJSON = json.makeIterator(), pendingWebs = webs.makeIterator()
+            func askNextJSON() {
+                guard let item = pendingJSON.next() else { return }
+                group.addTask { (false, await WebPlayback.askJSON(service: item.url, page: page, headers: item.headers, http: http)) }
+            }
+            func sniffNextWeb() {
+                guard let active, let item = pendingWebs.next() else { return }
+                let target = item.url + page
+                group.addTask {
+                    (true, await active.sniff(url: target, headers: item.headers, click: item.click, detect: !target.contains("player/?url="), ads: ads, rules: rules))
+                }
+            }
+            for _ in 0..<Self.superParseJSONWidth { askNextJSON() }
+            for _ in 0..<Self.superParseWebWidth { sniffNextWeb() }
+            while let next = await group.next() {
+                if let found = next.found { group.cancelAll(); return found }
+                if next.web { sniffNextWeb() } else { askNextJSON() }
+            }
+            return nil
+        }
+    }
+    static let superParseJSONWidth = 4
+    static let superParseWebWidth = 2
+
+    private static func parsers(_ items: [ParseService], type: Int, flag: String) -> [ParseService] {
+        let typed = items.filter { $0.type == type }
+        let flagged = typed.filter { $0.flags.contains(flag) }
+        return flagged.isEmpty ? typed : flagged
     }
     static func isDirectMedia(_ address: String) -> Bool {
         guard let url = try? WebAddress.resolve(address) else { return false }

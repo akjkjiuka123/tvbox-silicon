@@ -40,6 +40,7 @@ struct CloudDriveView: View {
                           footer: L10n.text("You can also paste existing credentials. They are stored locally and supplied to the subscription plugins you run. Saving restarts plugin sessions.")) {
                 DisclosureGroup(isExpanded: $showsManual) {
                     SecureField(L10n.text("Quark Cookie"), text: $accounts.quarkCookie)
+                    SecureField(L10n.text("Quark Mobile Ticket (optional)"), text: Binding(get: { accounts.quarkServiceTicket ?? "" }, set: { accounts.quarkServiceTicket = $0.isEmpty ? nil : $0 }))
                     SecureField(L10n.text("UC Cookie"), text: $accounts.ucCookie)
                     SecureField(L10n.text("UC Token (optional)"), text: $accounts.ucToken)
                     SecureField(L10n.text("Aliyun Refresh Token"), text: $accounts.token)
@@ -55,9 +56,11 @@ struct CloudDriveView: View {
         }
         .task { do { accounts = try CloudDriveAccounts.load() } catch { self.error = error.localizedDescription } }
         .sheet(item: $login) { provider in
-            CloudLoginView(provider: provider) { cookie in
-                provider.set(cookie, in: &accounts)
-                save()
+            CloudLoginView(provider: provider) { cookie, ticket in
+                try await provider.saveLogin(cookie, ticket: ticket)
+                accounts = (try? CloudDriveAccounts.load()) ?? accounts
+                notice = L10n.text("Accounts saved. Retry the video source.")
+                error = nil
             }
         }
         .sheet(item: $scan) { provider in
@@ -83,7 +86,8 @@ struct CloudDriveView: View {
 
 struct CloudLoginView: View {
     let provider: CloudProvider
-    let save: (String) -> Void
+    /// Cookie text, and Quark's approved sign-in ticket when the page opened one.
+    let save: (String, String?) async throws -> Void
     @Environment(\.dismiss) private var dismiss
     @State private var webView: WKWebView = {
         let configuration = WKWebViewConfiguration()
@@ -92,6 +96,9 @@ struct CloudLoginView: View {
     }()
     @State private var error: String?
     @State private var loading = true
+    @State private var saving = false
+    /// Quark's approved sign-in ticket. FTY's player needs the mobile ticket derived from it.
+    @State private var ticket: String?
     var body: some View {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
@@ -108,27 +115,13 @@ struct CloudLoginView: View {
                     ElapsedTime().font(.caption)
                 }
                 Spacer()
-                Button { error = nil; loading = true; webView.load(URLRequest(url: provider.url)) } label: {
+                Button { error = nil; loading = true; ticket = nil; webView.load(URLRequest(url: provider.url)) } label: {
                     Image(systemName: "arrow.clockwise")
                 }
                 .settingsButton().help(L10n.text("Retry")).accessibilityLabel(L10n.text("Retry"))
                 Button(L10n.text("Cancel")) { dismiss() }.settingsButton().keyboardShortcut(.cancelAction)
-                Button(L10n.text("Save Login")) {
-                    webView.configuration.websiteDataStore.httpCookieStore.getAllCookies { cookies in
-                        let selected = cookies.filter { cookie in
-                            let domain = cookie.domain.hasPrefix(".") ? String(cookie.domain.dropFirst()) : cookie.domain
-                            return (domain == provider.domain || domain.hasSuffix("." + provider.domain)) && (cookie.expiresDate == nil || cookie.expiresDate! > Date())
-                        }
-                        guard selected.contains(where: { $0.name == "__pus" && !$0.value.isEmpty }) else {
-                            error = L10n.text("Finish signing in before saving the login."); return
-                        }
-                        var fields: [String: String] = [:]
-                        for cookie in selected { fields[cookie.name] = cookie.value }
-                        save(fields.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: "; "))
-                        dismiss()
-                    }
-                }
-                .settingsButton(prominent: true).keyboardShortcut(.defaultAction)
+                Button(L10n.text("Save Login")) { Task { await commit() } }
+                .settingsButton(prominent: true).keyboardShortcut(.defaultAction).disabled(saving)
             }
             .padding(.horizontal, 16).padding(.vertical, 12)
             if let error {
@@ -138,28 +131,103 @@ struct CloudLoginView: View {
                     .padding(.horizontal, 16).padding(.bottom, 10)
             }
             Divider()
-            CloudLoginBrowser(webView: webView, url: provider.url, error: $error, loading: $loading)
+            CloudLoginBrowser(webView: webView, provider: provider, error: $error, loading: $loading, ticket: $ticket)
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(width: 900, height: 680)
     }
+
+    /// Saves once the page has a drive cookie. Quark also waits briefly for the sign-in ticket the page
+    /// sends in the background. Without it the cookie still saves; only FTY asks to sign in again.
+    private func commit() async {
+        saving = true
+        defer { saving = false }
+        let cookies = await webView.configuration.websiteDataStore.httpCookieStore.allCookies()
+        let now = Date()
+        let selected = cookies.filter { cookie in
+            let domain = cookie.domain.hasPrefix(".") ? String(cookie.domain.dropFirst()) : cookie.domain
+            return (domain == provider.domain || domain.hasSuffix("." + provider.domain)) && (cookie.expiresDate == nil || cookie.expiresDate! > now)
+        }
+        guard selected.contains(where: { $0.name == "__pus" && !$0.value.isEmpty }) else {
+            error = L10n.text("Finish signing in before saving the login.")
+            return
+        }
+        var found = ticket
+        if provider == .quark, found == nil {
+            for _ in 0..<4 {
+                try? await Task.sleep(for: .seconds(1))
+                if let ticket { found = ticket; break }
+            }
+        }
+        var fields: [String: String] = [:]
+        for cookie in selected where !cookie.value.isEmpty { fields[cookie.name] = cookie.value }
+        let cookie = fields.sorted { $0.key < $1.key }.map { "\($0.key)=\($0.value)" }.joined(separator: "; ")
+        do {
+            try await save(cookie, found)
+            dismiss()
+        } catch {
+            self.error = error.localizedDescription
+        }
+    }
 }
 private struct CloudLoginBrowser: NSViewRepresentable {
     let webView: WKWebView
-    let url: URL
+    let provider: CloudProvider
     @Binding var error: String?
     @Binding var loading: Bool
-    func makeCoordinator() -> Coordinator { Coordinator(error: $error, loading: $loading) }
+    @Binding var ticket: String?
+    func makeCoordinator() -> Coordinator { Coordinator(provider: provider, error: $error, loading: $loading, ticket: $ticket) }
     func makeNSView(context: Context) -> WKWebView {
+        webView.customUserAgent = provider.webSignIn.userAgent
+        if provider == .quark {
+            let content = webView.configuration.userContentController
+            content.add(context.coordinator, name: Self.ticketMessage)
+            content.addUserScript(WKUserScript(source: Self.catchTicket, injectionTime: .atDocumentStart, forMainFrameOnly: true))
+        }
         webView.navigationDelegate = context.coordinator
-        webView.load(URLRequest(url: url))
+        webView.load(URLRequest(url: provider.url))
         return webView
     }
     func updateNSView(_ view: WKWebView, context: Context) {}
-    final class Coordinator: NSObject, WKNavigationDelegate {
+
+    static let ticketMessage = "signInTicket"
+
+    /// Reports Quark's sign-in ticket from the sign-in frame, or from the page's request to /account/info?st=.
+    static let catchTicket = """
+    (function () {
+      function report(st) { if (st) window.webkit.messageHandlers.\(ticketMessage).postMessage(String(st)); }
+      function check(address) {
+        try { var url = new URL(String(address), location.href); if (/\\/account\\/info$/.test(url.pathname)) report(url.searchParams.get('st')); } catch (e) {}
+      }
+      var open = XMLHttpRequest.prototype.open;
+      XMLHttpRequest.prototype.open = function (method, address) { check(address); return open.apply(this, arguments); };
+      if (window.fetch) {
+        var fetch = window.fetch;
+        window.fetch = function (input) { check(typeof input === 'string' ? input : input && input.url); return fetch.apply(this, arguments); };
+      }
+      window.addEventListener('message', function (event) {
+        if (event.data && typeof event.data === 'object' && typeof event.data.st === 'string') report(event.data.st);
+      });
+    })();
+    """
+
+    final class Coordinator: NSObject, WKNavigationDelegate, WKScriptMessageHandler {
+        let provider: CloudProvider
         @Binding var error: String?
         @Binding var loading: Bool
-        init(error: Binding<String?>, loading: Binding<Bool>) { _error = error; _loading = loading }
+        @Binding var ticket: String?
+        init(provider: CloudProvider, error: Binding<String?>, loading: Binding<Bool>, ticket: Binding<String?>) {
+            self.provider = provider; _error = error; _loading = loading; _ticket = ticket
+        }
+        func webView(_ webView: WKWebView, decidePolicyFor navigationAction: WKNavigationAction, decisionHandler: @escaping (WKNavigationActionPolicy) -> Void) {
+            if let url = navigationAction.request.url, let found = WebSignIn.quark.serviceTicket(in: url) { ticket = found }
+            decisionHandler(.allow)
+        }
+        func userContentController(_ controller: WKUserContentController, didReceive message: WKScriptMessage) {
+            guard message.name == CloudLoginBrowser.ticketMessage, let found = message.body as? String, !found.isEmpty, found != ticket else { return }
+            ticket = found
+            Diagnostics.shared.record(.info, "cloud.signin", "\(provider.rawValue) page passed its sign-in ticket")
+        }
         func webView(_ webView: WKWebView, didStartProvisionalNavigation navigation: WKNavigation!) { loading = true }
         func webView(_ webView: WKWebView, didFinish navigation: WKNavigation!) { loading = false }
         func webView(_ webView: WKWebView, didFail navigation: WKNavigation!, withError failure: Error) { loading = false; error = failure.localizedDescription }
@@ -315,9 +383,17 @@ enum CloudProvider: String, Identifiable, CaseIterable {
 #if os(macOS)
 extension CloudProvider {
     /// Saves a login captured outside the accounts page and restarts plugin sessions.
-    func saveLogin(_ cookie: String) async throws {
+    /// `ticket` is Quark's approved sign-in ticket. FTY's player needs the mobile ticket exchanged from it.
+    func saveLogin(_ cookie: String, ticket: String? = nil) async throws {
         var accounts = (try? CloudDriveAccounts.load()) ?? CloudDriveAccounts()
         set(cookie, in: &accounts)
+        if self == .quark {
+            // The cookie is the login every other plugin uses, so a missing or failed ticket does not stop the save.
+            if let ticket, !ticket.isEmpty {
+                do { accounts.quarkServiceTicket = try await CloudDriveQRLogin.quarkMobileTicket(ticket, cookie: cookie) } catch {}
+            }
+            Diagnostics.shared.record(.info, "cloud.signin", "quark login saved mobileTicket=\(accounts.quarkServiceTicket != nil)")
+        }
         try accounts.save()
         await LocalJarHost.shared.reloadCloudAccounts()
         await EmbeddedJarHost.shared.reloadCloudAccounts()

@@ -90,6 +90,23 @@ private func document(_ origin: String, sites: [(key: String, api: String)]) thr
     #expect(renamed.origin(or: first.origin) == second.origin)
 }
 
+@Test func homeRowKeepsPinsAndBuiltInsThenFollowsTheDirectory() {
+    let pin = source("pin")
+    let firstBuiltIn = source("built-a")
+    let secondBuiltIn = source("built-b")
+    let later = source("later")
+    let earlier = source("earlier")
+    let groups = [
+        SourceGroup(kind: .pinned, title: "Pinned Group", sites: [pin]),
+        SourceGroup(kind: .builtIn, title: "Built-in", sites: [secondBuiltIn, firstBuiltIn]),
+        SourceGroup(kind: .subscription("two"), title: "Two", sites: [later, pin]),
+        SourceGroup(kind: .subscription("one"), title: "One", sites: [earlier]),
+        SourceGroup(kind: .hidden, title: "Hidden Sources", sites: [source("hidden-src")]),
+    ]
+    let row = SourceGroups.homeRow(pinned: [pin], builtIn: [firstBuiltIn, secondBuiltIn], groups: groups)
+    #expect(row.map(\.key) == ["pin", "built-a", "built-b", "later", "earlier"])
+}
+
 @Test func droppingAGroupMovesItTowardTheTarget() {
     let displayed = ["jia", "yi", "bing"]
     #expect(SubscriptionOrder.moving("jia", onto: "bing", in: displayed) == ["yi", "bing", "jia"])

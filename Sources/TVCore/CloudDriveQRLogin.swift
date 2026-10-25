@@ -92,18 +92,26 @@ public struct CloudDriveQRLogin: Sendable {
     }
 
     /// Quark's mobile service ticket for an approved sign-in ticket, from a scanned code or the web page.
+    /// The ticket is encoded by hand: a query builder leaves `+` and `/` raw, and Quark then reads `+` as a space.
     public static func quarkMobileTicket(_ ticket: String, session: URLSession = .shared, cookie: String? = nil) async throws -> String {
-        var mobile = URLComponents(string: "https://pan.quark.cn/account/mobileinfo")!
-        mobile.queryItems = [URLQueryItem(name: "pr", value: "ucpro"), URLQueryItem(name: "fr", value: "h5"), URLQueryItem(name: "st", value: ticket)]
-        var info = request(mobile.url!, .quark)
-        if let cookie { info.setValue(cookie, forHTTPHeaderField: "Cookie") }
-        let (data, response) = try await session.data(for: info)
-        try check(response)
-        let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
-        guard object?["success"] as? Bool == true, let serviceTicket = (object?["data"] as? [String: Any])?["serviceTicket"] as? String, !serviceTicket.isEmpty else {
-            throw TVError.unsupported(L10n.text("Sign-in was approved, but the drive didn't return a login. Try again."))
+        let encoded = ticket.addingPercentEncoding(withAllowedCharacters: CharacterSet.alphanumerics.union(.init(charactersIn: "-._~"))) ?? ticket
+        var missingCode = -1
+        var missingKeys = "-"
+        for client in ["h5", "pc"] {
+            guard let url = URL(string: "https://pan.quark.cn/account/mobileinfo?pr=ucpro&fr=\(client)&st=\(encoded)") else { continue }
+            var info = request(url, .quark)
+            if let cookie { info.setValue(cookie, forHTTPHeaderField: "Cookie") }
+            let (data, response) = try await session.data(for: info)
+            try check(response)
+            let object = try JSONSerialization.jsonObject(with: data) as? [String: Any]
+            if object?["success"] as? Bool == true, let serviceTicket = (object?["data"] as? [String: Any])?["serviceTicket"] as? String, !serviceTicket.isEmpty {
+                return serviceTicket
+            }
+            missingCode = (object?["code"] as? NSNumber)?.intValue ?? (object?["status"] as? NSNumber)?.intValue ?? -1
+            missingKeys = object?.keys.sorted().joined(separator: ",") ?? "-"
         }
-        return serviceTicket
+        Diagnostics.shared.record(.warning, "cloud.signin", "quark mobile ticket missing length=\(ticket.count) code=\(missingCode) keys=\(missingKeys)")
+        throw TVError.unsupported(L10n.text("Sign-in was approved, but the drive didn't return a login. Try again."))
     }
 
     // MARK: Baidu Netdisk

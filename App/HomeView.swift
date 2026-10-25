@@ -14,31 +14,37 @@ struct HomeView: View {
     @AppStorage(HomeSection.recommendations.key) private var showsRecommendations = true
     @AppStorage(HomeSection.favorites.key) private var showsFavorites = true
     @AppStorage(HomeSection.liveTV.key) private var showsLiveTV = true
+    /// The first frame is only the section placeholders. The source row is built on the next turn, so the page can appear before that layout.
+    @State private var settled = false
 
     var body: some View {
-        ScrollViewReader { reader in
-            ScrollView {
-                VStack(alignment: .leading, spacing: Layout.sectionSpacing) {
-                    if showsContinueWatching, !store.playbackHistory.entries.isEmpty { continueWatching }
-                    if let config = store.subscription {
-                        if showsPinnedSources, store.orderedSites(config).contains(where: { store.pinnedSources.contains($0, origin: config.origin) }) {
-                            pinnedSources(config)
+        // The column width, not the placeholders' own width. A row of fixed cards is wider than the
+        // detail column and NavigationSplitView then gives it that width, crushing the sidebar.
+        GeometryReader { proxy in
+            ScrollViewReader { reader in
+                ScrollView {
+                    Group {
+                        if let config = store.subscription, !settled, showsPlaceholder(config) {
+                            placeholders(config)
+                        } else {
+                            sections
                         }
-                        if showsRecommendations { RecommendationsView(config: config) }
-                        if showsFavorites, !store.favorites.items.isEmpty { favorites }
-                        if showsLiveTV, !config.lives.isEmpty { playlists(config).id("live") }
-                        if !(showsContinueWatching || showsPinnedSources || showsRecommendations || showsFavorites || showsLiveTV) { allHidden }
-                    } else {
-                        welcome
                     }
+                    .pageContainer()
+                    .frame(width: proxy.size.width, alignment: .top)
                 }
-                .pageContainer()
+                #if DEBUG
+                .task { if let target = QALaunch.scrollTarget { try? await Task.sleep(for: .seconds(8)); reader.scrollTo(target, anchor: .bottom) } }
+                #endif
             }
-            #if DEBUG
-            .task { if let target = QALaunch.scrollTarget { try? await Task.sleep(for: .seconds(8)); reader.scrollTo(target, anchor: .bottom) } }
-            #endif
         }
         .screenBackdrop()
+        .task {
+            // Yield so this navigation paints the placeholders before the source row and posters are laid out.
+            await Task.yield()
+            guard !Task.isCancelled else { return }
+            settled = true
+        }
         #if os(tvOS)
         // The tab sidebar already names this page; a second heading just repeats it.
         .toolbar(.hidden, for: .navigationBar)
@@ -48,6 +54,75 @@ struct HomeView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
+    }
+
+    /// A section that will be on the page once it is built. Empty data is skipped so a placeholder does not appear and then vanish.
+    private func showsPlaceholder(_ config: Subscription) -> Bool {
+        (showsContinueWatching && !store.playbackHistory.entries.isEmpty)
+            || (showsPinnedSources && !store.pinnedSources.isEmpty)
+            || showsRecommendations
+            || (showsFavorites && !store.favorites.items.isEmpty)
+            || (showsLiveTV && !config.lives.isEmpty)
+    }
+
+    @ViewBuilder private var sections: some View {
+        VStack(alignment: .leading, spacing: Layout.sectionSpacing) {
+            if showsContinueWatching, !store.playbackHistory.entries.isEmpty { continueWatching }
+            if let config = store.subscription {
+                if showsPinnedSources, store.orderedSites(config).contains(where: { store.pinnedSources.contains($0, origin: config.origin) }) {
+                    pinnedSources(config)
+                }
+                if showsRecommendations { RecommendationsView(config: config) }
+                if showsFavorites, !store.favorites.items.isEmpty { favorites }
+                if showsLiveTV, !config.lives.isEmpty { playlists(config).id("live") }
+                if !(showsContinueWatching || showsPinnedSources || showsRecommendations || showsFavorites || showsLiveTV) { allHidden }
+            } else {
+                welcome
+            }
+        }
+    }
+
+    private func placeholders(_ config: Subscription) -> some View {
+        VStack(alignment: .leading, spacing: Layout.sectionSpacing) {
+            if showsContinueWatching, !store.playbackHistory.entries.isEmpty {
+                loadingSection(HomeSection.continueWatching.title, action: { store.section = .history }) { cardRow }
+            }
+            if showsPinnedSources, !store.pinnedSources.isEmpty {
+                loadingSection(HomeSection.pinnedSources.title, action: { store.section = .sites }) { cardRow }
+            }
+            if showsRecommendations {
+                VStack(alignment: .leading, spacing: 16) {
+                    ChipSkeletonRow()
+                    PosterSkeletonGrid()
+                }
+                .accessibilityElement(children: .ignore)
+                .accessibilityLabel(L10n.text("Loading…"))
+            }
+            if showsFavorites, !store.favorites.items.isEmpty {
+                loadingSection(HomeSection.favorites.title, action: { store.section = .favorites }) { cardRow }
+            }
+            if showsLiveTV, !config.lives.isEmpty {
+                loadingSection(HomeSection.liveTV.title, action: { store.section = .live }) { ChannelSkeletonGrid(count: 3) }
+            }
+        }
+    }
+
+    private func loadingSection<Content: View>(_ title: String, action: @escaping () -> Void, @ViewBuilder content: () -> Content) -> some View {
+        VStack(alignment: .leading, spacing: Layout.headerSpacing) {
+            SectionHeader(title: title, action: action)
+            content()
+        }
+    }
+
+    private var cardRow: some View {
+        HStack(spacing: Layout.cardSpacing) {
+            ForEach(0..<4, id: \.self) { _ in
+                SkeletonBlock(cornerRadius: 16)
+                    .frame(maxWidth: .infinity)
+                    .frame(height: 92)
+            }
+        }
+        .accessibilityHidden(true)
     }
 
     // MARK: Welcome

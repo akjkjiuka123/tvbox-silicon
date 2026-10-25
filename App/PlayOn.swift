@@ -68,7 +68,7 @@ import AVKit
             plan = .channel(CloudFiles.channel(context, resumePosition: position))
         } else if let context = sent.historyContext, let config = store.subscription,
                   let site = config.sites.first(where: { $0.origin(or: config.origin) == context.origin && $0.sourceKey == context.sourceKey }) {
-            let client = CatalogClient(site: site, origin: config.origin, jarURL: config.spiderURL).with(parses: config.parseServices)
+            let client = CatalogClient(site: site, origin: config.origin, jarURL: config.spiderURL).applying(config)
             plan = .source(client, context, request.video)
         } else if let direct {
             plan = .channel(direct)
