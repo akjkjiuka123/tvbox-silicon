@@ -1,7 +1,8 @@
 """The CatVod Python spider base class that TVBox subscriptions import as `base.spider`.
 
 Method names and defaults follow the TVBox pyramid contract so existing spiders run unmodified.
-The host (`host.py`) installs the proxy URL, cache file, and module loader through `_runtime`.
+The host (`host.py`) installs the proxy URL, cache file, and module loader through `_runtime`, or per
+source through a spider's `_tvbox_runtime` when one interpreter runs many sources (iOS and tvOS).
 """
 import base64
 import hashlib
@@ -24,21 +25,25 @@ class _Runtime:
 _runtime = _Runtime()
 
 
-def _read_cache():
+def _runtime_of(spider):
+    return getattr(spider, '_tvbox_runtime', None) or _runtime
+
+
+def _read_cache(runtime):
     try:
-        with open(_runtime.cache_file, encoding='utf-8') as stream:
+        with open(runtime.cache_file, encoding='utf-8') as stream:
             return json.load(stream)
     except (OSError, TypeError, ValueError):
         return {}
 
 
-def _write_cache(values):
-    if not _runtime.cache_file:
+def _write_cache(runtime, values):
+    if not runtime.cache_file:
         return
-    temporary = _runtime.cache_file + '.tmp'
+    temporary = runtime.cache_file + '.tmp'
     with open(temporary, 'w', encoding='utf-8') as stream:
         json.dump(values, stream, ensure_ascii=False)
-    os.replace(temporary, _runtime.cache_file)
+    os.replace(temporary, runtime.cache_file)
 
 
 class Spider(metaclass=ABCMeta):
@@ -97,11 +102,14 @@ class Spider(metaclass=ABCMeta):
         self.extend = extend
 
     def loadSpider(self, name):
-        return self.loadModule(name).Spider()
+        spider = self.loadModule(name).Spider()
+        spider._tvbox_runtime = _runtime_of(self)
+        return spider
 
     def loadModule(self, name):
-        if _runtime.load_module:
-            return _runtime.load_module(name)
+        runtime = _runtime_of(self)
+        if runtime.load_module:
+            return runtime.load_module(name)
         path = os.path.join('..', 'plugin', name + '.py')
         return SourceFileLoader(name, path).load_module()
 
@@ -147,26 +155,28 @@ class Spider(metaclass=ABCMeta):
         return hashlib.md5(str(text).encode('utf-8')).hexdigest()
 
     def getProxyUrl(self, local=True):
-        return _runtime.proxy_url
+        return _runtime_of(self).proxy_url
 
     def log(self, message):
         print(json.dumps(message, ensure_ascii=False) if isinstance(message, (dict, list)) else message, flush=True)
 
     def getCache(self, key):
-        value = _read_cache().get(key)
+        value = _read_cache(_runtime_of(self)).get(key)
         if isinstance(value, dict) and 'expiresAt' in value and value['expiresAt'] < int(time.time()):
             self.delCache(key)
             return None
         return value
 
     def setCache(self, key, value):
-        values = _read_cache()
+        runtime = _runtime_of(self)
+        values = _read_cache(runtime)
         values[key] = str(value) if isinstance(value, (int, float)) else value
-        _write_cache(values)
+        _write_cache(runtime, values)
         return 'succeed'
 
     def delCache(self, key):
-        values = _read_cache()
+        runtime = _runtime_of(self)
+        values = _read_cache(runtime)
         values.pop(key, None)
-        _write_cache(values)
+        _write_cache(runtime, values)
         return 'succeed'

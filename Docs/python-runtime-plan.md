@@ -33,14 +33,22 @@ has only some, so we compile every C library from source with our own scripts.
 1. **Interpreter:** CPython 3.14 from BeeWare's
    [Python-Apple-support](https://github.com/beeware/Python-apple-support). It is the one maintained build
    that covers both iOS and tvOS (python.org's official build is iOS-only). It also includes OpenSSL,
-   which `ssl` and `hashlib` need for `requests`. We link it statically and ship a trimmed standard
-   library (no tests, idlelib, tkinter, ensurepip), precompiled, because the bundle is read-only.
-2. **Bridge:** a C file next to `AppleRuntime.m`, for example `TVPythonRequest(resources, json)`. It
-   starts the interpreter only when a Python source is first used, imports `host.py`, and passes JSON
-   requests and responses. A Swift actor wraps it with `SerializedPluginWorker`, as `EmbeddedJarHost`
-   does. `host.py`'s loopback media proxy runs on a thread inside the app. A spider that hangs is
-   abandoned at its deadline, the same way the JVM watchdog handles one now. `HOME` and `TMPDIR` point
-   into the app's Caches.
+   which `ssl` and `hashlib` need for `requests`. We ship a trimmed standard library (no tests,
+   idlelib, tkinter, ensurepip), precompiled, because the bundle is read-only.
+   *As built (phase 2):* since 3.13 the package is a dynamic `Python.framework`, not a static library,
+   and iOS loads binary modules only from frameworks. `Scripts/build-apple-python.sh` turns each
+   extension module into `Frameworks/<module>.framework` with a `.fwork` file in its place, as CPython's
+   iOS guide prescribes, and `Scripts/embed-apple-python.sh` (an Xcode build phase) embeds and signs
+   them. The app doesn't link Python: the bridge opens the framework at run time, so a build without
+   it still works and offers no Python sources.
+2. **Bridge:** `Runtime/AppleRuntime/Native/ApplePython.c`, next to `AppleRuntime.m`:
+   `TVPythonRequest(resources, json)` starts the interpreter when a Python source is first used
+   (configured through PEP 741's opaque `PyInitConfig`, so no Python headers are compiled in), imports
+   `host.py`, and passes JSON requests and responses to its `handle()`. `EmbeddedPythonHost` wraps it
+   with `SerializedPluginWorker`, as `EmbeddedJarHost` does. Each source keeps its own spider, profile
+   and loopback media proxy (a thread inside the app), and calls to one spider take turns. A spider that
+   hangs is abandoned at the worker's deadline, the same way the JVM watchdog handles one now. Scripts
+   and profiles live in `EmbeddedPython` under Application Support (iOS) or Caches (tvOS).
 3. **Libraries:** built as static libraries with the same SDK and target table as `build-apple-libffi.sh`:
    - **Pure Python, used as is:** requests, urllib3, certifi, idna, charset-normalizer (its pure-Python
      fallback), beautifulsoup4, soupsieve, cssselect, pyquery.

@@ -108,4 +108,35 @@ class Spider(Spider):
             finally:
                 if process.poll() is None: process.kill(); process.wait()
         print(f'run {run}: ready in {startup:.2f}s')
-print('Python host checks passed: base.spider, bundled libraries, persistent cache, search arity, proxy with byte ranges, response protocol.')
+
+    # iOS and tvOS import the host into one interpreter and call handle() for every source: each source
+    # keeps its own spider, cache and proxy, and sources answer side by side.
+    embedded = r'''
+import json, sys, threading
+sys.path.insert(0, sys.argv[1])
+import host
+job, source = sys.argv[2], sys.argv[3]
+
+def ask(name, params):
+    request = dict(session=name, script=source, cache=job + '/' + name, profile=job + '/' + name + '/profile',
+                   api='https://fixture.example/spider.py', key=name, ext='ext-' + name, params=params)
+    return json.loads(host.handle(json.dumps(request)))
+
+answers = {}
+threads = [threading.Thread(target=lambda name=name: answers.__setitem__(name, ask(name, {}))) for name in ('a', 'b')]
+for thread in threads: thread.start()
+for thread in threads: thread.join()
+for name in ('a', 'b'):
+    home = json.loads(answers[name]['result'])
+    assert home['class'][0]['type_id'] == '1' and home['list'][0]['vod_name'] == 'ext-' + name, answers[name]
+assert json.loads(ask('a', {})['result'])['class'][0]['type_id'] == '1', 'the spider was opened twice'
+assert json.loads(ask('b', {'wd': 'k'})['result'])['list'][0]['vod_name'] == 'k16'
+broken = json.loads(host.handle(json.dumps(dict(session='c', script=job + '/missing.py', cache=job + '/c', api='x', key='c', params={}))))
+assert broken.get('errorCode') == 'script_error', broken
+assert host.handle('{"command":"cancel","request":"r"}') == '{}'
+print('embedded ok')
+'''
+    done = subprocess.run([str(host / 'python/bin/python3'), '-I', '-B', '-c', embedded, str(host), str(job / 'embedded'), str(source)],
+                          capture_output=True, text=True, timeout=60)
+    assert done.returncode == 0 and done.stdout.strip().endswith('embedded ok'), done.stdout + done.stderr
+print('Python host checks passed: base.spider, bundled libraries, persistent cache, search arity, proxy with byte ranges, response protocol, embedded sessions.')

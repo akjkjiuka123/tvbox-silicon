@@ -217,6 +217,11 @@ public struct CatalogClient: Sendable {
         if site.runtime == .javascript {
             return try await ScriptRuntime.shared.request(site: site, scriptURL: site.scriptURL(origin: origin), params: params, http: http, origin: origin)
         }
+        #if os(iOS) || os(tvOS)
+        if site.runtime == .python {
+            return try await EmbeddedPythonHost.shared.request(site: site, scriptURL: site.scriptURL(origin: origin), params: params, http: http, origin: origin)
+        }
+        #endif
         #endif
         if site.runtime == .jar, var plugin = try site.pluginURL(origin: origin, fallback: jarURL) {
             func run(_ archive: URL) async throws -> [String: JSONValue] {

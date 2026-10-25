@@ -203,6 +203,9 @@ public struct Site: Identifiable, Codable, Hashable, Sendable {
             if LocalJarHost.pythonAvailable { return L10n.text("Local Python · Experimental") }
             #else
             if runtime == .javascript, ScriptRuntime.available { return L10n.text("Local JavaScript · Experimental") }
+            #if os(iOS) || os(tvOS)
+            if runtime == .python, EmbeddedPythonHost.available { return L10n.text("Local Python · Experimental") }
+            #endif
             #endif
             return L10n.text("Requires script engine")
         case .jar:
