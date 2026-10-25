@@ -83,12 +83,14 @@ struct GlobalSearchView: View {
             .screenTitle(L10n.text("Global Search"))
             #if os(iOS)
             .navigationBarTitleDisplayMode(.inline)
-            // The system search bar, as on Sources, so the two pages line up under their titles. Only the
-            // keyboard's Search key searches; clearing the field goes back to the recent searches.
-            .searchable(text: $model.draft, placement: .navigationBarDrawer(displayMode: .always), prompt: Text(L10n.text("Search videos")))
+            #endif
+            // The system search field, as on Sources and Live TV: under the title on iPhone and iPad, in the toolbar on
+            // the Mac. Only Return or the keyboard's Search key searches; clearing the field goes back to the recent searches.
+            .catalogSearchable(text: $model.draft, prompt: L10n.text("Search videos"))
             .searchFieldFocused($inputFocused)
             .onSubmit(of: .search) { if let config = store.subscription { submit(config) } }
             .onChange(of: model.draft) { _, draft in if draft.isEmpty && !model.keyword.isEmpty { model.reset() } }
+            #if os(iOS)
             .scrollDismissesKeyboard(.interactively)
             #endif
             .sheet(isPresented: $showFailures) { failureDetails }
@@ -112,14 +114,8 @@ struct GlobalSearchView: View {
         #endif
     }
 
-    /// On iPhone and iPad the search bar is the system's, so the bar below it waits for a search.
-    private var showsHeader: Bool {
-        #if os(iOS)
-        !model.keyword.isEmpty
-        #else
-        true
-        #endif
-    }
+    /// The search field is the system's, so the bar below it waits for a search.
+    private var showsHeader: Bool { !model.keyword.isEmpty }
 
     private var searchResults: some View {
         ScrollView {
@@ -201,50 +197,6 @@ struct GlobalSearchView: View {
     private func searchHeader(_ config: Subscription) -> some View {
         @Bindable var model = model
         return VStack(alignment: .leading, spacing: 14) {
-            #if os(macOS)
-            let trimmed = model.draft.trimmingCharacters(in: .whitespacesAndNewlines)
-            HStack(spacing: 10) {
-                Image(systemName: "magnifyingglass").font(.system(size: 17, weight: .medium))
-                    .foregroundStyle(inputFocused ? Color.primary : .secondary)
-                TextField(L10n.text("Search videos"), text: $model.draft)
-                    .textFieldStyle(.plain).font(.system(size: 17)).focused($inputFocused)
-                    .submitLabel(.search).onSubmit { submit(config) }
-                if !model.draft.isEmpty {
-                    Button { model.reset(); inputFocused = true } label: {
-                        Image(systemName: "xmark.circle.fill").font(.system(size: 15)).frame(width: 28, height: 40)
-                    }
-                    .buttonStyle(.plain).foregroundStyle(.tertiary)
-                    .accessibilityLabel(L10n.text("Clear search"))
-                }
-                if !trimmed.isEmpty && trimmed != model.keyword {
-                    Button(L10n.text("Search")) { submit(config) }
-                        .buttonStyle(.plain).font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Brand.onAccent)
-                        .padding(.horizontal, 14).frame(height: 30)
-                        .background(Brand.accent, in: RoundedRectangle(cornerRadius: 8, style: .continuous))
-                        .transition(.opacity.combined(with: .scale(scale: 0.95)))
-                }
-            }
-            .padding(.leading, 14).padding(.trailing, 7).frame(height: 44)
-            .background(Color.primary.opacity(inputFocused ? 0.09 : 0.06), in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .overlay { RoundedRectangle(cornerRadius: 12, style: .continuous).strokeBorder(Color.primary.opacity(inputFocused ? 0.30 : 0.08), lineWidth: 1) }
-            .overlay(alignment: .bottom) {
-                if model.busy && model.total > 0 {
-                    GeometryReader { proxy in
-                        Capsule().fill(Color.primary.opacity(0.55))
-                            .frame(width: proxy.size.width * CGFloat(model.completed) / CGFloat(model.total))
-                            .animation(.smooth(duration: 0.3), value: model.completed)
-                    }
-                    .frame(height: 2).padding(.horizontal, 12)
-                    .transition(.opacity)
-                    .accessibilityHidden(true)
-                }
-            }
-            .animation(.smooth(duration: 0.18), value: inputFocused)
-            .animation(.smooth(duration: 0.18), value: trimmed == model.keyword)
-            .animation(.smooth(duration: 0.25), value: model.busy)
-            .contentShape(Rectangle()).onTapGesture { inputFocused = true }
-            #endif
             if !model.keyword.isEmpty {
                 ViewThatFits(in: .horizontal) {
                     HStack(alignment: .center, spacing: 16) {
@@ -262,8 +214,9 @@ struct GlobalSearchView: View {
                 // the source chips below, so the remote passed them by. As a section, moving onto the row lands on them.
                 .focusSection()
                 #endif
-                if model.busy && showsActivity {
-                    SearchActivityList(origin: config.origin, completed: model.completed, total: model.total, runStart: model.runStart)
+                if model.busy {
+                    SearchActivityList(origin: config.origin, completed: model.completed, total: model.total, runStart: model.runStart,
+                                       showsSources: showsActivity)
                         .transition(.opacity)
                 }
                 if sourceItems.count > 1 {
@@ -291,6 +244,8 @@ struct GlobalSearchView: View {
         #if os(iOS)
         // Right under the search bar, which has its own margin.
         .padding(.horizontal, Layout.gutter).padding(.top, 6).padding(.bottom, 12)
+        #elseif os(macOS)
+        .padding(.horizontal, Layout.gutter).padding(.vertical, 10)
         #else
         .padding(.horizontal, Layout.gutter).padding(.vertical, 16)
         #endif
@@ -299,7 +254,7 @@ struct GlobalSearchView: View {
     private var searchSummary: some View {
         // A spinner has no text baseline, so it centers on the row; only the two labels share a baseline.
         HStack(alignment: .center, spacing: 12) {
-            #if os(tvOS)
+            #if !os(iOS)
             if model.busy { ProgressView().controlSize(.small) }
             #endif
             HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -534,6 +489,8 @@ private struct SearchActivityList: View {
     let completed: Int
     let total: Int
     let runStart: (date: Date, completed: Int)?
+    /// The progress bar always shows; the sources being searched fold behind the chevron.
+    let showsSources: Bool
     /// The on-device plugin worker runs at most this many searches at once.
     private let limit = 5
     var body: some View {
@@ -556,18 +513,21 @@ private struct SearchActivityList: View {
                     Label(L10n.text("Preparing plugins for first use. Later searches are much faster."), systemImage: "hourglass")
                         .foregroundStyle(.secondary)
                 }
-                Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
-                    ForEach(active) { item in
-                        GridRow {
-                            Text(item.name).fontWeight(.semibold).lineLimit(1)
-                            Text(status(item.snapshot)).foregroundStyle(.secondary).lineLimit(1)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(Duration.seconds(max(0, Int(timeline.date.timeIntervalSince(item.snapshot.started))))
-                                    .formatted(.time(pattern: .minuteSecond)))
-                                .monospacedDigit().foregroundStyle(.secondary)
-                                .gridColumnAlignment(.trailing)
+                if showsSources {
+                    Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
+                        ForEach(active) { item in
+                            GridRow {
+                                Text(item.name).fontWeight(.semibold).lineLimit(1)
+                                Text(status(item.snapshot)).foregroundStyle(.secondary).lineLimit(1)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text(Duration.seconds(max(0, Int(timeline.date.timeIntervalSince(item.snapshot.started))))
+                                        .formatted(.time(pattern: .minuteSecond)))
+                                    .monospacedDigit().foregroundStyle(.secondary)
+                                    .gridColumnAlignment(.trailing)
+                            }
                         }
                     }
+                    .transition(.opacity)
                 }
             }
             .font(.subheadline)
