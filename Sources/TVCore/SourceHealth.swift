@@ -1,9 +1,9 @@
 import Foundation
 import Observation
 
-/// How each source has been answering lately. Search tries a failing source after the others, and
-/// the source lists mark it, until it answers again or its cooldown ends. A source is identified by
-/// its subscription and original key, so its record survives re-imports and merges.
+/// How each source has been answering lately. Search leaves a failing source out, and the source
+/// lists mark it, until it answers again or its cooldown ends; it stays listed and opens as usual.
+/// A source is identified by its subscription and original key, so its record survives re-imports and merges.
 @MainActor @Observable public final class SourceHealth {
     public static let shared = SourceHealth(file: URL.cachesDirectory.appending(path: "source-health.json"))
 
@@ -13,7 +13,7 @@ import Observation
         case healthy
         /// Slow on average, or failed lately without reaching a cooldown.
         case unstable
-        /// Failed repeatedly; searched last until the cooldown ends.
+        /// Failed repeatedly; left out of search until the cooldown ends or it answers.
         case failing
     }
 
@@ -55,9 +55,19 @@ import Observation
         return record.lastSuccess == nil ? .unknown : .healthy
     }
 
-    /// Whether search should ask this source after the others.
-    public func deprioritized(_ site: Site, origin: URL, now: Date = Date()) -> Bool {
-        status(site, origin: origin, now: now) == .failing
+    /// Whether search leaves this source out for now. A retry of the unavailable sources still asks it.
+    public func paused(_ site: Site, origin: URL, now: Date = Date()) -> Bool {
+        pausedUntil(site, origin: origin, now: now) != nil
+    }
+
+    /// When a paused source joins search again; nil when it is not paused.
+    public func pausedUntil(_ site: Site, origin: URL, now: Date = Date()) -> Date? {
+        records[Self.key(site, origin: origin)]?.cooldownUntil.flatMap { $0 > now ? $0 : nil }
+    }
+
+    /// Whether the source's latest answers were failures, at least two in a row, cooldown over or not.
+    public func failedRepeatedly(_ site: Site, origin: URL) -> Bool {
+        (records[Self.key(site, origin: origin)]?.failures ?? 0) >= 2
     }
 
     /// Records one answer from a source: `error` nil for success. Cancellations, and failures that

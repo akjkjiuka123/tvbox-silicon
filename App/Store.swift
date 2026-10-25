@@ -98,9 +98,6 @@ import TVCore
         #endif
         sourceOrder = SourceOrder(defaults: playbackDefaults)
         favorites = Favorites(defaults: defaults)
-        SourceHideReports.report = { [hiddenSources] site, origin, error in
-            hiddenSources.note(site, origin: origin, error: error, health: .shared)
-        }
         autoPlayNext = defaults.object(forKey: "autoPlayNextEpisode") == nil || defaults.bool(forKey: "autoPlayNextEpisode")
         let saved = defaults.data(forKey: "subscriptions").flatMap { try? JSONDecoder().decode([SubscriptionEntry].self, from: $0) }
         var entries = saved ?? [], copies: [String: Subscription] = [:]
@@ -317,7 +314,7 @@ import TVCore
         if let subscription {
             Self.registerPlugins(subscription)
             hiddenSources.restoreBuiltIns(subscription.sites, origin: subscription.origin)
-            hiddenSources.backfill(subscription.sites, origin: subscription.origin, health: .shared)
+            hiddenSources.restoreAutoHidden(subscription.sites, origin: subscription.origin, health: .shared)
         }
     }
     func searchVideos(_ title: String) {
