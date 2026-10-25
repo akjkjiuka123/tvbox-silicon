@@ -62,6 +62,14 @@ has only some, so we compile every C library from source with our own scripts.
    - **cryptography:** left out on iOS and tvOS at first. It needs Rust, and Rust's tvOS target is tier 3
      (nightly with `build-std`). Most spiders use `Crypto` (pycryptodome). We measure how many real
      sources import `cryptography` before doing anything for it.
+
+   *As built (phase 3):* with a dynamic interpreter, compiled libraries are ordinary extension
+   modules turned into frameworks, so nothing is linked into the app or renamed.
+   `Scripts/build-apple-python-wheels.sh` compiles pycryptodome and lxml from source for each platform
+   in a BeeWare cross venv. lxml links libxml2 2.14.6 and libxslt 1.1.43 (with the backport patch its
+   sdist carries) statically, the same versions as lxml's own wheels. pycryptodome still opens its C code
+   with ctypes, so `build-apple-python.sh` patches `load_pycryptodome_raw_lib` to follow the module's
+   `.fwork` file to its framework. `_cffi_backend` is left out: without cffi, pycryptodome uses ctypes.
 4. **macOS:** keeps its separate, sandboxed Python process, since an embedded interpreter wouldn't have
    `spider.sb` around it. `host.py`, `base/` and the library versions are the same files on every
    platform, so a spider that works on the Mac should behave the same on iPhone and Apple TV. Pin the

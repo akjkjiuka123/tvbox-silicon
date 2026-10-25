@@ -1,7 +1,8 @@
 #!/bin/bash
 # Assemble build/ApplePython/<platform> for the iOS and tvOS apps (Docs/python-runtime-plan.md): BeeWare's
-# CPython (Python-Apple-support), a trimmed standard library, the pure-Python libraries TVBox spiders import
-# (pinned in Runtime/PythonHost/requirements.txt, like the Mac's host), and Runtime/PythonHost itself.
+# CPython (Python-Apple-support), a trimmed standard library, the libraries TVBox spiders import (pinned in
+# Runtime/PythonHost/requirements.txt, like the Mac's host; lxml and pycryptodome are compiled by
+# Scripts/build-apple-python-wheels.sh), and Runtime/PythonHost itself.
 # iOS and tvOS load binary modules only from frameworks, so each extension module becomes
 # Frameworks/<module>.framework with a .fwork file in its place, as Python's Apple testbed does.
 # The app targets embed the result with Scripts/embed-apple-python.sh.
@@ -56,12 +57,38 @@ EXCLUDES=(--exclude '__pycache__' --exclude 'test/' --exclude 'idlelib/' --exclu
 rsync -a "${EXCLUDES[@]}" "$XCFRAMEWORK/lib/" "$DEST/python/lib/"
 rsync -a "${EXCLUDES[@]}" "$XCFRAMEWORK/$SLICE/lib-arm64/" "$DEST/python/lib/"
 
-# Pure-Python libraries, the same versions as the Mac's host. Compiled ones (cffi, lxml, pycryptodome,
-# cryptography) need builds for these platforms and are left out here.
+# Pure-Python libraries, the same versions as the Mac's host. lxml and pycryptodome are compiled below;
+# cffi and cryptography are left out (pycryptodome then uses ctypes; Docs/python-runtime-plan.md).
 grep -E '^[A-Za-z]' Runtime/PythonHost/requirements.txt | grep -v -E '^(cffi|cryptography|lxml|pycryptodome)==' > "$WORK/requirements-pure.txt"
 "$HOST_PYTHON" -m pip install --quiet --disable-pip-version-check --target "$DEST/PythonHost/site-packages" --no-deps \
   --only-binary=:all: --platform any --implementation py --abi none --python-version "$VERSION" -r "$WORK/requirements-pure.txt"
 rm -rf "$DEST/PythonHost/site-packages/bin"
+
+# lxml and pycryptodome, compiled for this platform.
+Scripts/build-apple-python-wheels.sh "$TARGET"
+for name in lxml pycryptodome; do
+  version="$(grep -E "^$name==" Runtime/PythonHost/requirements.txt | cut -d= -f3)"
+  unzip -qo "$WORK/wheels/$PLATFORM/$name-$version-"*.whl -d "$DEST/PythonHost/site-packages"
+done
+# Cython sources, C headers and type stubs only matter when building against them.
+rm -rf "$DEST/PythonHost/site-packages/lxml/includes"
+find "$DEST/PythonHost/site-packages/lxml" "$DEST/PythonHost/site-packages/Crypto" \
+  \( -name '*.pyx' -o -name '*.pxd' -o -name '*.pxi' -o -name '*.h' -o -name '*.c' -o -name '*.pyi' \) -delete
+# pycryptodome opens its C code with ctypes from .so files beside its modules. Those become frameworks
+# below, so it follows the .fwork file instead, as importlib does for extension modules.
+"$HOST_PYTHON" -I - "$DEST/PythonHost/site-packages/Crypto/Util/_raw_api.py" <<'PATCH'
+import sys
+path = sys.argv[1]
+source = open(path, encoding='utf-8').read()
+anchor = '''            full_name = pycryptodome_filename(dir_comps, filename)
+'''
+assert source.count(anchor) == 1, 'pycryptodome changed: update the .fwork patch'
+open(path, 'w', encoding='utf-8').write(source.replace(anchor, anchor + '''            fwork = full_name[:-len(".so")] + ".fwork"
+            if full_name.endswith(".so") and os.path.isfile(fwork):
+                with open(fwork) as stream:
+                    full_name = os.path.join(os.path.dirname(sys.executable), stream.read().strip())
+'''))
+PATCH
 cp Runtime/PythonHost/host.py "$DEST/PythonHost/"
 cp -R Runtime/PythonHost/base "$DEST/PythonHost/"
 
