@@ -112,6 +112,13 @@ extension View {
         }
     }
 
+    #if os(iOS)
+    /// `searchFocused`; before iOS 18 a search field can't be focused from code, so it keeps the viewer's focus.
+    @ViewBuilder func searchFieldFocused(_ focused: FocusState<Bool>.Binding) -> some View {
+        if #available(iOS 18, *) { searchFocused(focused) } else { self }
+    }
+    #endif
+
     /// The breathing symbol effect; iOS 17 and tvOS 17 have no breathe, so the symbol pulses instead.
     @ViewBuilder func breathingSymbol() -> some View {
         if #available(iOS 18, tvOS 18, *) {

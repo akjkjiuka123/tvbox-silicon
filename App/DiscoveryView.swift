@@ -86,7 +86,7 @@ struct GlobalSearchView: View {
             // The system search bar, as on Sources, so the two pages line up under their titles. Only the
             // keyboard's Search key searches; clearing the field goes back to the recent searches.
             .searchable(text: $model.draft, placement: .navigationBarDrawer(displayMode: .always), prompt: Text(L10n.text("Search videos")))
-            .searchFocused($inputFocused)
+            .searchFieldFocused($inputFocused)
             .onSubmit(of: .search) { if let config = store.subscription { submit(config) } }
             .onChange(of: model.draft) { _, draft in if draft.isEmpty && !model.keyword.isEmpty { model.reset() } }
             .scrollDismissesKeyboard(.interactively)
