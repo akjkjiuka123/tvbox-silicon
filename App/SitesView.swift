@@ -157,7 +157,7 @@ extension SourceHealth.Status {
         case .unknown: ""
         case .healthy: L10n.text("Responding normally")
         case .unstable: L10n.text("Slow or unreliable lately")
-        case .failing: L10n.text("Failing; searched last for now")
+        case .failing: L10n.text("Failing; skipped in search for now")
         }
     }
 }

@@ -13,18 +13,24 @@ private struct Failure: Error {}
     #expect(health.status(site, origin: origin, now: now) == .unknown)
     health.record(site, origin: origin, seconds: 1, error: Failure(), now: now)
     #expect(health.status(site, origin: origin, now: now) == .unstable)
-    #expect(!health.deprioritized(site, origin: origin, now: now))
+    #expect(!health.paused(site, origin: origin, now: now))
     health.record(site, origin: origin, seconds: 1, error: Failure(), now: now)
-    #expect(health.deprioritized(site, origin: origin, now: now))
-    #expect(!health.deprioritized(site, origin: origin, now: now.addingTimeInterval(31 * 60)))
+    #expect(health.paused(site, origin: origin, now: now))
+    #expect(health.pausedUntil(site, origin: origin, now: now) == now.addingTimeInterval(30 * 60))
+    #expect(health.failedRepeatedly(site, origin: origin))
+    #expect(!health.paused(site, origin: origin, now: now.addingTimeInterval(31 * 60)))
+    #expect(health.pausedUntil(site, origin: origin, now: now.addingTimeInterval(31 * 60)) == nil)
+    // The cooldown ending does not reset the run of failures.
+    #expect(health.failedRepeatedly(site, origin: origin))
     health.record(site, origin: origin, seconds: 1, error: Failure(), now: now)
-    #expect(health.deprioritized(site, origin: origin, now: now.addingTimeInterval(59 * 60)))
-    #expect(!health.deprioritized(site, origin: origin, now: now.addingTimeInterval(61 * 60)))
+    #expect(health.paused(site, origin: origin, now: now.addingTimeInterval(59 * 60)))
+    #expect(!health.paused(site, origin: origin, now: now.addingTimeInterval(61 * 60)))
     for _ in 0..<10 { health.record(site, origin: origin, seconds: 1, error: Failure(), now: now) }
-    #expect(!health.deprioritized(site, origin: origin, now: now.addingTimeInterval(6 * 3600 + 1)))
+    #expect(!health.paused(site, origin: origin, now: now.addingTimeInterval(6 * 3600 + 1)))
     // One answer clears it.
     health.record(site, origin: origin, seconds: 1, error: nil, now: now)
     #expect(health.status(site, origin: origin, now: now) == .healthy)
+    #expect(!health.failedRepeatedly(site, origin: origin))
 }
 
 @MainActor @Test func onlyTheSourcesOwnFailuresCount() {
@@ -52,7 +58,7 @@ private struct Failure: Error {}
                        provenance: SourceProvenance(origin: origin, spider: nil))
     health.record(renamed, origin: URL(string: "https://other.example/")!, seconds: 1, error: Failure())
     health.record(source("a", "A"), origin: origin, seconds: 1, error: Failure())
-    #expect(health.deprioritized(source("a", "A"), origin: origin))
+    #expect(health.paused(source("a", "A"), origin: origin))
 }
 
 @Test func failingChannelsAndSourcesGoLast() {

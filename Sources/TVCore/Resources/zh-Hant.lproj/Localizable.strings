@@ -687,7 +687,10 @@
 "%lld subscriptions could not be refreshed; their last copies stay in use." = "%lld 個訂閱更新失敗，將繼續使用上次的副本。";
 "Responding normally" = "回應正常";
 "Slow or unreliable lately" = "最近較慢或不穩定";
-"Failing; searched last for now" = "連續失敗，暫時最後搜尋";
+"Failing; skipped in search for now" = "連續失敗，暫時不參與搜尋";
+"Skipped after repeated failures; back in search at %@" = "連續失敗，已略過；%@ 後恢復搜尋";
+
+"Skipped after repeated failures" = "連續失敗，已略過";
 "Sign in to Douyin to search its live rooms." = "登入抖音後即可搜尋直播間。";
 "Douyin no longer accepts this sign-in. Sign in again in Settings." = "抖音登入已失效，請在設定中重新登入。";
 "The Apple TV didn't answer. Make sure both are on the same Wi-Fi and try again." = "Apple TV 沒有回應。請確認兩台裝置連著同一個 Wi-Fi，然後再試一次。";

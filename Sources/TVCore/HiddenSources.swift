@@ -8,8 +8,8 @@ import Observation
     public private(set) var revision = 0
     private let defaults: UserDefaults
     private static let storageKey = "hiddenSources.v1"
-    private static let backfillKey = "hiddenSources.backfill.v1"
     private static let builtInRestoreKey = "hiddenSources.builtInRestore.v1"
+    private static let autoRestoreKey = "hiddenSources.autoRestore.v1"
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -37,24 +37,6 @@ import Observation
         revision += 1
     }
 
-    /// Writes a hide when this counted failure leaves the source red. Success, cancellation,
-    /// a busy runtime, and a yellow-dot failure do nothing. A later success does not remove the hide.
-    /// A built-in source is never hidden this way: it only goes red, and the viewer may hide it by hand.
-    public func note(_ site: Site, origin: URL, error: Error?, health: SourceHealth, now: Date = Date()) {
-        guard !site.isBuiltIn, let error, SourceHealth.counts(error) else { return }
-        guard health.status(site, origin: origin, now: now) == .failing else { return }
-        insert(site, origin: origin)
-    }
-
-    /// One pass over the sources already loaded. An empty list waits for the real subscription.
-    public func backfill(_ sites: [Site], origin: URL, health: SourceHealth, now: Date = Date()) {
-        guard !defaults.bool(forKey: Self.backfillKey), !sites.isEmpty else { return }
-        for site in sites where !site.isBuiltIn && health.status(site, origin: origin, now: now) == .failing {
-            insert(site, origin: origin)
-        }
-        defaults.set(true, forKey: Self.backfillKey)
-    }
-
     /// Built-in sources used to be hidden automatically like any other, so once, every hidden
     /// built-in shows again. One the viewer hides afterwards stays hidden.
     public func restoreBuiltIns(_ sites: [Site], origin: URL) {
@@ -67,9 +49,19 @@ import Observation
         }
         defaults.set(true, forKey: Self.builtInRestoreKey)
     }
-}
 
-/// Set by the app so catalog requests can hide a source without TVCore owning the defaults suite.
-@MainActor public enum SourceHideReports {
-    public static var report: ((Site, URL, Error?) -> Void)?
+    /// 1.7.13 hid a source automatically once it went red, in the same list as the viewer's own hides,
+    /// and nothing brought it back. Failing sources are now only paused in search (`SourceHealth.paused`),
+    /// so once, every hidden source that failed repeatedly shows again. One hidden while it worked was
+    /// the viewer's choice and stays hidden. An empty list waits for the real subscription.
+    public func restoreAutoHidden(_ sites: [Site], origin: URL, health: SourceHealth) {
+        guard !defaults.bool(forKey: Self.autoRestoreKey), !sites.isEmpty else { return }
+        let restored = Set(sites.filter { health.failedRepeatedly($0, origin: origin) }.map { key($0, origin: origin) })
+        if keys.contains(where: restored.contains) {
+            keys.removeAll { restored.contains($0) }
+            defaults.set(keys, forKey: Self.storageKey)
+            revision += 1
+        }
+        defaults.set(true, forKey: Self.autoRestoreKey)
+    }
 }

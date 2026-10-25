@@ -10,6 +10,8 @@ import Observation
     public var total = 0
     public var keyword = ""
     public var stopped = false
+    /// Sources this search left out because they are failing (`SourceHealth.paused`); a retry asks them.
+    public private(set) var paused: [Site] = []
     /// Paused because the viewer left the results, not by Stop; `resumeSuspended` continues it.
     public private(set) var suspended = false
     public var scrollID: String?
@@ -137,7 +139,7 @@ import Observation
 
     public func reset() {
         stop()
-        draft = ""; keyword = ""; results = []; completed = 0; total = 0
+        draft = ""; keyword = ""; results = []; completed = 0; total = 0; paused = []
         selectedSource = nil; scrollID = nil; stopped = false
         clearPages()
         cache = [:]; subscriptionID = nil
@@ -162,10 +164,14 @@ import Observation
         stop()
         keyword = value; draft = value; results = []; completed = 0
         clearPages()
-        let sites = Self.eligible(config.sites, jarURL: config.spiderURL, excluding: hidden)
+        let eligible = Self.eligible(config.sites, jarURL: config.spiderURL, excluding: hidden)
+        let now = Date()
+        paused = eligible.filter { SourceHealth.shared.paused($0, origin: config.origin, now: now) }
+        let held = Set(paused.map(\.id))
+        let sites = eligible.filter { !held.contains($0.id) }
         let preferred = UserDefaults.standard.string(forKey: Self.sourceKey)
         selectedSource = sites.contains { $0.id == preferred } ? preferred : nil; scrollID = nil
-        rank = Dictionary(arrange(sites, config: config, failing: failing(config)).enumerated().map { ($1.id, $0) }) { first, _ in first }
+        rank = Dictionary(arrange(eligible, config: config, failing: failing(config)).enumerated().map { ($1.id, $0) }) { first, _ in first }
         total = sites.count
         if let hit = cache[value], Date().timeIntervalSince(hit.created) < 300 {
             results = Self.visible(hit.results, excluding: hidden)
@@ -181,10 +187,15 @@ import Observation
         guard !busy, !keyword.isEmpty else { return }
         let finished = Set(results.map(\.id))
         let failed = Set(failures.map(\.id))
+        // A retry also asks the sources paused for failing: the viewer asked for them.
+        let held = Set(paused.map(\.id))
         let sites = Self.eligible(config.sites, jarURL: config.spiderURL, excluding: excluded).filter {
-            retryFailures ? failed.contains($0.id) : !finished.contains($0.id)
+            retryFailures ? failed.contains($0.id) || held.contains($0.id) : !finished.contains($0.id) && !held.contains($0.id)
         }
-        if retryFailures { results.removeAll { failed.contains($0.id) }; completed = results.count }
+        if retryFailures {
+            results.removeAll { failed.contains($0.id) }; completed = results.count
+            total += paused.count; paused = []
+        }
         run(sites, config: config)
     }
 
@@ -228,11 +239,11 @@ import Observation
         return order.arrange(automatic, origin: config.origin)
     }
 
-    /// Sources in a `SourceHealth` cooldown, asked after the others (and listed after them unless
-    /// the viewer's own order is on).
+    /// Sources in a `SourceHealth` cooldown. Search leaves them out; when a retry asks them, they go
+    /// after the others (and are listed after them unless the viewer's own order is on).
     private func failing(_ config: Subscription) -> @Sendable (Site) -> Bool {
         let now = Date()
-        let down = Set(config.sites.filter { SourceHealth.shared.deprioritized($0, origin: config.origin, now: now) }.map(\.id))
+        let down = Set(config.sites.filter { SourceHealth.shared.paused($0, origin: config.origin, now: now) }.map(\.id))
         return { down.contains($0.id) }
     }
 

@@ -181,9 +181,6 @@ public struct CatalogClient: Sendable {
         } catch {
             if !Task.isCancelled {
                 await SourceHealth.shared.record(site, origin: origin, seconds: started.duration(to: .now).seconds, error: error)
-                let site = site
-                let origin = origin
-                await MainActor.run { SourceHideReports.report?(site, origin, error) }
             }
             throw error
         }
