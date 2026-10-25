@@ -100,6 +100,40 @@ has only some, so we compile every C library from source with our own scripts.
 - **Effort:** about 2 weeks for iOS and tvOS together. Once iOS works, tvOS is mostly the same
   scripts with the tvOS SDK added.
 
+## Measurements (phase 4)
+
+October 25–26, 2026. The 133 Python sources of a public subscription (the list the Mac was tested with on
+October 7) went through `Scripts/test-sources.py`, which runs home, category, detail and play, then fetches
+the media URL. All runs were on the same night:
+
+| Runtime | Sources passing every stage |
+| --- | --- |
+| macOS, separate Python process | 37 |
+| iOS 26.5 simulator, embedded (`--apple-simulator`) | 35, then 36 (a timeout passed on rerun) |
+| tvOS 27.0 simulator, embedded | 36 |
+
+- **The same sources fail on every platform, for reasons outside the runtime:**
+  - 36 scripts are not valid Python 3 (for example full-width punctuation, or an HTML page instead of
+    a script).
+  - Sites are down or time out.
+  - Results are empty.
+  - Play pages need web sniffing.
+
+  The remaining differences were upstream 403/404 answers that went both ways and that the Mac
+  matched on a rerun. No source failed on iOS or tvOS with an import or native-loading error.
+- **Libraries:** of the 96 scripts that downloaded, 26 import `Crypto`, 16 `lxml`, 16 `bs4` and
+  8 `pyquery`. One imports `cryptography`, inside a `try` with a pycryptodome fallback. **Decision:**
+  `cryptography` stays out of iOS and tvOS. Revisit if a source needs it.
+- **One runtime bug found:** a client hanging up on the media proxy killed the app with SIGPIPE. The
+  bridge now ignores SIGPIPE, as `AppleRuntime.m` does for the JVM.
+- **Size:** the embedded bundle is 66–68 MB per platform (stdlib 23 MB, 101 frameworks 31 MB,
+  libraries and host 13 MB).
+- **Still to measure on a real iPhone and Apple TV** (not done here):
+  - memory with the JVM and Python both resident;
+  - cold start of the first Python request (about 18 s on the iOS simulator for the script from
+    #125);
+  - whether the loopback proxy survives the app being suspended.
+
 ## Phases (one PR each)
 
 1. **Short-link detection.** When a type 3 `api` has no recognizable extension, check the downloaded
