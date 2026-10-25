@@ -64,6 +64,8 @@ import TVCore
     /// Result of a check someone asked for.
     var message: String?
     #if os(macOS)
+    /// The window presenting the sheet or message: the one active when it came, until it's dismissed.
+    var presenter: UUID?
     /// Installs Mac updates in place and relaunches; nil where Get the Update opens the download instead.
     let installer = MacUpdater.make()
     #endif
@@ -613,15 +615,39 @@ struct NewBadge: View {
 extension View {
     /// Presents release sheets and update-check results, holding them back while a video plays.
     func updatePresentation(_ updates: Updates, playing: Bool) -> some View {
-        @Bindable var updates = updates
-        let item = Binding(get: { playing ? nil : updates.sheet }, set: { updates.sheet = $0 })
+        modifier(UpdatePresentation(updates: updates, playing: playing))
+    }
+}
+
+private struct UpdatePresentation: ViewModifier {
+    let updates: Updates
+    let playing: Bool
+    #if os(macOS)
+    // One window presents: the one active when the sheet or message came. A closed Mac window keeps its views,
+    // and presenting from every window brought closed ones back, one more for each window closed earlier.
+    @Environment(\.appearsActive) private var active
+    @State private var id = UUID()
+    #endif
+
+    func body(content: Content) -> some View {
+        let pending = updates.sheet != nil || updates.message != nil
         #if os(macOS)
-        let presented = sheet(item: item) { ReleaseNotesView(sheet: $0).environment(updates) }
+        let shown = !playing && updates.presenter == id
         #else
-        let presented = fullScreenCover(item: item) { ReleaseNotesView(sheet: $0).environment(updates) }
+        let shown = !playing
+        #endif
+        let item = Binding(get: { shown ? updates.sheet : nil }, set: { updates.sheet = $0 })
+        #if os(macOS)
+        let presented = content.sheet(item: item) { ReleaseNotesView(sheet: $0).environment(updates) }
+            .onChange(of: active && pending && updates.presenter == nil, initial: true) { _, claim in
+                if claim { updates.presenter = id }
+            }
+            .onChange(of: pending) { _, pending in if !pending { updates.presenter = nil } }
+        #else
+        let presented = content.fullScreenCover(item: item) { ReleaseNotesView(sheet: $0).environment(updates) }
         #endif
         return presented
-        .alert(L10n.text("Software Update"), isPresented: Binding(get: { !playing && updates.message != nil }, set: { if !$0 { updates.message = nil } })) {
+        .alert(L10n.text("Software Update"), isPresented: Binding(get: { shown && updates.message != nil }, set: { if !$0 { updates.message = nil } })) {
             Button(L10n.text("OK"), role: .cancel) { updates.message = nil }
         } message: { Text(updates.message ?? "") }
     }
