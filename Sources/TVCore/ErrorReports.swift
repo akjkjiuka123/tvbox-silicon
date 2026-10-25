@@ -43,6 +43,9 @@ public final class ErrorReports: @unchecked Sendable {
     private var context: QuitContext
     private var sampler: DispatchSourceTimer?
     private var pressure: DispatchSourceMemoryPressure?
+    /// Saves and clears that context in order, outside `lock`: a UserDefaults write can wait on
+    /// SwiftUI, and the main thread waits on `lock` in `onScreen` during a scene update (8BADF00D).
+    private let contextWriter = DispatchQueue(label: "tvbox.error-reports.context", qos: .utility)
 
     init(defaults: UserDefaults = .standard, directory: URL = Diagnostics.shared.directory, interval: TimeInterval = 6 * 3600) {
         self.defaults = defaults
@@ -120,8 +123,8 @@ public final class ErrorReports: @unchecked Sendable {
         lock.withLock {
             sampler?.cancel(); sampler = nil
             pressure?.cancel(); pressure = nil
+            contextWriter.async { self.defaults.removeObject(forKey: Self.contextKey) }
         }
-        defaults.removeObject(forKey: Self.contextKey)
     }
 
     /// Changes this launch's context and, while it is on screen, saves it with fresh memory figures.
@@ -132,7 +135,7 @@ public final class ErrorReports: @unchecked Sendable {
             guard sampler != nil else { return }
             context.footprint = memory.footprint; context.available = memory.available
             context.saved = Int(Date().timeIntervalSince1970)
-            if let data = try? JSONEncoder().encode(context) { defaults.set(data, forKey: Self.contextKey) }
+            if let data = try? JSONEncoder().encode(context) { contextWriter.async { self.defaults.set(data, forKey: Self.contextKey) } }
         }
     }
 
