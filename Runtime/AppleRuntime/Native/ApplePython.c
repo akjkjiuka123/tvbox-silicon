@@ -6,6 +6,7 @@
 #include <dlfcn.h>
 #include <limits.h>
 #include <mach-o/dyld.h>
+#include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -106,6 +107,10 @@ static int configure(PyInitConfig *config, const char *resources) {
 static void start(void *context) {
     const char *resources = context;
     if (!load(resources)) return;
+    // Python ignores these itself only when it installs signal handlers, which an app's Python must not.
+    // Otherwise a write to a closed socket (the player leaving the media proxy, a server hanging up)
+    // kills the app instead of raising BrokenPipeError. AppleRuntime.m does the same for the JVM.
+    signal(SIGPIPE, SIG_IGN); signal(SIGXFSZ, SIG_IGN);
     PyInitConfig *config = py.InitConfig_Create();
     if (!config) { snprintf(failure, sizeof failure, "The Python runtime could not allocate its configuration."); return; }
     if (!configure(config, resources) || py.InitializeFromInitConfig(config) < 0) {
