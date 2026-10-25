@@ -184,6 +184,51 @@ struct RemuxTests {
         #expect(played.status == .readyToPlay && abs(played.duration - 4) < 0.2)
     }
 
+    // MARK: - Links
+
+    @Test func aLinkThatSendsTheRestOfTheFileIsReadThroughOneResponse() async throws {
+        let size = 12 << 20
+        var bytes = Data(count: size)
+        bytes.withUnsafeMutableBytes { raw in for i in 0..<size { raw[i] = UInt8(truncatingIfNeeded: i &* 31 &+ i >> 9) } }
+        let name = "rest-of-file-\(UUID().uuidString).bin"
+        let url = RangeServer.add(name, bytes, restOfFile: true)
+        let source = try await Remux.httpSource(url, headers: [:], chunks: RangeServer.session, configuration: RangeServer.configuration)
+        defer { Task { await source.close() } }
+        #expect(source is StreamingRemuxSource && source.length == Int64(size))
+        // Reads in order, a jump back and jumps forward all come from the probe's own response.
+        var copy = Data()
+        while copy.count < 1 << 20 { copy.append(try await source.read(at: Int64(copy.count), count: 65536)) }
+        #expect(copy == bytes.prefix(copy.count))
+        #expect(try await source.read(at: 1000, count: 16) == bytes[1000..<1016])
+        #expect(try await source.read(at: 3 << 20, count: 16) == bytes[(3 << 20)..<(3 << 20) + 16])
+        #expect(try await source.read(at: Int64(size - 100), count: 100) == bytes.suffix(100))
+        #expect(RangeServer.requests(name) == 1)
+        // A jump back past the bytes it kept opens one more response.
+        #expect(try await source.read(at: 5, count: 5) == bytes[5..<10])
+        #expect(RangeServer.requests(name) == 2)
+        // The first response stays open for a return to where it was.
+        #expect(try await source.read(at: Int64(size - 50), count: 50) == bytes.suffix(50))
+        #expect(RangeServer.requests(name) == 2)
+        #expect(try await source.read(at: Int64(size), count: 1).isEmpty)
+    }
+
+    @Test func aLinkThatSendsWhatWasAskedIsReadInChunks() async throws {
+        let url = RangeServer.add("exact-\(UUID().uuidString).mkv", try Data(contentsOf: fixture("remux-copy.mkv")))
+        let source = try await Remux.httpSource(url, headers: [:], chunks: RangeServer.session, configuration: RangeServer.configuration)
+        #expect(source is CloudRemuxSource)
+        let head = try await source.read(at: 0, count: 4)
+        #expect(Remux.handles(head))
+    }
+
+    @Test func matroskaFromAPluginProxyPlays() async throws {
+        let url = RangeServer.add("proxy-\(UUID().uuidString).mkv", try Data(contentsOf: fixture("remux-copy.mkv")), restOfFile: true)
+        let source = try await Remux.httpSource(url, headers: [:], chunks: RangeServer.session, configuration: RangeServer.configuration)
+        let master = try await Remux.open(source)
+        defer { Remux.stop(master) }
+        let played = await ready(master)
+        #expect(played.status == .readyToPlay && abs(played.duration - 8) < 0.2)
+    }
+
     @Test func aFileFFmpegCantReadFailsToOpen() async throws {
         let file = FileManager.default.temporaryDirectory.appending(path: "remux-\(UUID().uuidString).mkv")
         try (Data([0x1A, 0x45, 0xDF, 0xA3]) + Data(repeating: 0x55, count: 4096)).write(to: file)

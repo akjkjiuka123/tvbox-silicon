@@ -49,20 +49,23 @@ public enum Remux {
 
     public static func transfer(for url: URL) -> (received: Int64, host: String?)? { session(url)?.source.transfer }
 
-    /// A file behind an HTTP(S) link that answers byte ranges; read like a cloud drive's file.
+    /// A file behind an HTTP(S) link that answers byte ranges. One that sends the bytes asked for is read
+    /// like a cloud drive's file, in parallel chunks. One that answers every range with the rest of the file
+    /// (a plugin's drive proxy, which downloads it with its own threads) is read through one connection.
     public static func httpSource(_ url: URL, headers: [String: String]) async throws -> RemuxSource {
-        var request = URLRequest(url: url)
-        headers.forEach { request.setValue($1, forHTTPHeaderField: $0) }
-        request.setValue("bytes=0-0", forHTTPHeaderField: "Range")
-        request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
-        let (_, response) = try await CloudByteStream.session.data(for: request)
-        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
-        guard status == 206, let range = (response as? HTTPURLResponse)?.value(forHTTPHeaderField: "Content-Range"),
-              let total = range.split(separator: "/").last.flatMap({ Int($0) }), total > 0 else {
-            throw status >= 400 ? TVError.http(status) : TVError.unsupported("no byte ranges")
+        try await httpSource(url, headers: headers, chunks: CloudByteStream.session, configuration: RangeConnection.configuration)
+    }
+
+    static func httpSource(_ url: URL, headers: [String: String], chunks: URLSession, configuration: URLSessionConfiguration) async throws -> RemuxSource {
+        let counter = CloudCounter()
+        let probe = try await RangeConnection.open(url, headers: headers, from: 0, through: 1, configuration: configuration, counter: counter)
+        if probe.last > 1 {
+            Diagnostics.shared.record(.info, "remux", "link sends the rest of the file host=\(url.host() ?? "-") length=\(probe.length)")
+            return StreamingRemuxSource(url: url, headers: headers, configuration: configuration, counter: counter, first: probe)
         }
-        let source = CloudStreams.Source(url: url, headers: headers, length: total, name: url.lastPathComponent)
-        return CloudRemuxSource(stream: CloudByteStream(source: source, rewritesSampleEntries: false, refresh: { nil }))
+        probe.close()
+        let source = CloudStreams.Source(url: url, headers: headers, length: Int(probe.length), name: url.lastPathComponent)
+        return CloudRemuxSource(stream: CloudByteStream(source: source, session: chunks, rewritesSampleEntries: false, refresh: { nil }))
     }
 
     /// A file on this device.
@@ -86,6 +89,241 @@ struct CloudRemuxSource: RemuxSource {
     func read(at offset: Int64, count: Int) async throws -> Data { try await stream.read(at: Int(offset), count: count) }
     var transfer: (received: Int64, host: String?)? { (stream.counter.value, stream.host) }
     func close() async { await stream.clear() }
+}
+
+/// A link that answers every range with the rest of the file, as a plugin's drive proxy does: it downloads
+/// the file with its own threads, so parallel chunk requests would each start that download again. A response
+/// is read through, and another opens only when FFmpeg jumps. Each costs the plugin another drive request
+/// (seconds), so a short jump forward reads through instead, and the previous response stays open, paused:
+/// FFmpeg reads an MKV's index at the end of the file and then comes back to where it was.
+final class StreamingRemuxSource: RemuxSource, @unchecked Sendable {
+    static let readThrough: Int64 = 8 << 20
+    static let kept = 2
+    let length: Int64
+    private let url: URL
+    private let headers: [String: String]
+    private let configuration: URLSessionConfiguration
+    private let counter: CloudCounter
+    private let lock = NSLock()
+    /// The open responses, the one read last at the end.
+    private var connections: [RangeConnection]
+    private var closed = false
+
+    init(url: URL, headers: [String: String], configuration: URLSessionConfiguration, counter: CloudCounter, first: RangeConnection) {
+        self.url = url; self.headers = headers; self.configuration = configuration; self.counter = counter
+        length = first.length; connections = [first]
+    }
+
+    func read(at offset: Int64, count: Int) async throws -> Data {
+        guard offset < length else { return Data() }
+        var opened = 0
+        while true {
+            for connection in lock.withLock({ connections.reversed() }) {
+                guard let data = try await connection.read(at: offset, count: count, readThrough: Self.readThrough) else { continue }
+                lock.withLock {
+                    if let index = connections.firstIndex(where: { $0 === connection }), index != connections.count - 1 {
+                        connections.append(connections.remove(at: index))
+                    }
+                }
+                return data
+            }
+            // A response that ends, or answers nothing, twice in a row at the same place won't do better a third time.
+            guard opened < 2 else { throw TVError.unsupported("The link stopped sending the file.") }
+            opened += 1
+            try Task.checkCancellation()
+            lock.withLock { connections.count >= Self.kept ? connections.removeFirst() : nil }?.close()
+            Diagnostics.shared.record(.debug, "remux", "link reopened at=\(offset)")
+            let next = try await RangeConnection.open(url, headers: headers, from: offset, configuration: configuration, counter: counter)
+            let stale: Bool = lock.withLock {
+                if closed { return true }
+                connections.append(next)
+                return false
+            }
+            if stale { next.close(); throw CancellationError() }
+        }
+    }
+
+    var transfer: (received: Int64, host: String?)? { (counter.value, url.host()) }
+
+    func close() async {
+        lock.withLock {
+            closed = true
+            defer { connections = [] }
+            return connections
+        }.forEach { $0.close() }
+    }
+}
+
+/// One HTTP response read as it arrives, for `StreamingRemuxSource`. It pauses while far ahead of its reader,
+/// so a paused player doesn't pull the rest of a large file into memory, and keeps a little behind it for
+/// FFmpeg's short jumps back.
+final class RangeConnection: NSObject, URLSessionDataDelegate, @unchecked Sendable {
+    static let configuration: URLSessionConfiguration = {
+        let configuration = URLSessionConfiguration.ephemeral
+        // A plugin's proxy first asks its drive for a download address: seconds before the first byte.
+        configuration.timeoutIntervalForRequest = 60
+        configuration.requestCachePolicy = .reloadIgnoringLocalCacheData
+        configuration.urlCache = nil
+        return configuration
+    }()
+    /// About two seconds of a drive's speed ahead, and what FFmpeg may jump back over: at most 16 MB each.
+    static let ahead = 8 << 20
+    static let behind: Int64 = 4 << 20
+
+    let first: Int64
+    /// The response's last byte and the file's length, from its Content-Range.
+    private(set) var last: Int64 = 0
+    private(set) var length: Int64 = 0
+    private let counter: CloudCounter
+    private let lock = NSLock()
+    private var session: URLSession?
+    private var task: URLSessionDataTask?
+    private var opening: CheckedContinuation<Void, Error>?
+    private var waiters: [UUID: CheckedContinuation<Void, Never>] = [:]
+    /// The file offset of `buffer`'s first byte, and the furthest offset handed out.
+    private var base: Int64
+    private var position: Int64
+    private var buffer = Data()
+    private var finished = false
+    private var paused = false
+
+    private init(first: Int64, counter: CloudCounter) {
+        self.first = first; self.counter = counter
+        base = first; position = first
+    }
+
+    /// The response to `Range: bytes=<from>-<through>`, once its headers say which bytes follow.
+    static func open(_ url: URL, headers: [String: String], from first: Int64, through last: Int64? = nil,
+                     configuration: URLSessionConfiguration, counter: CloudCounter) async throws -> RangeConnection {
+        let connection = RangeConnection(first: first, counter: counter)
+        var request = URLRequest(url: url)
+        headers.forEach { request.setValue($1, forHTTPHeaderField: $0) }
+        request.setValue("bytes=\(first)-\(last.map(String.init) ?? "")", forHTTPHeaderField: "Range")
+        request.setValue("identity", forHTTPHeaderField: "Accept-Encoding")
+        try await withTaskCancellationHandler {
+            try await withCheckedThrowingContinuation { (continuation: CheckedContinuation<Void, Error>) in
+                let session = URLSession(configuration: configuration, delegate: connection, delegateQueue: nil)
+                let task = session.dataTask(with: request)
+                let cancelled = connection.lock.withLock {
+                    if connection.finished { return true }
+                    connection.opening = continuation; connection.session = session; connection.task = task
+                    return false
+                }
+                if cancelled { session.invalidateAndCancel(); continuation.resume(throwing: CancellationError()) }
+                else { task.resume() }
+            }
+        } onCancel: { connection.close() }
+        return connection
+    }
+
+    /// Up to `count` bytes at `offset`, waiting for them while they are on their way (within `readThrough`
+    /// of what arrived). Nil when this response can't supply them: the caller opens another.
+    func read(at offset: Int64, count: Int, readThrough: Int64) async throws -> Data? {
+        enum Step { case data(Data), elsewhere, wait }
+        while true {
+            try Task.checkCancellation()
+            var resume: URLSessionDataTask?
+            let step: Step = lock.withLock {
+                let end = base + Int64(buffer.count)
+                guard offset >= base, offset <= last, offset <= max(end, position) + readThrough else { return .elsewhere }
+                if offset < end {
+                    let start = buffer.startIndex + Int(offset - base)
+                    let data = Data(buffer[start..<min(buffer.endIndex, start + count)])
+                    position = max(position, offset + Int64(data.count))
+                    // Drop what lies well behind the reader, keeping `behind` for jumps back.
+                    let keep = position - Self.behind
+                    if keep - base > Self.behind {
+                        buffer.removeSubrange(buffer.startIndex..<buffer.startIndex + Int(keep - base))
+                        base = keep
+                    }
+                    if paused, base + Int64(buffer.count) - position < Int64(Self.ahead / 2) { paused = false; resume = task }
+                    return .data(data)
+                }
+                if finished { return .elsewhere }
+                // The reader skips ahead to `offset`: what arrives before it no longer counts as read-ahead.
+                position = max(position, offset)
+                if paused { paused = false; resume = task }
+                return .wait
+            }
+            resume?.resume()
+            switch step {
+            case .data(let data): return data
+            case .elsewhere: return nil
+            case .wait: await arrival(beyond: offset)
+            }
+        }
+    }
+
+    /// Returns once bytes past `offset` arrived, the response ended, or the read was cancelled.
+    private func arrival(beyond offset: Int64) async {
+        let id = UUID()
+        await withTaskCancellationHandler {
+            await withCheckedContinuation { (continuation: CheckedContinuation<Void, Never>) in
+                let ready = lock.withLock {
+                    if finished || base + Int64(buffer.count) > offset || Task.isCancelled { return true }
+                    waiters[id] = continuation
+                    return false
+                }
+                if ready { continuation.resume() }
+            }
+        } onCancel: {
+            lock.withLock { waiters.removeValue(forKey: id) }?.resume()
+        }
+    }
+
+    func close() {
+        let session = lock.withLock {
+            finished = true
+            return self.session
+        }
+        session?.invalidateAndCancel()
+        end(CancellationError())
+    }
+
+    private func end(_ error: Error?) {
+        let (opening, waiters): (CheckedContinuation<Void, Error>?, [CheckedContinuation<Void, Never>]) = lock.withLock {
+            finished = true
+            defer { self.opening = nil; self.waiters = [:] }
+            return (self.opening, Array(self.waiters.values))
+        }
+        opening?.resume(throwing: error ?? TVError.unsupported("no response"))
+        waiters.forEach { $0.resume() }
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive response: URLResponse,
+                    completionHandler: @escaping (URLSession.ResponseDisposition) -> Void) {
+        let status = (response as? HTTPURLResponse)?.statusCode ?? 0
+        let range = (response as? HTTPURLResponse)?.value(forHTTPHeaderField: "Content-Range")
+        guard status == 206, let match = range?.firstMatch(of: /^bytes (\d+)-(\d+)\/(\d+)$/), Int64(match.1) == first,
+              let end = Int64(match.2), let total = Int64(match.3), end < total else {
+            completionHandler(.cancel)
+            self.end(status >= 400 ? TVError.http(status) : TVError.unsupported("no byte ranges"))
+            return
+        }
+        let opening = lock.withLock {
+            last = end; length = total
+            defer { self.opening = nil }
+            return self.opening
+        }
+        completionHandler(.allow)
+        opening?.resume()
+    }
+
+    func urlSession(_ session: URLSession, dataTask: URLSessionDataTask, didReceive data: Data) {
+        counter.add(data.count)
+        let waiters: [CheckedContinuation<Void, Never>] = lock.withLock {
+            buffer.append(data)
+            if !paused, base + Int64(buffer.count) - position > Int64(Self.ahead) { paused = true; dataTask.suspend() }
+            defer { self.waiters = [:] }
+            return Array(self.waiters.values)
+        }
+        waiters.forEach { $0.resume() }
+    }
+
+    func urlSession(_ session: URLSession, task: URLSessionTask, didCompleteWithError error: Error?) {
+        end(error)
+        session.finishTasksAndInvalidate()
+    }
 }
 
 final class FileRemuxSource: RemuxSource, @unchecked Sendable {
