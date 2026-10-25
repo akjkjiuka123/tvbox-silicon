@@ -19,6 +19,16 @@
       "category": "entertainment",
       "versions": [
         {
+          "version": "1.8.0",
+          "buildVersion": "34",
+          "date": "2026-10-26",
+          "localizedDescription": "• 支持 MKV 等更多格式\n• Python 点播源全平台可用\n• 点播源不再消失\n• 红果短剧更稳定\n• 选集按钮不再误触\n• 更舒展的影片页面\n• 其他修复\n\n• Plays MKV and more\n• Python sources everywhere\n• Sources no longer disappear\n• Hongguo loads more reliably\n• Episode buttons out of the way\n• A roomier video page\n• Other fixes",
+          "downloadURL": "https://download.getmegaportal.com/yingxia/1.8.0/Yingxia-1.8.0-ios.ipa",
+          "size": 98602531,
+          "sha256": "f0486ff16ada212e89c32c063ed1edd3ef4d57be13046012e01f9cba47ff6e93",
+          "minOSVersion": "17.0"
+        },
+        {
           "version": "1.7.13",
           "buildVersion": "32",
           "date": "2026-10-25",
@@ -56,16 +66,6 @@
           "downloadURL": "https://download.getmegaportal.com/yingxia/1.7.10/Yingxia-1.7.10-ios.ipa",
           "size": 69950478,
           "sha256": "73a52023cb471d2b4a09a9dfd1ef5acc65c7795fcb4c3dcccb5ffa0a3ce85769",
-          "minOSVersion": "18.0"
-        },
-        {
-          "version": "1.7.9",
-          "buildVersion": "28",
-          "date": "2026-10-23",
-          "localizedDescription": "• iPhone 和 iPad 的全新播放器\n• 可通过 TestFlight 公开测试版获取\n• 可用 AltStore 或 SideStore 安装和更新\n\n• A new player on iPhone and iPad\n• Public beta on TestFlight\n• Install and update with AltStore or SideStore",
-          "downloadURL": "https://download.getmegaportal.com/yingxia/1.7.9/Yingxia-1.7.9-ios.ipa",
-          "size": 69875432,
-          "sha256": "5009afcfd07f40b3e6edf10fc9122afbd2ce4af1733f94e1e0ea60033f5cb632",
           "minOSVersion": "18.0"
         }
       ],
