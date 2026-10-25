@@ -654,6 +654,8 @@ struct PosterImage: View {
     var headers: [String: String] = [:]
     /// Shown until the image loads, and when there is none.
     var symbol = "film"
+    /// Receives the loaded image's width over height, for a frame that shows the whole cover.
+    var aspect: Binding<CGFloat?>? = nil
     @State private var bitmap: PosterBitmap?
     private var resource: PosterResource? { url.map { PosterResource(url: $0, headers: headers) } }
     var body: some View {
@@ -669,7 +671,10 @@ struct PosterImage: View {
         .task(id: resource) {
             bitmap = nil
             guard let resource else { return }
-            if let image = try? await PosterLoader.shared.load(resource), !Task.isCancelled { bitmap = image }
+            if let image = try? await PosterLoader.shared.load(resource), !Task.isCancelled {
+                bitmap = image
+                aspect?.wrappedValue = CGFloat(image.image.width) / CGFloat(max(image.image.height, 1))
+            }
         }
     }
 }
