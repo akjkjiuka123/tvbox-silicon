@@ -130,27 +130,41 @@ struct CloudStreamsTests {
 final class RangeServer: URLProtocol, @unchecked Sendable {
     private static let lock = NSLock()
     nonisolated(unsafe) private static var files: [String: Data] = [:]
-    static let session: URLSession = {
+    nonisolated(unsafe) private static var restOfFile: Set<String> = []
+    nonisolated(unsafe) private static var counts: [String: Int] = [:]
+    static let configuration: URLSessionConfiguration = {
         let configuration = URLSessionConfiguration.ephemeral
         configuration.protocolClasses = [RangeServer.self]
-        return URLSession(configuration: configuration)
+        return configuration
     }()
-    static func add(_ name: String, _ data: Data) -> URL {
-        lock.withLock { files[name] = data }
+    static let session = URLSession(configuration: configuration)
+    /// `restOfFile` answers every range with everything from its start, as a plugin's drive proxy does.
+    static func add(_ name: String, _ data: Data, restOfFile: Bool = false) -> URL {
+        lock.withLock {
+            files[name] = data
+            if restOfFile { Self.restOfFile.insert(name) }
+        }
         return URL(string: "https://cloud.test/\(name)")!
     }
+    /// How many requests a file was asked for.
+    static func requests(_ name: String) -> Int { lock.withLock { counts[name, default: 0] } }
     override class func canInit(with request: URLRequest) -> Bool { request.url?.host() == "cloud.test" }
     override class func canonicalRequest(for request: URLRequest) -> URLRequest { request }
     override func startLoading() {
         guard let url = request.url, let client else { return }
         let name = url.lastPathComponent
-        guard let data = Self.lock.withLock({ Self.files[name] }) else {
+        let (file, toEnd) = Self.lock.withLock {
+            Self.counts[name, default: 0] += 1
+            return (Self.files[name], Self.restOfFile.contains(name))
+        }
+        guard let data = file else {
             client.urlProtocol(self, didReceive: HTTPURLResponse(url: url, statusCode: 404, httpVersion: "HTTP/1.1", headerFields: [:])!, cacheStoragePolicy: .notAllowed)
             client.urlProtocolDidFinishLoading(self); return
         }
         var range = 0..<data.count, status = 200
-        if let header = request.value(forHTTPHeaderField: "Range"), let match = header.firstMatch(of: /^bytes=(\d+)-(\d+)$/),
-           let first = Int(match.1), let last = Int(match.2), first < data.count {
+        if let header = request.value(forHTTPHeaderField: "Range"), let match = header.firstMatch(of: /^bytes=(\d+)-(\d*)$/),
+           let first = Int(match.1), first < data.count {
+            let last = toEnd ? data.count - 1 : Int(match.2) ?? data.count - 1
             range = first..<min(data.count, last + 1); status = 206
         }
         var headers = ["Content-Length": "\(range.count)", "Content-Type": "application/octet-stream"]

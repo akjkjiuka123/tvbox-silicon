@@ -42,6 +42,10 @@ How Unicorn's and Keystone's GPL-2.0 terms apply to apps that embed this runtime
 
 [QuickJS-ng](https://github.com/quickjs-ng/quickjs) v0.17.0 (MIT) runs the bundled lightweight source ports on every platform and JavaScript sources on iPhone, iPad and Apple TV. Its engine sources are vendored unmodified in `Vendor/QuickJS/`, with the license and an upstream record (`UPSTREAM.md`).
 
+## Media repackaging
+
+[FFmpeg](https://ffmpeg.org) n8.1.3 (LGPL-2.1-or-later) reads MKV, AVI, FLV, WMV, RMVB and MPEG files so AVPlayer can play them. `Scripts/build-apple-ffmpeg.sh` builds it from unmodified upstream sources with only LGPL parts enabled and links it statically; `Vendor/FFmpeg/` keeps the license and an upstream record (`UPSTREAM.md`). The complete source of the app, including that script, is available under the GPL, so the library can be rebuilt and relinked.
+
 ## Reference implementation
 
 The built-in Hongguo source uses the catalog and player response formats from

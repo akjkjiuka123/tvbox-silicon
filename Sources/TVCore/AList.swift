@@ -165,7 +165,7 @@ public actor AList {
     }
 
     func stream(_ server: AListServer, path: String, name: String) async throws -> URL {
-        guard CloudFile.playsNatively(name) else { throw CloudFilesError.unsupportedFormat((name as NSString).pathExtension) }
+        guard CloudFile.playsOriginal(name) else { throw CloudFilesError.unsupportedFormat((name as NSString).pathExtension) }
         let source = try await link(server, path: path, name: name)
         // A playlist, or a file whose size the server doesn't know, plays from its link as it is.
         if (name as NSString).pathExtension.lowercased() == "m3u8" || source.length <= 0 { return source.url }

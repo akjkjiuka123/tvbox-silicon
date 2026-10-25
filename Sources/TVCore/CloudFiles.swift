@@ -26,7 +26,10 @@ public struct CloudFile: Identifiable, Hashable, Codable, Sendable {
         default: .other
         }
     }
-    /// Containers Apple devices open as they are; other videos only play as a drive's transcoded copy.
+    /// Containers that play as the drive stores them: those AVPlayer opens, and those `Remux` repackages for it.
+    static func playsOriginal(_ name: String) -> Bool { playsNatively(name) || Remux.handles(name: name) }
+
+    /// Containers Apple devices open as they are.
     static func playsNatively(_ name: String) -> Bool {
         ["mp4", "m4v", "mov", "ts", "m2ts", "mts", "m3u8", "mp3", "m4a", "aac", "flac", "wav", "aif", "aiff"]
             .contains((name as NSString).pathExtension.lowercased())
@@ -57,12 +60,12 @@ public enum CloudFilesDrive: Hashable, Identifiable, Sendable {
         case .alist(let server): server.name
         }
     }
-    /// Whether `file` plays from this drive: Quark and UC also transcode videos in containers Apple
-    /// devices can't open, such as MKV; an AList server hands over the file as it is.
+    /// Whether `file` plays from this drive: Quark and UC also transcode videos in containers that don't play
+    /// as they are; an AList server hands over the file as it is.
     public func plays(_ file: CloudFile) -> Bool {
         switch self {
         case .quark, .uc: file.kind == .video || (file.kind == .audio && CloudFile.playsNatively(file.name))
-        case .alist: file.isPlayable && CloudFile.playsNatively(file.name)
+        case .alist: file.isPlayable && (CloudFile.playsNatively(file.name) || (file.kind == .video && CloudFile.playsOriginal(file.name)))
         }
     }
 

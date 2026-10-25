@@ -36,7 +36,8 @@ enum QALaunch {
         }
         guard section != nil || page != nil || UserDefaults.standard.string(forKey: "qaPlay") != nil
                 || UserDefaults.standard.string(forKey: "qaDownload") != nil
-                || UserDefaults.standard.string(forKey: "qaPlayLive") != nil else { return }
+                || UserDefaults.standard.string(forKey: "qaPlayLive") != nil
+                || UserDefaults.standard.string(forKey: "qaPlayURL") != nil else { return }
         if UserDefaults.standard.bool(forKey: "qaResetHistory") { store.playbackHistory.clear() }
         #if os(macOS)
         // `-qaWindowSnapshot <png> [-qaWindowSize 1230x830] [-qaSnapshotDelay 20]`: draws the main window into a PNG
@@ -91,6 +92,10 @@ enum QALaunch {
             if let room = parts.last, let url = URL(string: "\(platform.scheme)://room/\(room)") {
                 store.playing = Channel(name: "Live \(room)", group: platform.name, url: url)
             }
+        }
+        // `-qaPlayURL <address>` plays a media link as it is (an MKV on a local server, say).
+        if let address = UserDefaults.standard.string(forKey: "qaPlayURL"), let url = URL(string: address) {
+            store.playing = Channel(name: url.lastPathComponent, group: "QA", url: url)
         }
         // `-qaPlay <site key>:<video id>[:<episode index>]` opens that source's video in the player.
         if let target = UserDefaults.standard.string(forKey: "qaPlay"), let config = store.subscription {

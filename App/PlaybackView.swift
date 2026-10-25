@@ -347,8 +347,8 @@ import TVCore
             #if os(macOS)
             self.proxy = prepared.adapter
             #endif
-            // Drives keep originals as uploaded; Apple devices can't open MKV. Say so now, or switch
-            // to the drive's transcoded line, instead of letting AVPlayer fail with a vague error.
+            // Drives keep originals as uploaded. One that couldn't be repackaged for AVPlayer: say so now, or
+            // switch to the drive's transcoded line, instead of letting AVPlayer fail with a vague error.
             if prepared.matroska {
                 if let line = self.onUnplayableFile?() {
                     Diagnostics.shared.record(.warning, "player", "mkv original; switching to line=\(line)")
@@ -376,6 +376,8 @@ import TVCore
         #endif
         let item = makeItem(channel, url: url)
         watch(item, channel: channel, url: url, generation: activeGeneration)
+        // A repackaged file is served on this device's loopback, which an AirPlay receiver can't reach.
+        player.allowsExternalPlayback = !Remux.isRemuxed(url)
         player.preventsDisplaySleepDuringVideoPlayback = true
         player.replaceCurrentItem(with: item)
         if pendingResume == nil { player.play() }
@@ -517,7 +519,7 @@ import TVCore
         let now = Date()
         var next = Transfer(received: events.reduce(Int64(0)) { $0 + max(0, $1.numberOfBytesTransferred) })
         // A resource-loader stream's bytes never reach the access log.
-        let cloud = automatic.flatMap(CloudStreams.transfer(for:))
+        let cloud = automatic.flatMap { CloudStreams.transfer(for: $0) ?? Remux.transfer(for: $0) }
         if let cloud { next.received = max(next.received, cloud.received) }
         #if os(macOS)
         // HLS goes through the local proxy, which sees upstream bytes as they arrive.
@@ -553,7 +555,8 @@ import TVCore
         }
         transfer = next
         #if DEBUG
-        if QALaunch.page?.hasPrefix("play-source:") == true || QALaunch.page == "resume-last" || UserDefaults.standard.string(forKey: "qaPlay") != nil {
+        if QALaunch.page?.hasPrefix("play-source:") == true || QALaunch.page == "resume-last" || UserDefaults.standard.string(forKey: "qaPlay") != nil
+            || UserDefaults.standard.string(forKey: "qaPlayURL") != nil {
             let report: [String: Any] = ["seconds": position, "duration": duration, "ready": item.status == .readyToPlay,
                 "rate": player.rate, "error": error ?? "", "danmakuCount": danmaku.count,
                 "errorDetail": item.error.map(Self.describe) ?? "", "videoWidth": item.presentationSize.width, "videoHeight": item.presentationSize.height,
@@ -601,7 +604,7 @@ import TVCore
         upcomingAttempted = false; skipsToUpcoming = false; advanced = nil
         upcomingEpisode = nil; onAdvance = nil; playsOn = { false }; boost = nil
         if let url = playing?.url { HongguoStreams.stop(url) }
-        if let automatic { CloudStreams.stop(automatic) }
+        if let automatic { CloudStreams.stop(automatic); Remux.stop(automatic) }
         if playing != nil { ErrorReports.shared.stoppedPlaying() }
         playing = nil
         catalogDanmaku.clear()
@@ -686,7 +689,7 @@ extension PlaybackSession {
     /// saved download, and on the Mac through the local HLS adapter, which stops with the episode.
     fileprivate struct Prepared {
         var url: URL
-        /// A cloud drive's MKV original, which Apple devices can't open.
+        /// A cloud drive's original in a container AVPlayer can't open (MKV, AVI, ...) that couldn't be repackaged.
         var matroska = false
         /// Every byte passes through the plugin runtime.
         var pluginProxy = false
@@ -720,14 +723,20 @@ extension PlaybackSession {
             address = CloudStreams.register(media) { await EmbeddedJarHost.shared.directMedia(proxied) }
             prepared.url = address
             Diagnostics.shared.record(.info, "player", "cloud direct host=\(media.url.host() ?? "-") length=\(media.length)")
-            if await CloudStreams.isMatroska(address) {
-                try Task.checkCancellation()
-                prepared.matroska = true
-                return prepared
-            }
         } else if EmbeddedJarHost.isPluginProxy(address) {
             Diagnostics.shared.record(.warning, "player", "plugin proxy stream \(EmbeddedJarHost.proxyRoute(address))")
             prepared.pluginProxy = true
+        }
+        // MKV, AVI, FLV, WMV and RMVB from a drive play repackaged as HLS; AVPlayer opens none of them.
+        if address.scheme == CloudStreams.scheme, await CloudStreams.needsRemux(address) {
+            try Task.checkCancellation()
+            if let source = await CloudStreams.remuxSource(for: address), let url = await Self.remux(source, channel: channel) {
+                prepared.url = url
+                return prepared
+            }
+            try Task.checkCancellation()
+            prepared.matroska = true
+            return prepared
         }
         // A downloaded episode plays from disk: its file, or its HLS through a loopback server.
         if address.scheme == DownloadLibrary.scheme {
@@ -737,6 +746,24 @@ extension PlaybackSession {
                 throw error
             }
             prepared.url = address
+        }
+        // A link or saved file whose name says MKV and the like is repackaged too; when that fails AVPlayer
+        // tries it as it is.
+        if Remux.handles(name: address.lastPathComponent), ["http", "https", "file"].contains(address.scheme) {
+            let source: RemuxSource?
+            if address.isFileURL { source = try? Remux.fileSource(address) }
+            else {
+                do { source = try await Remux.httpSource(address, headers: channel.headers) }
+                catch {
+                    if !Task.isCancelled { Diagnostics.shared.failure("player", "remux link host=\(address.host() ?? "-")", error) }
+                    source = nil
+                }
+            }
+            try Task.checkCancellation()
+            if let source, let url = await Self.remux(source, channel: channel) {
+                prepared.url = url
+                return prepared
+            }
         }
         #if os(macOS)
         if address.pathExtension.lowercased() == "m3u8", ["http", "https"].contains(address.scheme), channel.url.scheme != DownloadLibrary.scheme {
@@ -752,8 +779,18 @@ extension PlaybackSession {
         return prepared
     }
 
-    /// The local HLS adapter of a stream that won't play after all.
+    /// The repackaged file's address, nil when FFmpeg can't read it.
+    fileprivate static func remux(_ source: RemuxSource, channel: Channel) async -> URL? {
+        do { return try await Remux.open(source) }
+        catch {
+            if !Task.isCancelled { Diagnostics.shared.failure("player", "remux source=\(channel.historyContext?.sourceKey ?? "-")", error) }
+            return nil
+        }
+    }
+
+    /// The local HLS adapter, or repackager, of a stream that won't play after all.
     fileprivate static func stopAdapter(_ prepared: Prepared) {
+        Remux.stop(prepared.url)
         #if os(macOS)
         if let adapter = prepared.adapter { Task { await adapter.stop() } }
         #endif
@@ -763,7 +800,8 @@ extension PlaybackSession {
 extension PlaybackSession {
     /// Near the end of an episode, resolves the next one and queues it behind this one, where it loads
     /// while this one finishes; the queue then plays it straight on. When it can't be queued (no next
-    /// episode, a plugin-proxied or MKV stream, a failure), the episode ends and switches as before.
+    /// episode, a plugin-proxied stream or an original that won't play, a failure), the episode ends and
+    /// switches as before.
     fileprivate func queueUpcomingIfDue(_ item: AVPlayerItem) {
         if upcoming != nil, looping || !playsOn() { return discardUpcoming() }
         guard !upcomingAttempted, !looping, !isLive, playsOn(), let upcomingEpisode, item.status == .readyToPlay,
@@ -848,7 +886,7 @@ extension PlaybackSession {
         Diagnostics.shared.record(.info, "player", "advance name=\(channel.name) ready=\(upcoming.item.status == .readyToPlay)")
         // Let go of the finished episode's stream; the queued one's becomes the session's.
         if let url = playing?.url { HongguoStreams.stop(url) }
-        if let automatic { CloudStreams.stop(automatic) }
+        if let automatic { CloudStreams.stop(automatic); Remux.stop(automatic) }
         #if os(macOS)
         if let proxy { Task { await proxy.stop() } }
         proxy = upcoming.prepared.adapter
@@ -864,6 +902,7 @@ extension PlaybackSession {
         begin(channel)
         loading = upcoming.item.status != .readyToPlay
         playing = channel; automatic = upcoming.prepared.url
+        player.allowsExternalPlayback = !Remux.isRemuxed(upcoming.prepared.url)
         qualities = BilibiliStreams.qualities(for: upcoming.prepared.url)
         watch(upcoming.item, channel: channel, url: upcoming.prepared.url, generation: activeGeneration)
         if DanmakuSource.has(channel.url) {
