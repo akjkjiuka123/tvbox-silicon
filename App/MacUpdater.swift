@@ -32,6 +32,7 @@ import TVCore
 
     @ObservationIgnored private var updater: SPUUpdater!
     @ObservationIgnored private let feed: URL
+    @ObservationIgnored private let defaults: UserDefaults
     /// Someone pressed Install: say yes to each of Sparkle's questions until the app relaunches.
     @ObservationIgnored private var installRequested = false
     @ObservationIgnored private var cancellation: (() -> Void)?
@@ -40,6 +41,10 @@ import TVCore
     /// Closes the release sheet: macOS doesn't quit an app while a sheet is open, so the relaunch waits for it.
     @ObservationIgnored var closeSheet: (() -> Void)?
     @ObservationIgnored private var terminationRetries = 0
+    /// Sparkle has told the installer to relaunch: from here on, quitting the app installs the update and reopens it.
+    @ObservationIgnored private var relaunching = false
+    @ObservationIgnored private var relaunchWatchdog: Task<Void, Never>?
+    private static let pendingKey = "pendingUpdateRelaunch"
 
     /// Nil in App Store builds, which the App Store updates, and in debug builds, whose update would replace
     /// the build in DerivedData (QA: `-qaAppcast <url>`).
@@ -47,19 +52,21 @@ import TVCore
         guard !Distribution.isAppStore else { return nil }
         #if DEBUG
         guard let value = defaults.string(forKey: "qaAppcast"), let url = URL(string: value) else { return nil }
-        let updater = MacUpdater(feed: url)
+        let updater = MacUpdater(feed: url, defaults: defaults)
         // `-qaInstallUpdate 1` presses Install and Relaunch a few seconds after launch.
         if defaults.bool(forKey: "qaInstallUpdate") { Task { try? await Task.sleep(for: .seconds(4)); updater.install() } }
         return updater
         #else
-        return MacUpdater(feed: ReleaseFeed.appcastAddress)
+        return MacUpdater(feed: ReleaseFeed.appcastAddress, defaults: defaults)
         #endif
     }
 
-    private init(feed: URL) {
+    private init(feed: URL, defaults: UserDefaults) {
         self.feed = feed
+        self.defaults = defaults
         automaticallyInstalls = true
         super.init()
+        reportLastRelaunch()
         updater = SPUUpdater(hostBundle: .main, applicationBundle: .main, userDriver: self, delegate: self)
         do { try updater.start() } catch {
             Diagnostics.shared.record(.warning, "updates", "Updater didn't start: \(error.localizedDescription)")
@@ -69,6 +76,7 @@ import TVCore
 
     /// Downloads the newest version if needed, installs it and relaunches.
     func install() {
+        Diagnostics.shared.record(.info, "updates", "Install pressed: phase=\(phase) downloaded=\(installNow != nil) canCheck=\(updater.canCheckForUpdates)")
         switch phase {
         case .checking, .downloading, .preparing, .installing: return
         case .idle, .ready, .failed: break
@@ -76,6 +84,7 @@ import TVCore
         installRequested = true
         if let installNow {
             phase = .installing
+            watchRelaunch()
             installNow()
             return
         }
@@ -113,6 +122,53 @@ import TVCore
             next = error.userInfo[NSUnderlyingErrorKey] as? NSError
         }
         return parts.joined(separator: " <- ")
+    }
+
+    /// Closes the release sheet, then any sheet still attached: macOS doesn't quit an app while one is open.
+    private func closeSheets() async {
+        closeSheet?()
+        try? await Task.sleep(for: .milliseconds(400))
+        for window in NSApp.windows { if let sheet = window.attachedSheet { window.endSheet(sheet) } }
+    }
+
+    /// What can keep the app from quitting, for the log.
+    private static func blockers() -> String {
+        let sheets = NSApp.windows.filter { $0.attachedSheet != nil }.count
+        let modal = NSApp.modalWindow.map { String(describing: type(of: $0)) } ?? "none"
+        return "windows=\(NSApp.windows.filter(\.isVisible).count) sheets=\(sheets) modal=\(modal)"
+    }
+
+    /// Sparkle asks the app to quit only once, and only its user-driver path says so (`showInstallingUpdate`); an
+    /// update downloaded in the background relaunches without telling. Should the app still be open, close what may
+    /// hold it and quit again; should it stay open, say so instead of leaving "Relaunching…" up for good (#122).
+    private func watchRelaunch() {
+        guard relaunchWatchdog == nil else { return }
+        relaunchWatchdog = Task { [weak self] in
+            try? await Task.sleep(for: .seconds(3))
+            guard let self, phase == .installing else { self?.relaunchWatchdog = nil; return }
+            Diagnostics.shared.record(.warning, "updates", "Still open 3 s after Relaunch: \(Self.blockers()) relaunching=\(relaunching)")
+            if relaunching {
+                await closeSheets()
+                NSApp.terminate(nil)
+            }
+            try? await Task.sleep(for: .seconds(9))
+            relaunchWatchdog = nil
+            guard phase == .installing else { return }
+            Diagnostics.shared.record(.error, "updates", "Relaunch to update stalled: still open 12 s after Relaunch: \(Self.blockers()) relaunching=\(relaunching)")
+            fail(L10n.text("Yingxia couldn't relaunch to finish the update. Quit Yingxia and open it again."))
+        }
+    }
+
+    /// Says how the last relaunch to update went, now that the app is open again: one that hung until someone
+    /// force-quit shows up as slow, or as the old version.
+    private func reportLastRelaunch() {
+        guard let data = defaults.data(forKey: Self.pendingKey) else { return }
+        defaults.removeObject(forKey: Self.pendingKey)
+        guard let pending = try? JSONDecoder().decode(PendingRelaunch.self, from: data) else { return }
+        let info = Bundle.main.infoDictionary
+        let outcome = pending.outcome(version: info?["CFBundleShortVersionString"] as? String ?? "?",
+                                      build: info?["CFBundleVersion"] as? String ?? "?")
+        Diagnostics.shared.record(outcome.level, "updates", outcome.message)
     }
 }
 
@@ -177,6 +233,7 @@ extension MacUpdater: SPUUserDriver {
     func showReady(toInstallAndRelaunch reply: @escaping (SPUUserUpdateChoice) -> Void) {
         if installRequested {
             phase = .installing
+            watchRelaunch()
             reply(.install)
         } else {
             // Installs on quit; Install later resumes it through checkForUpdates.
@@ -187,14 +244,14 @@ extension MacUpdater: SPUUserDriver {
 
     func showInstallingUpdate(withApplicationTerminated applicationTerminated: Bool, retryTerminatingApplication: @escaping () -> Void) {
         phase = .installing
-        // The app refused to quit, as it does while a sheet is open (the release sheet, where Install was pressed):
-        // close the sheets and ask again. Should something else keep it open, the update still goes in on quit.
+        Diagnostics.shared.record(.info, "updates", "Installing: terminated=\(applicationTerminated) \(Self.blockers())")
+        // Sparkle has just sent the quit request, which the app refuses while a sheet is open (the release sheet,
+        // where Install was pressed): close the sheets and ask again. Should something else keep it open, the
+        // watchdog asks once more and then says so; the update still goes in on quit.
         guard !applicationTerminated, terminationRetries < 3 else { return }
         terminationRetries += 1
-        closeSheet?()
         Task {
-            try? await Task.sleep(for: .milliseconds(400))
-            for window in NSApp.windows { if let sheet = window.attachedSheet { window.endSheet(sheet) } }
+            await closeSheets()
             retryTerminatingApplication()
         }
     }
@@ -209,6 +266,7 @@ extension MacUpdater: SPUUserDriver {
         cancellation = nil
         switch phase {
         case .checking, .downloading, .preparing, .installing:
+            Diagnostics.shared.record(.info, "updates", "Sparkle ended the update session during \(phase)")
             installRequested = false
             phase = .idle
         case .idle, .ready, .failed: break
@@ -226,6 +284,7 @@ extension MacUpdater: SPUUpdaterDelegate {
         cancellation = nil
         if installRequested {
             phase = .installing
+            watchRelaunch()
             Task { immediateInstallHandler() }
         } else {
             phase = .ready
@@ -234,10 +293,28 @@ extension MacUpdater: SPUUpdaterDelegate {
         return true
     }
 
+    /// Sparkle is about to ask the installer to relaunch, on both paths (Install and Relaunch, and Relaunch to Update
+    /// after a background download). Close the sheets now, so the quit request that follows finds none, and note
+    /// the update so the next launch can say how it went.
+    func updater(_ updater: SPUUpdater, willInstallUpdate item: SUAppcastItem) {
+        let info = Bundle.main.infoDictionary
+        let pending = PendingRelaunch(from: info?["CFBundleShortVersionString"] as? String ?? "?", to: item.displayVersionString,
+                                      build: item.versionString, requested: Date())
+        defaults.set(try? JSONEncoder().encode(pending), forKey: Self.pendingKey)
+        Diagnostics.shared.record(.info, "updates", "Relaunching to install \(item.displayVersionString): \(Self.blockers())")
+        relaunching = true
+        phase = .installing
+        watchRelaunch()
+        Task { await closeSheets() }
+    }
+
     /// A check or download that ended without telling the user driver, such as the background download Install was
     /// waiting for (Sparkle doesn't start a second session while one runs).
     func updater(_ updater: SPUUpdater, didAbortWithError error: any Error) {
-        guard installRequested else { return }
+        guard installRequested else {
+            Diagnostics.shared.record(.info, "updates", "Update session ended: \(Self.detail(error))")
+            return
+        }
         fail(L10n.text("The update couldn't be installed: %@", error.localizedDescription), error)
     }
 }

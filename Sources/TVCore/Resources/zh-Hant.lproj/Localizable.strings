@@ -443,6 +443,7 @@
 "Download Manually" = "手動下載";
 "The update couldn't be installed: %@" = "無法安裝更新：%@";
 "This update can't be installed from within Yingxia yet. Download it instead." = "暫時無法在映匣內安裝此更新，請手動下載。";
+"Yingxia couldn't relaunch to finish the update. Quit Yingxia and open it again." = "映匣未能重新開啟以完成更新。請結束映匣後再開啟。";
 "Install Updates Automatically" = "自動安裝更新";
 "Yingxia downloads updates in the background and installs them the next time it quits." = "映匣會在背景下載更新，並在下次結束時安裝。";
 "Continue" = "繼續";

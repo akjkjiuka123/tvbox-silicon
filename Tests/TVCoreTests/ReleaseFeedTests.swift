@@ -158,3 +158,27 @@ private func release(_ version: String, build: Int? = nil, platforms: [String] =
 private extension ReleaseFeed {
     func release(_ version: String) -> Release { releases.first { AppVersion($0.version) == AppVersion(version) }! }
 }
+
+@Test func pendingRelaunchReportsSlowAndMissedUpdates() throws {
+    let requested = Date(timeIntervalSince1970: 1_000_000)
+    let pending = PendingRelaunch(from: "1.7.12", to: "1.7.13", build: "32", requested: requested)
+    let decoded = try JSONDecoder().decode(PendingRelaunch.self, from: JSONEncoder().encode(pending))
+    #expect(decoded == pending)
+
+    let quick = pending.outcome(version: "1.7.13", build: "32", now: requested.addingTimeInterval(9))
+    #expect(quick.level == .info)
+    #expect(quick.message == "Updated from 1.7.12 to 1.7.13; relaunched in 9 s")
+    // Someone had to force-quit: the update went in, but long after Relaunch.
+    let slow = pending.outcome(version: "1.7.13", build: "32", now: requested.addingTimeInterval(PendingRelaunch.slow + 30))
+    #expect(slow.level == .error)
+    #expect(slow.message.contains("took 90 s"))
+    let missed = pending.outcome(version: "1.7.12", build: "31", now: requested.addingTimeInterval(20))
+    #expect(missed.level == .error)
+    #expect(missed.message == "Update to 1.7.13 (32) didn't install: opened 1.7.12 (31) 20 s after Relaunch")
+}
+
+@Test func relaunchFailureIsTranslated() {
+    let key = "Yingxia couldn't relaunch to finish the update. Quit Yingxia and open it again."
+    #expect(L10n.text(key, language: "en") == key)
+    for language in L10n.supportedLanguages where language != "en" { #expect(L10n.text(key, language: language) != key) }
+}
