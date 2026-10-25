@@ -108,7 +108,12 @@ EOF
 
   if [ $UPLOAD = 1 ]; then
     echo "== $platform: upload"
-    xcrun altool --upload-app --type "$type" -f "$ipa" --apiKey "$KEY_ID" --apiIssuer "$ISSUER" >"$OUT/$platform-upload.log" 2>&1 || true
+    # The App Store app IDs (as in testflight-publish.py): without them altool guesses the bundle ID and can
+    # pick an embedded Python module framework instead of the app. With --apple-id it also needs the bundle
+    # ID and versions, or it assumes 1.0 (1).
+    case $platform in iOS) apple_id=6825717102 ;; tvOS) apple_id=6825717931 ;; esac
+    xcrun altool --upload-app --type "$type" -f "$ipa" --apple-id "$apple_id" \
+      --bundle-id "$bundle" --bundle-version "$BUILD" --bundle-short-version-string "$TESTFLIGHT_VERSION" --apiKey "$KEY_ID" --apiIssuer "$ISSUER" >"$OUT/$platform-upload.log" 2>&1 || true
     grep -q "UPLOAD SUCCEEDED" "$OUT/$platform-upload.log" || { cat "$OUT/$platform-upload.log"; exit 1; }
   fi
 done
