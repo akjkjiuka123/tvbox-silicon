@@ -1,6 +1,135 @@
 {
   "releases": [
     {
+      "version": "1.8.0",
+      "build": 34,
+      "date": "2026-10-26",
+      "links": {
+        "macos": "https://download.getmegaportal.com/yingxia/1.8.0/Yingxia-1.8.0-macos-arm64.dmg",
+        "macos-x86_64": "https://download.getmegaportal.com/yingxia/1.8.0/Yingxia-1.8.0-macos-x86_64.dmg",
+        "ios": "https://yingxia.getmegaportal.com/#install-ios",
+        "tvos": "https://yingxia.getmegaportal.com/#install-tv"
+      },
+      "features": [
+        {
+          "symbol": "film",
+          "title": {
+            "en": "Plays MKV and more",
+            "zh-Hans": "支持 MKV 等更多格式",
+            "zh-Hant": "支援 MKV 等更多格式",
+            "ja": "MKV などにも対応"
+          },
+          "detail": {
+            "en": "Yingxia now plays MKV, WebM, AVI, FLV, WMV, RMVB and MPEG files, from cloud drives and from web addresses. Subtitles, speed, Picture in Picture and resume work as usual.",
+            "zh-Hans": "映匣现在可以播放 MKV、WebM、AVI、FLV、WMV、RMVB 和 MPEG 文件，无论来自网盘还是网址。字幕、倍速、画中画和续播照常可用。",
+            "zh-Hant": "映匣現在可以播放 MKV、WebM、AVI、FLV、WMV、RMVB 和 MPEG 檔案，無論來自雲端硬碟還是網址。字幕、倍速、子母畫面和續播照常可用。",
+            "ja": "映匣で MKV、WebM、AVI、FLV、WMV、RMVB、MPEG ファイルを再生できるようになりました。クラウドドライブのファイルも URL のファイルも対象です。字幕、再生速度、ピクチャ・イン・ピクチャ、続きから再生もこれまでどおり使えます。"
+          }
+        },
+        {
+          "symbol": "chevron.left.forwardslash.chevron.right",
+          "title": {
+            "en": "Python sources everywhere",
+            "zh-Hans": "Python 点播源全平台可用",
+            "zh-Hant": "Python 隨選來源全平台可用",
+            "ja": "Python ソースがどこでも動作"
+          },
+          "detail": {
+            "en": "Sources written in Python now run on iPhone, iPad and Apple TV, not only on the Mac, including ones that use lxml or pycryptodome.",
+            "zh-Hans": "用 Python 编写的点播源现在也能在 iPhone、iPad 和 Apple TV 上运行，不再只限于 Mac，使用 lxml 或 pycryptodome 的点播源也可以。",
+            "zh-Hant": "以 Python 撰寫的隨選來源現在也能在 iPhone、iPad 和 Apple TV 上執行，不再只限於 Mac，使用 lxml 或 pycryptodome 的隨選來源也可以。",
+            "ja": "Python で書かれたソースが Mac だけでなく iPhone、iPad、Apple TV でも動くようになりました。lxml や pycryptodome を使うソースにも対応しています。"
+          },
+          "platforms": [
+            "ios",
+            "tvos"
+          ]
+        },
+        {
+          "symbol": "eye",
+          "title": {
+            "en": "Sources no longer disappear",
+            "zh-Hans": "点播源不再消失",
+            "zh-Hant": "隨選來源不再消失",
+            "ja": "ソースが消えなくなりました"
+          },
+          "detail": {
+            "en": "1.7.13 hid a source after it failed twice, and it never came back. Yingxia no longer hides sources by itself, and the ones it hid are shown again. A failing source is skipped in search for a while; Retry failed sources asks it again.",
+            "zh-Hans": "1.7.13 会在点播源连续失败两次后将其隐藏，而且之后不会再显示。现在映匣不会再自动隐藏点播源，之前被自动隐藏的也会重新显示。失败的点播源会在搜索中暂时跳过；点按“重试失败来源”可以再次搜索它。",
+            "zh-Hant": "1.7.13 會在隨選來源連續失敗兩次後將其隱藏，而且之後不會再顯示。現在映匣不會再自動隱藏隨選來源，之前被自動隱藏的也會重新顯示。失敗的隨選來源會在搜尋中暫時略過；點按「重試失敗來源」可以再次搜尋它。",
+            "ja": "1.7.13 では 2 回続けて失敗したソースが非表示になり、元に戻りませんでした。映匣が自動でソースを非表示にすることはなくなり、非表示にされていたソースも再び表示されます。失敗が続くソースは検索でしばらくスキップされ、「失敗したソースを再検索」で再び検索できます。"
+          }
+        },
+        {
+          "symbol": "bolt.horizontal",
+          "title": {
+            "en": "Hongguo loads more reliably",
+            "zh-Hans": "红果短剧更稳定",
+            "zh-Hant": "紅果短劇更穩定",
+            "ja": "Hongguo がより安定"
+          },
+          "detail": {
+            "en": "When Hongguo's site stalls, Yingxia tries a fresh connection after two seconds, so pages load instead of ending in a connection error. Episodes that only offer a 10-second preview are skipped, and playback can move to a backup server.",
+            "zh-Hans": "红果短剧网站卡住时，映匣会在两秒后改用新的连接重试，页面能正常载入，而不是显示“暂时无法连接红果”。只提供 10 秒预览的剧集会被跳过，播放时也可以切换到备用服务器。",
+            "zh-Hant": "紅果短劇網站卡住時，映匣會在兩秒後改用新的連線重試，頁面能正常載入，而不是顯示「暫時無法連接紅果」。只提供 10 秒預覽的劇集會被略過，播放時也可以切換到備用伺服器。",
+            "ja": "Hongguo のサイトが応答しなくなっても、映匣は 2 秒後に新しい接続で再試行するので、接続エラーで終わらずにページが読み込まれます。10 秒のプレビューしかないエピソードはスキップし、再生時に予備のサーバへ切り替えることもできます。"
+          }
+        },
+        {
+          "symbol": "forward.end",
+          "title": {
+            "en": "Episode buttons out of the way",
+            "zh-Hans": "选集按钮不再误触",
+            "zh-Hant": "選集按鈕不再誤觸",
+            "ja": "エピソードボタンを押し間違えない"
+          },
+          "detail": {
+            "en": "On iPhone and iPad, Previous and Next Episode now sit beside the time above the seek bar, so a tap past +10 seconds no longer switches the episode.",
+            "zh-Hans": "在 iPhone 和 iPad 上，“上一集”和“下一集”移到了进度条上方的时间旁边，点按“+10 秒”时不会再误切换剧集。",
+            "zh-Hant": "在 iPhone 和 iPad 上，「上一集」和「下一集」移到了進度列上方的時間旁邊，點按「+10 秒」時不會再誤切換劇集。",
+            "ja": "iPhone と iPad では「前のエピソード」と「次のエピソード」がシークバー上の時間の横に移動し、「+10 秒」の押し間違いでエピソードが切り替わらなくなりました。"
+          },
+          "platforms": [
+            "ios"
+          ]
+        },
+        {
+          "symbol": "rectangle.stack",
+          "title": {
+            "en": "A roomier video page",
+            "zh-Hans": "更舒展的影片页面",
+            "zh-Hant": "更舒展的影片頁面",
+            "ja": "ゆったりした作品ページ"
+          },
+          "detail": {
+            "en": "On the Mac and iPad, a video's page opens with a wide banner holding the cover, title and buttons, then the synopsis and episodes. Wide covers are no longer cropped, and long episode names are no longer cut short.",
+            "zh-Hans": "在 Mac 和 iPad 上，影片页面顶部是一条宽横幅，包含封面、标题和按钮，下方依次是简介和剧集。横版封面不再被裁切，较长的剧集名称也不再被截断。",
+            "zh-Hant": "在 Mac 和 iPad 上，影片頁面頂部是一條寬橫幅，包含封面、標題和按鈕，下方依序是簡介和劇集。橫式封面不再被裁切，較長的劇集名稱也不再被截斷。",
+            "ja": "Mac と iPad の作品ページは、カバー、タイトル、ボタンを並べた横長のバナーで始まり、その下にあらすじとエピソードが続きます。横長のカバーが切り取られず、長いエピソード名も途中で切れなくなりました。"
+          },
+          "platforms": [
+            "ios",
+            "macos"
+          ]
+        },
+        {
+          "symbol": "wrench.and.screwdriver",
+          "title": {
+            "en": "Other fixes",
+            "zh-Hans": "其他修复",
+            "zh-Hant": "其他修正",
+            "ja": "その他の修正"
+          },
+          "detail": {
+            "en": "Groups on the Sources page start open, and Python sources behind short links now run.",
+            "zh-Hans": "“点播源”页面中的分组默认展开；通过短链接提供的 Python 点播源现在也能运行。",
+            "zh-Hant": "「隨選來源」頁面中的群組預設展開；透過短網址提供的 Python 隨選來源現在也能執行。",
+            "ja": "「配信ソース」ページのグループは最初から開いた状態になり、短縮 URL の Python ソースも動くようになりました。"
+          }
+        }
+      ]
+    },
+    {
       "version": "1.7.13",
       "build": 32,
       "date": "2026-10-25",
@@ -2352,11 +2481,11 @@
   ],
   "testflight": {
     "ios": {
-      "build": 31,
+      "build": 32,
       "link": "https://testflight.apple.com/join/dU6UNbzp"
     },
     "tvos": {
-      "build": 31,
+      "build": 32,
       "link": "https://testflight.apple.com/join/SSgWEwSr"
     }
   }
