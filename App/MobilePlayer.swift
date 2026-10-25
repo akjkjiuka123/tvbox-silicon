@@ -306,9 +306,9 @@ struct MobilePlayerView: View {
                         .frame(width: 200)
                         .clipShape(RoundedRectangle(cornerRadius: 10))
                 }
-                Text(SeekBar.format(target) + " / " + SeekBar.format(clock.duration))
+                Text(SeekBar<EmptyView>.format(target) + " / " + SeekBar<EmptyView>.format(clock.duration))
                     .font(.title3.weight(.semibold).monospacedDigit())
-                Text((moved < 0 ? "\u{2212}" : "+") + SeekBar.format(abs(moved)))
+                Text((moved < 0 ? "\u{2212}" : "+") + SeekBar<EmptyView>.format(abs(moved)))
                     .font(.subheadline.monospacedDigit()).foregroundStyle(.white.opacity(0.75))
             }
             .foregroundStyle(.white)
@@ -542,18 +542,7 @@ struct MobilePlayerView: View {
     // MARK: Middle and bottom
 
     private var centerRow: some View {
-        let previous = store.step(back: true, from: channel, session: session)
-        let next = store.step(back: false, from: channel, session: session)
-        return HStack(spacing: 20) {
-            if let previous {
-                Button { previous.go() } label: { Image(systemName: "backward.end.fill") }
-                    .buttonStyle(PlayerCircleStyle(size: 44))
-                    .disabled(previous.busy)
-                    .accessibilityLabel(L10n.text("Previous Episode"))
-            } else if next != nil {
-                // The first episode: keep play in the middle.
-                Color.clear.frame(width: 44, height: 44)
-            }
+        HStack(spacing: 20) {
             if seekable {
                 Button { session.skip(-10); sought() } label: { Image(systemName: "gobackward.10") }
                     .buttonStyle(PlayerCircleStyle(size: 52))
@@ -571,17 +560,32 @@ struct MobilePlayerView: View {
                     .buttonStyle(PlayerCircleStyle(size: 52))
                     .accessibilityLabel(L10n.text("Forward 10 seconds"))
             }
-            if let next {
-                Button { next.go() } label: { Image(systemName: "forward.end.fill") }
-                    .buttonStyle(PlayerCircleStyle(size: 44))
-                    .disabled(next.busy)
-                    .accessibilityLabel(L10n.text("Next Episode"))
-            } else if previous != nil {
-                // The last episode: keep play in the middle.
-                Color.clear.frame(width: 44, height: 44)
-            }
         }
         .simultaneousGesture(TapGesture().onEnded { poke() })
+    }
+
+    /// Previous and Next Episode, small and at the right of the time above the seek bar. Beside ±10 and play, a tap
+    /// that ran past +10 out of habit changed the episode.
+    @ViewBuilder private var stepButtons: some View {
+        let previous = store.step(back: true, from: channel, session: session)
+        let next = store.step(back: false, from: channel, session: session)
+        if previous != nil || next != nil {
+            HStack(spacing: 10) {
+                if let previous {
+                    Button { previous.go() } label: { Image(systemName: "backward.end.fill") }
+                        .buttonStyle(PlayerCircleStyle(size: 36))
+                        .disabled(previous.busy)
+                        .accessibilityLabel(L10n.text("Previous Episode"))
+                }
+                if let next {
+                    Button { next.go() } label: { Image(systemName: "forward.end.fill") }
+                        .buttonStyle(PlayerCircleStyle(size: 36))
+                        .disabled(next.busy)
+                        .accessibilityLabel(L10n.text("Next Episode"))
+                }
+            }
+            .simultaneousGesture(TapGesture().onEnded { poke() })
+        }
     }
 
     @ViewBuilder private var bottomRow: some View {
@@ -591,10 +595,16 @@ struct MobilePlayerView: View {
                     .padding(.horizontal, 10).padding(.vertical, 5)
                     .background(.red, in: Capsule())
                 Spacer(minLength: 0)
+                stepButtons
             }
         } else if session.hasTimeline {
             // Dragging holds the controls up itself (`hold`); a tap gesture here would compete with the scrubber's drag.
-            SeekBar(clock: clock, moving: chromeVisible && !session.paused, hold: hold, sought: sought)
+            SeekBar(clock: clock, moving: chromeVisible && !session.paused, hold: hold, sought: sought) { stepButtons }
+        } else {
+            HStack {
+                Spacer(minLength: 0)
+                stepButtons
+            }
         }
     }
 
@@ -620,12 +630,16 @@ struct MobilePlayerView: View {
 /// scrubbing as in Telegram's: while dragged, only the bar, the time and a frame from that point (above the handle)
 /// follow the finger, and the video seeks once, when the finger lifts. Seeking the playing video along with the finger
 /// left it stuttering behind. A view of its own, so only it redraws as the position moves.
-private struct SeekBar: View {
+private struct SeekBar<Accessory: View>: View {
+    /// The height of the time's row, which the accessory shares: the episode buttons are 36 points round.
+    static var timeRow: CGFloat { 36 }
     let clock: PlayerClock
     /// Playing with the controls showing: the bar follows the player every frame.
     let moving: Bool
     let hold: (Bool) -> Void
     let sought: () -> Void
+    /// At the right of the time: the episode buttons.
+    @ViewBuilder let accessory: () -> Accessory
     /// Where a drag began: the position then and the finger's start. The handle moves by as much as the finger does
     /// (Telegram), rather than jumping under it; a touch away from the handle puts it there first.
     @State private var drag: (position: Double, location: CGPoint)?
@@ -639,6 +653,12 @@ private struct SeekBar: View {
         TimelineView(.animation(paused: !follows)) { _ in
             bar(clock.scrubbing ?? (follows ? clock.currentPosition : clock.position))
         }
+        // Outside the bar, which is one accessibility element. Gone while scrubbing, when the time grows with the
+        // scrubbing speed's label and the finger is there to scrub.
+        .overlay(alignment: .topTrailing) {
+            if drag == nil { accessory().frame(height: Self.timeRow).transition(.opacity) }
+        }
+        .animation(.easeOut(duration: 0.15), value: drag == nil)
         .sensoryFeedback(.selection, trigger: fineness)
     }
 
@@ -655,6 +675,7 @@ private struct SeekBar: View {
             .font(.footnote.monospacedDigit().weight(.medium))
             .padding(.horizontal, 10).padding(.vertical, 5)
             .glassSurface(.regular, in: Capsule())
+            .frame(height: Self.timeRow)
             .accessibilityHidden(true)
             ZStack(alignment: .leading) {
                 Capsule().fill(.white.opacity(0.3)).frame(height: held ? 6 : 4)
