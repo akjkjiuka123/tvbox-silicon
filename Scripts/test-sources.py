@@ -25,7 +25,7 @@ parser.add_argument('--workers', type=int, default=4)
 parser.add_argument('--only', action='append', help='Test sources containing this text (repeat for multiple matches)')
 parser.add_argument('--runtime', action='append', choices=['api', 'javascript', 'python', 'jar'], help='Test sources that run in this runtime (repeatable)')
 parser.add_argument('--output', default=OUT, help='Directory for results and per-request evidence')
-parser.add_argument('--apple-simulator', metavar='UDID', help='Run JAR sources in the SourceSweep app on this booted simulator (Scripts/build-apple-source-sweep.sh), i.e. on the embedded Apple runtime')
+parser.add_argument('--apple-simulator', metavar='UDID', help='Run JAR and Python sources in the SourceSweep app on this booted simulator (Scripts/build-apple-source-sweep.sh), i.e. on the embedded Apple runtimes')
 args = parser.parse_args()
 workers, only, SUB, OUT = args.workers, args.only, args.subscription, os.path.abspath(args.output)
 if workers < 1:
@@ -198,12 +198,19 @@ class JarSession:
 
 
 class AppleSimulatorSession(JarSession):
-    """JarSession over the SourceSweep app: the same input EmbeddedJarHost sends, on Apple's runtime."""
+    """JarSession over the SourceSweep app: the same input EmbeddedJarHost (or EmbeddedPythonHost)
+    sends, on Apple's runtimes."""
     def __init__(self, site, jar, base=None):
         import hashlib
         self.site = site
         self.container = subprocess.check_output(['xcrun', 'simctl', 'get_app_container', args.apple_simulator, 'com.tvbox.yingxia.SourceSweep', 'data'], text=True).strip() + '/Library/Caches'
         self.sweep = self.container + '/sweep'
+        self.log_path = self.sweep + '/stdout.log'
+        self.offset = os.path.getsize(self.log_path) if os.path.exists(self.log_path) else 0
+        self.prefix = ''
+        if runtime(site) == 'python':
+            self.python(site, base)
+            return
         root = self.container + '/com.tvbox.yingxia/EmbeddedPlugins'
         data = open(jar, 'rb').read()
         digest = hashlib.sha256(data).hexdigest()
@@ -218,13 +225,35 @@ class AppleSimulatorSession(JarSession):
                       'cache': root + '/' + key, 'conversionCache': root + '/Converted', 'profile': root + '/' + key + '/profile',
                       'api': site['api'], 'key': site['key'], 'ext': ext}
         os.makedirs(self.input['cache'], exist_ok=True)
-        self.log_path = self.sweep + '/stdout.log'
-        self.offset = os.path.getsize(self.log_path) if os.path.exists(self.log_path) else 0
+
+    def python(self, site, base):
+        import hashlib
+        from urllib.parse import urljoin
+        ext = site.get('ext', '')
+        legacy = site['api'].startswith('py_')
+        api = urllib.parse.quote(urljoin(base, ext if legacy else site['api']), safe=':/?&=%#+$,;@')
+        try:
+            data, _ = http_get(api)
+        except Exception as error:
+            raise Failure('script download failed: %s' % error)
+        digest = hashlib.sha256(data).hexdigest()
+        root = self.container + '/com.tvbox.yingxia/EmbeddedPython'
+        script = root + '/Scripts/' + digest + '.py'
+        os.makedirs(root + '/Scripts', exist_ok=True)
+        if not os.path.exists(script):
+            open(script + '.tmp', 'wb').write(data); os.replace(script + '.tmp', script)
+        if legacy: ext = ''
+        elif not isinstance(ext, str): ext = json.dumps(ext, ensure_ascii=False, separators=(',', ':'))
+        key = hashlib.sha256((site['key'] + SUB).encode()).hexdigest()
+        self.prefix = 'py-'
+        self.input = {'session': key + '-' + digest, 'script': script, 'cache': root + '/Sessions/' + key + '-' + digest,
+                      'profile': root + '/Profiles/' + key, 'api': api, 'key': site['key'], 'ext': ext}
+        os.makedirs(self.input['cache'], exist_ok=True)
 
     def once(self, params):
         # Guarded plugins prepare on first use: allow the app's patience, not the desktop 60 s.
         deadline = time.monotonic() + 240
-        ident = str(uuid.uuid4())
+        ident = self.prefix + str(uuid.uuid4())
         request = dict(self.input, params=params)
         inbox = self.sweep + '/inbox/' + ident + '.json'
         open(inbox + '.tmp', 'w').write(json.dumps(request, ensure_ascii=False)); os.replace(inbox + '.tmp', inbox)
@@ -298,7 +327,7 @@ def test_site(site, base, jar):
     session = None
     stage = 'home'
     try:
-        if csp: session = (AppleSimulatorSession if args.apple_simulator and runtime(site) == 'jar' else JarSession)(site, jar, base)
+        if csp: session = (AppleSimulatorSession if args.apple_simulator and runtime(site) in ('jar', 'python') else JarSession)(site, jar, base)
         call = (lambda p: run_http(site, base, p)) if native else session.request
         try:
             home = call({'filter': 'true'} if site.get('type') == 4 else {})

@@ -17,6 +17,7 @@ extension Site {
         }
         #elseif os(iOS) || os(tvOS)
         if runtime == .javascript { return ScriptRuntime.available }
+        if runtime == .python { return EmbeddedPythonHost.available }
         return runtime == .jar && EmbeddedJarHost.available && (jarURL != nil || raw["jar"]?.string?.isEmpty == false)
         #else
         return false

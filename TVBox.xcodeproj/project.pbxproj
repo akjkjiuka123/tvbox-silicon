@@ -15,6 +15,7 @@
 		089C2D01F3B95CB1738D9AD9 /* PlaybackView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6876ACF1E9D9F80BBC4F22C4 /* PlaybackView.swift */; };
 		090916F463B64788E8F69468 /* Updates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D706229ED242AE96AE52F8 /* Updates.swift */; };
 		0AF3C56A9798DD0C68EC63D8 /* QALaunch.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8B842401113B0BDFA7B532B4 /* QALaunch.swift */; };
+		0BAEA44063C146779B061BB1 /* ApplePython.c in Sources */ = {isa = PBXBuildFile; fileRef = E740CFD276F4B76892EB0AF1 /* ApplePython.c */; };
 		0C95000B36C5B15AF33D6C8C /* Capstone.txt in Resources */ = {isa = PBXBuildFile; fileRef = E84A48E8E87E4B3CC3DCDA8C /* Capstone.txt */; };
 		1050D617A22F09CD0A01DE66 /* GlassKit.swift in Sources */ = {isa = PBXBuildFile; fileRef = 739A64FB51780D4314D2DDF8 /* GlassKit.swift */; };
 		13A266A0565733CC2C7A66E6 /* Updates.swift in Sources */ = {isa = PBXBuildFile; fileRef = 90D706229ED242AE96AE52F8 /* Updates.swift */; };
@@ -172,6 +173,7 @@
 		B46BA76AB9687CE1727B05D9 /* unidbg.txt in Resources */ = {isa = PBXBuildFile; fileRef = 995F5F0DB35FE66B4F90B4FF /* unidbg.txt */; };
 		B5B9BEFC49D2638D3A92F9C0 /* MusicNowPlayingScreen.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2B0131105AAF88C36366936A /* MusicNowPlayingScreen.swift */; };
 		B5DCC83D47D5AEB70A55028D /* RuntimeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2075419FEF0E1C161A31A9F0 /* RuntimeView.swift */; };
+		B7C3291A656E2548E80F1E4B /* ApplePython.c in Sources */ = {isa = PBXBuildFile; fileRef = E740CFD276F4B76892EB0AF1 /* ApplePython.c */; };
 		B85FBE9366F3D7487A517779 /* MusicView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 235375CC2420B76124FCEBC2 /* MusicView.swift */; };
 		BA97CE75C2E0DF21635E17EA /* CloudFilesView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4A0D2EAF4F07329DAB40B97D /* CloudFilesView.swift */; };
 		BB4A23786D789829360C242B /* TVBoxApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 8A2BB58B1720E9D6D85F93F4 /* TVBoxApp.swift */; };
@@ -314,6 +316,7 @@
 		DF5CB8DD12A92056BFD50444 /* MusicMacMiniPlayer.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MusicMacMiniPlayer.swift; sourceTree = "<group>"; };
 		E0A2914C1B5B5ABA5F4B25A7 /* BilibiliMark.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = BilibiliMark.swift; sourceTree = "<group>"; };
 		E19FE970E68D278C15E8DBF8 /* runtime-probe.jar */ = {isa = PBXFileReference; lastKnownFileType = archive.jar; path = "runtime-probe.jar"; sourceTree = "<group>"; };
+		E740CFD276F4B76892EB0AF1 /* ApplePython.c */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.c; path = ApplePython.c; sourceTree = "<group>"; };
 		E78573DE76BCF27CABBB20F3 /* CloudQRLoginView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudQRLoginView.swift; sourceTree = "<group>"; };
 		E84A48E8E87E4B3CC3DCDA8C /* Capstone.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = Capstone.txt; sourceTree = "<group>"; };
 		E9129983B00A1F634A9D91FA /* zh-Hans */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = "zh-Hans"; path = "zh-Hans.lproj/InfoPlist.strings"; sourceTree = "<group>"; };
@@ -392,6 +395,7 @@
 		3481683B30DDE3C81FFF2FF1 /* Native */ = {
 			isa = PBXGroup;
 			children = (
+				E740CFD276F4B76892EB0AF1 /* ApplePython.c */,
 				FFE4BA19E4F4F2797D929A6F /* AppleRuntime.m */,
 			);
 			name = Native;
@@ -546,6 +550,7 @@
 				AEDE346CFFADBAE2169B12A1 /* Resources */,
 				E94BC2A1C955B6F2E58D19BE /* Frameworks */,
 				A4DF47F9E069B67C04C29D12 /* Embed on-device Java runtime */,
+				FB29E2847532CCC69739F578 /* Embed on-device Python runtime */,
 			);
 			buildRules = (
 			);
@@ -589,6 +594,7 @@
 				28C5970E177A56CF0613AE10 /* Resources */,
 				42CF7C28FA76A27C0C01C499 /* Frameworks */,
 				539926191BD98FAA6485B217 /* Embed on-device Java runtime */,
+				E70A0A00C0021120BA15D9D3 /* Embed on-device Python runtime */,
 			);
 			buildRules = (
 			);
@@ -797,6 +803,44 @@
 			shellPath = /bin/sh;
 			shellScript = "set -eu\nRUNTIME=\"$SRCROOT/build/AppleRuntime/$PLATFORM_NAME\"\ntest -f \"$RUNTIME/lib/libTVAppleRuntime.a\"\n\"$SRCROOT/Scripts/check-java-host.sh\" \"$RUNTIME/Resources/JavaHost/host.jar\"\nrsync -a --delete \"$RUNTIME/Resources/lib/\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/lib/\"\nrsync -a --delete \"$RUNTIME/Resources/JavaHost/\" \"$TARGET_BUILD_DIR/$UNLOCALIZED_RESOURCES_FOLDER_PATH/JavaHost/\"\n";
 		};
+		E70A0A00C0021120BA15D9D3 /* Embed on-device Python runtime */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed on-device Python runtime";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/Scripts/embed-apple-python.sh\"";
+		};
+		FB29E2847532CCC69739F578 /* Embed on-device Python runtime */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Embed on-device Python runtime";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "\"$SRCROOT/Scripts/embed-apple-python.sh\"";
+		};
 /* End PBXShellScriptBuildPhase section */
 
 /* Begin PBXSourcesBuildPhase section */
@@ -805,6 +849,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				8A685170BCEDE3AE50C538DA /* Announcements.swift in Sources */,
+				0BAEA44063C146779B061BB1 /* ApplePython.c in Sources */,
 				36506AEA4D6F2E1541C1BCD1 /* AppleRuntime.m in Sources */,
 				F2F68C26F3FB2279B102CF52 /* BilibiliAccountView.swift in Sources */,
 				4FF55220DBC7080B2E95C5A8 /* BilibiliCastController.swift in Sources */,
@@ -930,6 +975,7 @@
 			buildActionMask = 2147483647;
 			files = (
 				D54D6BFE675267FF2D16FC49 /* Announcements.swift in Sources */,
+				B7C3291A656E2548E80F1E4B /* ApplePython.c in Sources */,
 				FD9721B84A06B25F362AF291 /* AppleRuntime.m in Sources */,
 				197B66B980AC69849F199D41 /* BilibiliAccountView.swift in Sources */,
 				BFCFF64AE36615F3BAE33874 /* BilibiliCastController.swift in Sources */,
