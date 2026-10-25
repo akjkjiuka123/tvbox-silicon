@@ -8,7 +8,7 @@ const T: Record<string, Row> = {
   // Boot and outro
   "All your sources. One big screen.": ["すべてのソースを、ひとつの大画面で。", "모든 소스를, 하나의 큰 화면에서.", "所有片源，盡在大螢幕。"],
   "A native TVBox player for Apple TV": ["Apple TV のためのネイティブ TVBox プレーヤー", "Apple TV를 위한 네이티브 TVBox 플레이어", "為 Apple TV 打造的原生 TVBox 播放器"],
-  "iPhone & iPad · iOS 18": ["iPhone・iPad · iOS 18", "iPhone 및 iPad · iOS 18", "iPhone 和 iPad · iOS 18"],
+  "iPhone & iPad · iOS 17": ["iPhone・iPad · iOS 17", "iPhone 및 iPad · iOS 17", "iPhone 和 iPad · iOS 17"],
   "Yingxia doesn’t host or provide any content. It plays the subscriptions you add.": ["映匣はコンテンツをホスト・提供しません。追加した配信設定を再生するだけです。", "Yingxia는 어떤 콘텐츠도 호스팅하거나 제공하지 않습니다. 추가한 구독을 재생할 뿐입니다.", "映匣不託管也不提供任何內容，只播放你加入的訂閱。"],
 
   // Settings
