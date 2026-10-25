@@ -9,6 +9,7 @@ import Observation
     private let defaults: UserDefaults
     private static let storageKey = "hiddenSources.v1"
     private static let backfillKey = "hiddenSources.backfill.v1"
+    private static let builtInRestoreKey = "hiddenSources.builtInRestore.v1"
 
     public init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
@@ -38,8 +39,9 @@ import Observation
 
     /// Writes a hide when this counted failure leaves the source red. Success, cancellation,
     /// a busy runtime, and a yellow-dot failure do nothing. A later success does not remove the hide.
+    /// A built-in source is never hidden this way: it only goes red, and the viewer may hide it by hand.
     public func note(_ site: Site, origin: URL, error: Error?, health: SourceHealth, now: Date = Date()) {
-        guard let error, SourceHealth.counts(error) else { return }
+        guard !site.isBuiltIn, let error, SourceHealth.counts(error) else { return }
         guard health.status(site, origin: origin, now: now) == .failing else { return }
         insert(site, origin: origin)
     }
@@ -47,10 +49,23 @@ import Observation
     /// One pass over the sources already loaded. An empty list waits for the real subscription.
     public func backfill(_ sites: [Site], origin: URL, health: SourceHealth, now: Date = Date()) {
         guard !defaults.bool(forKey: Self.backfillKey), !sites.isEmpty else { return }
-        for site in sites where health.status(site, origin: origin, now: now) == .failing {
+        for site in sites where !site.isBuiltIn && health.status(site, origin: origin, now: now) == .failing {
             insert(site, origin: origin)
         }
         defaults.set(true, forKey: Self.backfillKey)
+    }
+
+    /// Built-in sources used to be hidden automatically like any other, so once, every hidden
+    /// built-in shows again. One the viewer hides afterwards stays hidden.
+    public func restoreBuiltIns(_ sites: [Site], origin: URL) {
+        guard !defaults.bool(forKey: Self.builtInRestoreKey), !sites.isEmpty else { return }
+        let restored = Set(sites.filter(\.isBuiltIn).map { key($0, origin: origin) })
+        if keys.contains(where: restored.contains) {
+            keys.removeAll { restored.contains($0) }
+            defaults.set(keys, forKey: Self.storageKey)
+            revision += 1
+        }
+        defaults.set(true, forKey: Self.builtInRestoreKey)
     }
 }
 

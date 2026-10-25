@@ -316,6 +316,7 @@ import TVCore
         subscription = Subscription.merge(subscriptions.filter(\.enabled).compactMap { documents[$0.address] })?.withBuiltInSites()
         if let subscription {
             Self.registerPlugins(subscription)
+            hiddenSources.restoreBuiltIns(subscription.sites, origin: subscription.origin)
             hiddenSources.backfill(subscription.sites, origin: subscription.origin, health: .shared)
         }
     }
