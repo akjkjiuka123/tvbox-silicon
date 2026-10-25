@@ -320,6 +320,8 @@ public struct DownloadItem: Codable, Identifiable, Hashable, Sendable {
         }
         let file = folder(id).appending(path: media)
         guard FileManager.default.fileExists(atPath: file.path) else {
+            // Deleted or moved away in Finder: stop listing it as downloaded.
+            remove([id])
             throw TVError.unsupported(L10n.text("This download is no longer on this device."))
         }
         if let cid = item.cid { DanmakuSource.register(url, bilibiliCID: cid, duration: item.duration) }
@@ -329,8 +331,22 @@ public struct DownloadItem: Codable, Identifiable, Hashable, Sendable {
 
     // MARK: Storage
 
+    /// A finished download's playable file, for showing it in Finder.
+    public func file(for item: DownloadItem) -> URL? {
+        guard item.status == .completed, let media = item.media else { return nil }
+        return folder(item.id).appending(path: media)
+    }
+
+    /// Forgets finished downloads whose file is gone: deleted or moved away in Finder, or cleared by
+    /// tvOS to free space. They would otherwise stay listed and fail to play.
+    public func forgetMissing() {
+        let missing = items.filter { $0.status == .completed && !hasMedia($0) }.map(\.id)
+        if !missing.isEmpty { remove(missing) }
+    }
+
     /// Measures the downloads on disk and the space left on the device.
     public func measure() async {
+        forgetMissing()
         let root = root, ids = items.map(\.id)
         let sizes = await Task.detached { ids.map { (id: $0, size: Self.allocatedSize(root.appending(path: $0))) } }.value
         for entry in sizes {
@@ -367,14 +383,18 @@ public struct DownloadItem: Codable, Identifiable, Hashable, Sendable {
 
     private func folder(_ id: String) -> URL { root.appending(path: id) }
     private var index: URL { root.appending(path: "downloads.json") }
+    private func hasMedia(_ item: DownloadItem) -> Bool {
+        guard let media = item.media else { return false }
+        return FileManager.default.fileExists(atPath: folder(item.id).appending(path: media).path)
+    }
 
     private func load() {
         guard let data = try? Data(contentsOf: index), let stored = try? JSONDecoder().decode([DownloadItem].self, from: data) else { return }
         items = stored.compactMap { item in
             var item = item
             if item.status == .completed {
-                // tvOS may have cleared the folder to free space.
-                guard let media = item.media, FileManager.default.fileExists(atPath: folder(item.id).appending(path: media).path) else { return nil }
+                // tvOS may have cleared the folder to free space, or the file was moved away.
+                guard hasMedia(item) else { return nil }
             } else if item.isActive {
                 item.status = .queued
             }
@@ -385,6 +405,8 @@ public struct DownloadItem: Codable, Identifiable, Hashable, Sendable {
     private func save() {
         savedAt = Date()
         guard let data = try? JSONEncoder().encode(items) else { return }
+        // The folder itself may have been deleted in Finder.
+        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         try? data.write(to: index, options: .atomic)
     }
 }

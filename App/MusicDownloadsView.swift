@@ -21,6 +21,11 @@ struct MusicDownloadsView: View {
             #if os(tvOS)
             .onPlayPauseCommand { store.music.toggle() }
             #endif
+            .task { library.forgetMissing() }
+            #if os(macOS)
+            // Files may have been deleted or moved in Finder while the app was in the background.
+            .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in library.forgetMissing() }
+            #endif
             .confirmationDialog(L10n.text("Delete all downloaded songs?"), isPresented: $confirmsDeleteAll, titleVisibility: .visible) {
                 Button(L10n.text("Delete Downloads"), role: .destructive) { library.remove(library.items.map(\.id)) }
             }
@@ -38,6 +43,12 @@ struct MusicDownloadsView: View {
             page.screenTitle(Self.title)
                 #if os(macOS)
                 .toolbar(removing: .title)
+                .toolbar {
+                    ToolbarItem(placement: .primaryAction) {
+                        Button { NSWorkspace.shared.open(library.root) } label: { Label(L10n.text("Show in Finder"), systemImage: "folder") }
+                            .help(L10n.text("Show in Finder"))
+                    }
+                }
                 #endif
         }
     }

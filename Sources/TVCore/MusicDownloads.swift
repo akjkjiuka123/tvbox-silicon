@@ -148,6 +148,13 @@ public struct MusicDownloadedCollection: Codable, Identifiable, Hashable, Sendab
         remove(entry.trackIDs.filter { !shared.contains($0) })
     }
 
+    /// Forgets saved songs whose file is gone: deleted or moved away in Finder, or cleared by tvOS to
+    /// free space. They play from the network again and can be downloaded again.
+    public func forgetMissing() {
+        let missing = items.filter { $0.status == .completed && !hasMedia($0) }.map(\.id)
+        if !missing.isEmpty { remove(missing) }
+    }
+
     /// Stops every song on its way and keeps it paused, also after a relaunch, until `resumeAll()`.
     public func pauseAll() {
         for item in items where item.status == .queued || item.isActive {
@@ -312,6 +319,10 @@ public struct MusicDownloadedCollection: Codable, Identifiable, Hashable, Sendab
     private func folder(_ id: String) -> URL { root.appending(path: id.addingPercentEncoding(withAllowedCharacters: .alphanumerics) ?? id) }
     private var index: URL { root.appending(path: "music-downloads.json") }
     private var collectionIndex: URL { root.appending(path: "music-collections.json") }
+    private func hasMedia(_ item: MusicDownload) -> Bool {
+        guard let media = item.media else { return false }
+        return FileManager.default.fileExists(atPath: folder(item.id).appending(path: media).path)
+    }
 
     private func load() {
         if let data = try? Data(contentsOf: collectionIndex), let stored = try? JSONDecoder().decode([MusicDownloadedCollection].self, from: data) {
@@ -321,8 +332,8 @@ public struct MusicDownloadedCollection: Codable, Identifiable, Hashable, Sendab
         items = stored.compactMap { item in
             var item = item
             if item.status == .completed {
-                // tvOS may have cleared the folder to free space.
-                guard let media = item.media, FileManager.default.fileExists(atPath: folder(item.id).appending(path: media).path) else { return nil }
+                // tvOS may have cleared the folder to free space, or the file was moved away.
+                guard hasMedia(item) else { return nil }
             } else if item.isActive {
                 item.status = .queued
             }
@@ -339,11 +350,14 @@ public struct MusicDownloadedCollection: Codable, Identifiable, Hashable, Sendab
     private func save() {
         savedAt = Date()
         guard let data = try? JSONEncoder().encode(items) else { return }
+        // The folder itself may have been deleted in Finder.
+        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         try? data.write(to: index, options: .atomic)
     }
 
     private func saveCollections() {
         guard let data = try? JSONEncoder().encode(collections) else { return }
+        try? FileManager.default.createDirectory(at: root, withIntermediateDirectories: true)
         try? data.write(to: collectionIndex, options: .atomic)
     }
 }
