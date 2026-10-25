@@ -1,6 +1,207 @@
 {
   "releases": [
     {
+      "version": "1.7.13",
+      "build": 32,
+      "date": "2026-10-25",
+      "links": {
+        "macos": "https://download.getmegaportal.com/yingxia/1.7.13/Yingxia-1.7.13-macos-arm64.dmg",
+        "macos-x86_64": "https://download.getmegaportal.com/yingxia/1.7.13/Yingxia-1.7.13-macos-x86_64.dmg",
+        "ios": "https://yingxia.getmegaportal.com/#install-ios",
+        "tvos": "https://yingxia.getmegaportal.com/#install-tv"
+      },
+      "features": [
+        {
+          "symbol": "iphone",
+          "title": {
+            "en": "Runs on iOS 17",
+            "zh-Hans": "支持 iOS 17",
+            "zh-Hant": "支援 iOS 17",
+            "ja": "iOS 17 に対応"
+          },
+          "detail": {
+            "en": "Yingxia now runs on iPhones and iPads with iOS or iPadOS 17. On iPadOS 17 the tabs sit in a bar along the bottom.",
+            "zh-Hans": "映匣现在可以在 iOS 或 iPadOS 17 的 iPhone 和 iPad 上运行。在 iPadOS 17 上，标签栏位于屏幕底部。",
+            "zh-Hant": "映匣現在可以在 iOS 或 iPadOS 17 的 iPhone 和 iPad 上執行。在 iPadOS 17 上，標籤列位於螢幕底部。",
+            "ja": "映匣が iOS・iPadOS 17 の iPhone と iPad で動くようになりました。iPadOS 17 ではタブが画面下部のバーに並びます。"
+          },
+          "platforms": [
+            "ios"
+          ]
+        },
+        {
+          "symbol": "globe",
+          "title": {
+            "en": "More player pages play",
+            "zh-Hans": "更多网页播放地址可以播放",
+            "zh-Hant": "更多網頁播放位址可以播放",
+            "ja": "再生ページの動画も再生"
+          },
+          "detail": {
+            "en": "When a source hands over a player web page instead of a video, Yingxia finds the video the way TVBox does: through the subscription's parsers, or by loading the page out of sight. The subscription's ad and sniffing rules apply too.",
+            "zh-Hans": "点播源给出的是播放网页而不是视频时，映匣会像 TVBox 一样找出其中的视频：交给订阅里的解析接口，或在后台打开网页嗅探。订阅中的广告和嗅探规则也会生效。",
+            "zh-Hant": "隨選來源給出的是播放網頁而不是影片時，映匣會像 TVBox 一樣找出其中的影片：交給訂閱裡的解析介面，或在背景開啟網頁嗅探。訂閱中的廣告和嗅探規則也會生效。",
+            "ja": "ソースが動画ではなく再生用のウェブページを返したときも、TVBox と同じように動画を見つけます。登録の解析サービスに渡すか、ページを裏で開いて探します。登録の広告ルールと検出ルールも適用されます。"
+          },
+          "platforms": [
+            "ios",
+            "macos"
+          ]
+        },
+        {
+          "symbol": "magnifyingglass",
+          "title": {
+            "en": "A tidier Global Search",
+            "zh-Hans": "全局搜索更简洁",
+            "zh-Hant": "全域搜尋更簡潔",
+            "ja": "すっきりした横断検索"
+          },
+          "detail": {
+            "en": "Global Search uses the system search bar on iPhone and iPad and the search field in the toolbar on the Mac, like Sources and Live TV. The progress bar stays in view while each source's progress folds away behind a button.",
+            "zh-Hans": "全局搜索在 iPhone 和 iPad 上使用系统搜索栏，在 Mac 上使用工具栏中的搜索框，与“点播源”和“直播”一致。进度条始终可见，各点播源的进度可以收起到按钮后面。",
+            "zh-Hant": "全域搜尋在 iPhone 和 iPad 上使用系統搜尋列，在 Mac 上使用工具列中的搜尋欄位，與「隨選來源」和「直播」一致。進度列始終可見，各隨選來源的進度可以收合到按鈕後面。",
+            "ja": "横断検索は iPhone と iPad ではシステムの検索バーを、Mac ではツールバーの検索フィールドを使います（「配信ソース」や「ライブ TV」と同じです）。進行状況バーは常に表示され、ソースごとの進行状況はボタンの後ろにたためます。"
+          },
+          "platforms": [
+            "ios",
+            "macos"
+          ]
+        },
+        {
+          "symbol": "pencil",
+          "title": {
+            "en": "Name your subscriptions",
+            "zh-Hans": "为订阅命名",
+            "zh-Hant": "為訂閱命名",
+            "ja": "登録に名前を付ける"
+          },
+          "detail": {
+            "en": "Give a subscription a name when you add it, or rename it later with its Name field.",
+            "zh-Hans": "添加订阅时可以给它起个名字，之后也可以在“名称”栏中重新命名。",
+            "zh-Hant": "加入訂閱時可以替它取個名字，之後也可以在「名稱」欄位中重新命名。",
+            "ja": "登録を追加するときに名前を付けられ、あとから「名前」欄で変更することもできます。"
+          }
+        },
+        {
+          "symbol": "dock.rectangle",
+          "title": {
+            "en": "Icons-only tab bar",
+            "zh-Hans": "只显示图标的标签栏",
+            "zh-Hant": "只顯示圖示的標籤列",
+            "ja": "アイコンだけのタブバー"
+          },
+          "detail": {
+            "en": "Turn off Settings › Tab Bar Labels to show only the icons in the bar along the bottom. VoiceOver still reads their names.",
+            "zh-Hans": "关闭“设置 › 标签栏文字”后，底部标签栏只显示图标。VoiceOver 仍会读出名称。",
+            "zh-Hant": "關閉「設定 › 標籤列文字」後，底部標籤列只顯示圖示。VoiceOver 仍會讀出名稱。",
+            "ja": "「設定 › タブバーのラベル」をオフにすると、下部のタブバーにアイコンだけが表示されます。VoiceOver は引き続き名前を読み上げます。"
+          },
+          "platforms": [
+            "ios"
+          ]
+        },
+        {
+          "symbol": "photo",
+          "title": {
+            "en": "Posters stay put",
+            "zh-Hans": "海报不再丢失",
+            "zh-Hant": "海報不再遺失",
+            "ja": "ポスターが消えない"
+          },
+          "detail": {
+            "en": "Continue Watching keeps a title's poster when a source's details leave it out, and Now Playing on the Lock Screen shows the poster too.",
+            "zh-Hans": "点播源的详情缺少海报时，“继续观看”会保留原来的海报；锁定屏幕上的“正在播放”也会显示海报。",
+            "zh-Hant": "隨選來源的詳細資訊缺少海報時，「繼續觀看」會保留原來的海報；鎖定畫面上的「正在播放」也會顯示海報。",
+            "ja": "ソースの詳細にポスターがなくても「視聴を続ける」は元のポスターを残し、ロック画面の「再生中」にもポスターが表示されます。"
+          }
+        },
+        {
+          "symbol": "text.bubble",
+          "title": {
+            "en": "Danmaku keep coming",
+            "zh-Hans": "弹幕更稳定",
+            "zh-Hant": "彈幕更穩定",
+            "ja": "弾幕コメントが途切れにくく"
+          },
+          "detail": {
+            "en": "When the danmaku server for iQiyi and Tencent pages is down, comments come from a backup server. On an upright iPhone they are the same size as in landscape and stay clear of the Dynamic Island.",
+            "zh-Hans": "爱奇艺和腾讯视频页面的弹幕服务器无法使用时，会改从备用服务器获取弹幕。竖着拿 iPhone 时，弹幕和横屏时一样大，也不会被灵动岛挡住。",
+            "zh-Hant": "愛奇藝和騰訊視頻頁面的彈幕伺服器無法使用時，會改從備用伺服器取得彈幕。直拿 iPhone 時，彈幕和橫向時一樣大，也不會被動態島擋住。",
+            "ja": "iQiyi と Tencent のページ用の弾幕サーバが使えないときは、予備のサーバからコメントを取得します。iPhone を縦に持っても横向きと同じ大きさで、Dynamic Island に隠れません。"
+          }
+        },
+        {
+          "symbol": "playpause",
+          "title": {
+            "en": "Snappier play and pause",
+            "zh-Hans": "播放和暂停反应更快",
+            "zh-Hant": "播放和暫停反應更快",
+            "ja": "再生と一時停止がすばやく"
+          },
+          "detail": {
+            "en": "The play button answers the moment you tap it, and stays centred on the first and last episode.",
+            "zh-Hans": "点按播放按钮会立即响应；在第一集和最后一集时，按钮也保持居中。",
+            "zh-Hant": "點按播放按鈕會立即回應；在第一集和最後一集時，按鈕也保持置中。",
+            "ja": "再生ボタンはタップした瞬間に反応し、最初と最後のエピソードでも中央に表示されます。"
+          },
+          "platforms": [
+            "ios"
+          ]
+        },
+        {
+          "symbol": "checkmark.shield",
+          "title": {
+            "en": "No more freeze on return",
+            "zh-Hans": "返回时不再卡死",
+            "zh-Hant": "返回時不再卡死",
+            "ja": "戻ったときに固まらなくなりました"
+          },
+          "detail": {
+            "en": "Coming back to Yingxia could freeze it until iOS closed it. That no longer happens.",
+            "zh-Hans": "回到映匣时，应用可能卡住直到被系统关闭。现在不会再发生。",
+            "zh-Hant": "回到映匣時，App 可能卡住直到被系統關閉。現在不會再發生。",
+            "ja": "映匣に戻ったときに固まり、iOS に終了されることがありました。今は起こりません。"
+          },
+          "platforms": [
+            "ios"
+          ]
+        },
+        {
+          "symbol": "arrow.clockwise",
+          "title": {
+            "en": "Smoother Mac updates",
+            "zh-Hans": "Mac 更新更顺畅",
+            "zh-Hant": "Mac 更新更順暢",
+            "ja": "Mac のアップデートがスムーズに"
+          },
+          "detail": {
+            "en": "Relaunch to Update no longer hangs, and Check for Updates no longer brings back windows you closed. If this update stops at Relaunching…, quit Yingxia to finish it.",
+            "zh-Hans": "“重新打开以完成更新”不再卡住，“检查更新…”也不会再让已关闭的窗口重新出现。如果这次更新停在“正在重新打开…”，退出映匣即可完成。",
+            "zh-Hant": "「重新開啟以完成更新」不再卡住，「檢查更新…」也不會再讓已關閉的視窗重新出現。如果這次更新停在「正在重新開啟…」，結束映匣即可完成。",
+            "ja": "「再起動してアップデート」が止まらなくなり、「アップデートを確認…」で閉じたウインドウが再び開くこともなくなりました。今回のアップデートが「再起動中…」で止まったら、映匣を終了すると完了します。"
+          },
+          "platforms": [
+            "macos"
+          ]
+        },
+        {
+          "symbol": "wrench.and.screwdriver",
+          "title": {
+            "en": "Other fixes",
+            "zh-Hans": "其他修复",
+            "zh-Hant": "其他修正",
+            "ja": "その他の修正"
+          },
+          "detail": {
+            "en": "Watch Now opens without a wait, a refused feedback message says which limit it hit and when you can send again, and dark-mode switches turn green when on.",
+            "zh-Hans": "“现在观看”打开时不再需要等待；反馈被拒绝时会说明触发了哪项限制以及何时可以再次发送；深色模式下打开的开关显示为绿色。",
+            "zh-Hant": "「立即觀看」開啟時不再需要等待；回饋被拒絕時會說明觸發了哪項限制以及何時可以再次傳送；深色模式下開啟的開關顯示為綠色。",
+            "ja": "「今すぐ観る」が待たずに開き、フィードバックが受け付けられなかったときはどの制限に当たったか、いつ再送できるかを表示します。ダークモードでオンのスイッチは緑になります。"
+          }
+        }
+      ]
+    },
+    {
       "version": "1.7.12",
       "build": 31,
       "date": "2026-10-25",
