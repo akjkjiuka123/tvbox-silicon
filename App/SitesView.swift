@@ -1156,15 +1156,19 @@ struct VideoDetailView: View {
         .controlButton().controlSize(.large).accessibilityLabel(L10n.text("Download"))
     }
     /// Icon-only, beside Play and Download. An empty heart keeps the control color; a saved one is rose.
+    /// Set as text in their font, so the button is as tall as theirs: a bare image made a smaller one on Apple TV.
     private var videoFavoriteButton: some View {
         let saved = store.favorites.contains(videoFavorite())
         let title = saved ? L10n.text("Remove %@ from favorites", currentVideo().name) : L10n.text("Add %@ to favorites", currentVideo().name)
         return Button { store.favorites.toggle(videoFavorite()) } label: {
-            if saved {
-                Image(systemName: "heart.fill").foregroundStyle(Brand.rose)
-            } else {
-                Image(systemName: "heart")
+            Group {
+                if saved {
+                    Text(Image(systemName: "heart.fill")).foregroundStyle(Brand.rose)
+                } else {
+                    Text(Image(systemName: "heart"))
+                }
             }
+            .font(.headline).lineLimit(1).fixedSize()
         }
         .controlButton().controlSize(.large)
         .accessibilityLabel(title).help(title)
