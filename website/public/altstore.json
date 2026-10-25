@@ -19,6 +19,16 @@
       "category": "entertainment",
       "versions": [
         {
+          "version": "1.7.13",
+          "buildVersion": "32",
+          "date": "2026-10-25",
+          "localizedDescription": "• 支持 iOS 17\n• 更多网页播放地址可以播放\n• 全局搜索更简洁\n• 为订阅命名\n• 只显示图标的标签栏\n• 海报不再丢失\n• 弹幕更稳定\n• 播放和暂停反应更快\n• 返回时不再卡死\n• 其他修复\n\n• Runs on iOS 17\n• More player pages play\n• A tidier Global Search\n• Name your subscriptions\n• Icons-only tab bar\n• Posters stay put\n• Danmaku keep coming\n• Snappier play and pause\n• No more freeze on return\n• Other fixes",
+          "downloadURL": "https://download.getmegaportal.com/yingxia/1.7.13/Yingxia-1.7.13-ios.ipa",
+          "size": 72586889,
+          "sha256": "ecc26bb93204af75dfebe83032af28bddde05eba5bec272b9770dc67b769e920",
+          "minOSVersion": "17.0"
+        },
+        {
           "version": "1.7.12",
           "buildVersion": "31",
           "date": "2026-10-25",
@@ -56,16 +66,6 @@
           "downloadURL": "https://download.getmegaportal.com/yingxia/1.7.9/Yingxia-1.7.9-ios.ipa",
           "size": 69875432,
           "sha256": "5009afcfd07f40b3e6edf10fc9122afbd2ce4af1733f94e1e0ea60033f5cb632",
-          "minOSVersion": "18.0"
-        },
-        {
-          "version": "1.7.8",
-          "buildVersion": "27",
-          "date": "2026-10-23",
-          "localizedDescription": "• 云盘文件：浏览云盘并直接播放\n• 在服务自己的页面登录\n• 更多视频和频道可以播放\n• 最新版 FTY 站点恢复正常\n• 适配 iPhone Duo\n• 会作为新应用安装\n\n• Cloud Files: browse your drives and play what’s there\n• Sign in on the service’s own page\n• More videos and channels play\n• The latest FTY sources work again\n• Ready for iPhone Duo\n• Installs next to your old Yingxia",
-          "downloadURL": "https://download.getmegaportal.com/yingxia/1.7.8/Yingxia-1.7.8-ios.ipa",
-          "size": 69748665,
-          "sha256": "1a95489b2848c8898cf2e5a19c0f5b8612351b72ba9036f34a18dc4f86a3f123",
           "minOSVersion": "18.0"
         }
       ],
