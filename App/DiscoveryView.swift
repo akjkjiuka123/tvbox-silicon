@@ -214,8 +214,9 @@ struct GlobalSearchView: View {
                 // the source chips below, so the remote passed them by. As a section, moving onto the row lands on them.
                 .focusSection()
                 #endif
-                if model.busy && showsActivity {
-                    SearchActivityList(origin: config.origin, completed: model.completed, total: model.total, runStart: model.runStart)
+                if model.busy {
+                    SearchActivityList(origin: config.origin, completed: model.completed, total: model.total, runStart: model.runStart,
+                                       showsSources: showsActivity)
                         .transition(.opacity)
                 }
                 if sourceItems.count > 1 {
@@ -488,6 +489,8 @@ private struct SearchActivityList: View {
     let completed: Int
     let total: Int
     let runStart: (date: Date, completed: Int)?
+    /// The progress bar always shows; the sources being searched fold behind the chevron.
+    let showsSources: Bool
     /// The on-device plugin worker runs at most this many searches at once.
     private let limit = 5
     var body: some View {
@@ -510,18 +513,21 @@ private struct SearchActivityList: View {
                     Label(L10n.text("Preparing plugins for first use. Later searches are much faster."), systemImage: "hourglass")
                         .foregroundStyle(.secondary)
                 }
-                Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
-                    ForEach(active) { item in
-                        GridRow {
-                            Text(item.name).fontWeight(.semibold).lineLimit(1)
-                            Text(status(item.snapshot)).foregroundStyle(.secondary).lineLimit(1)
-                                .frame(maxWidth: .infinity, alignment: .leading)
-                            Text(Duration.seconds(max(0, Int(timeline.date.timeIntervalSince(item.snapshot.started))))
-                                    .formatted(.time(pattern: .minuteSecond)))
-                                .monospacedDigit().foregroundStyle(.secondary)
-                                .gridColumnAlignment(.trailing)
+                if showsSources {
+                    Grid(alignment: .leading, horizontalSpacing: 16, verticalSpacing: 6) {
+                        ForEach(active) { item in
+                            GridRow {
+                                Text(item.name).fontWeight(.semibold).lineLimit(1)
+                                Text(status(item.snapshot)).foregroundStyle(.secondary).lineLimit(1)
+                                    .frame(maxWidth: .infinity, alignment: .leading)
+                                Text(Duration.seconds(max(0, Int(timeline.date.timeIntervalSince(item.snapshot.started))))
+                                        .formatted(.time(pattern: .minuteSecond)))
+                                    .monospacedDigit().foregroundStyle(.secondary)
+                                    .gridColumnAlignment(.trailing)
+                            }
                         }
                     }
+                    .transition(.opacity)
                 }
             }
             .font(.subheadline)
