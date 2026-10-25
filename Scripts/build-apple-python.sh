@@ -18,6 +18,7 @@ case "$TARGET" in
   *) echo "Usage: $0 [ios|ios-simulator|tvos|tvos-simulator]" >&2; exit 2 ;;
 esac
 VERSION=3.14; SUPPORT=b13
+MINIMUM_OS=17.0  # the apps' deployment target in project.yml
 case "$FAMILY" in
   iOS) SHA256=ce1c68affa1cbd9c5611a0f4a013e412f14a760cf22c6bb58cfb4d893073bd45 ;;
   tvOS) SHA256=72380111fcf9362b587b30e1fdf31df4ca8d6d0f72f46054eb7e3673d61f44d1 ;;
@@ -111,6 +112,10 @@ find "$DEST/python" "$DEST/PythonHost" -name '*.so' | sort | while read -r libra
   cp "$XCFRAMEWORK/build/$FAMILY-dylib-Info-template.plist" "$DEST/$framework/Info.plist"
   plutil -replace CFBundleExecutable -string "$module" "$DEST/$framework/Info.plist"
   plutil -replace CFBundleIdentifier -string "com.tvbox.yingxia.python.$(echo "$module" | tr _ -)" "$DEST/$framework/Info.plist"
+  # BeeWare's template says iOS 13 / tvOS 9, but our wheels target 17.0 and some tvOS modules 12.0. App Store
+  # processing rejects a framework whose binary needs a newer OS than its MinimumOSVersion (ITMS-90208), so
+  # declare the app's deployment target, which covers them all.
+  plutil -replace MinimumOSVersion -string "$MINIMUM_OS" "$DEST/$framework/Info.plist"
   mv "$library" "$DEST/$framework/$module"
   if lipo -archs "$DEST/$framework/$module" | grep -q ' '; then
     lipo -thin arm64 "$DEST/$framework/$module" -output "$DEST/$framework/$module.arm64"
@@ -118,5 +123,12 @@ find "$DEST/python" "$DEST/PythonHost" -name '*.so' | sort | while read -r libra
   fi
   echo "$framework/$module" > "${library%.so}.fwork"
   echo "${relative%.so}.fwork" > "$DEST/$framework/$module.origin"
+done
+for framework in "$DEST/Frameworks/"*.framework; do
+  binary="$framework/$(plutil -extract CFBundleExecutable raw "$framework/Info.plist")"
+  declared="$(plutil -extract MinimumOSVersion raw "$framework/Info.plist")"
+  needed="$(vtool -show-build "$binary" | awk '/minos/ {print $2; exit}')"
+  [ "$(printf '%s\n%s\n' "$needed" "$declared" | sort -V | tail -1)" = "$declared" ] ||
+    { echo "$(basename "$framework") needs $FAMILY $needed but declares $declared" >&2; exit 1; }
 done
 echo "Embedded Python $VERSION ($FAMILY $SUPPORT) for $PLATFORM: $DEST ($(du -sh "$DEST" | cut -f1))"
