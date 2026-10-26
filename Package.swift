@@ -4,6 +4,7 @@ let package = Package(
     name: "TVCore",
     defaultLocalization: "en",
     platforms: [.macOS(.v14), .iOS(.v16), .tvOS(.v17)],
+    swiftLanguageModes: [.v5],
     products: [.library(name: "TVCore", targets: ["TVCore"]), .executable(name: "TVBoxProbe", targets: ["TVBoxProbe"])],
     dependencies: [
         .package(url: "https://github.com/pointfreeco/swift-perception", from: "1.3.0")
