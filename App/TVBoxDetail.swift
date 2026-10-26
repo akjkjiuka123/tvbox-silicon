@@ -483,7 +483,12 @@ struct TVBoxEpisodeStyle: ButtonStyle {
     struct Body: View {
         let configuration: ButtonStyleConfiguration
         let loaded: Bool
+        // isFocused exists on tvOS and macOS only; a phone has no focus to draw.
+        #if os(tvOS)
         @Environment(\.isFocused) private var focused
+        #else
+        private var focused: Bool { false }
+        #endif
         @Environment(\.isEnabled) private var enabled
         var body: some View {
             configuration.label
