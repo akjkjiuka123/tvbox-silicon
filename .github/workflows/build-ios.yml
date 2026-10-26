@@ -7,13 +7,17 @@ on:
 
 jobs:
   build-ios:
-    runs-on: macos-15
+    runs-on: macos-14
     timeout-minutes: 120
     steps:
       - uses: actions/checkout@v4
 
       - name: Select Xcode
-        run: sudo xcode-select -s /Applications/Xcode_16.2.app || sudo xcode-select -s /Applications/Xcode.app
+        run: |
+          # 优先选 Xcode 16.x（Swift 6 需要），macos-14 上可能是 16.0~16.2
+          XC=$(ls /Applications | grep -E '^Xcode_16' | sort | tail -1)
+          if [ -n "$XC" ]; then sudo xcode-select -s "/Applications/$XC"; fi
+          xcodebuild -version
 
       - name: Install build tools
         run: |
