@@ -5,27 +5,36 @@ workflows:
     max_build_duration: 120
     environment:
       xcode: 16.2
-      java: 19
       node: 20
       vars:
         LANG: en_US.UTF-8
+        JAVA_HOME: /Users/builder/jdk19/Contents/Home
     scripts:
       - name: Toolchain
         script: |
           set -e
           brew install xcodegen maven autoconf automake libtool pkg-config
-          echo "--- versions ---"
+          # Temurin 19 (Codemagic ships 8/11/17/21 only; the JVM host build pins 19)
+          mkdir -p "$HOME/jdk19"
+          curl -fsSL -o /tmp/jdk19.tar.gz \
+            "https://api.adoptium.net/v3/binary/latest/19/ga/mac/aarch64/jdk/hotspot/normal/eclipse"
+          tar -xzf /tmp/jdk19.tar.gz -C "$HOME/jdk19" --strip-components=1
+          ls "$HOME/jdk19/Contents/Home/bin/java"
+          echo "JAVA_HOME=$HOME/jdk19/Contents/Home" >> "$CM_ENV"
+          export JAVA_HOME="$HOME/jdk19/Contents/Home"
+          "$JAVA_HOME/bin/java" -version
           xcodebuild -version
           xcodegen --version
           mvn -v | head -2
-          java -version 2>&1 | head -2
       - name: FFmpeg
         script: |
           set -e
+          export JAVA_HOME="$HOME/jdk19/Contents/Home"
           Scripts/build-apple-ffmpeg.sh
       - name: Java host
         script: |
           set -e
+          export JAVA_HOME="$HOME/jdk19/Contents/Home"
           Scripts/build-java-host.sh
       - name: Mac-only host dirs
         script: |
@@ -35,6 +44,7 @@ workflows:
       - name: Apple runtime (JVM + interpreter)
         script: |
           set -e
+          export JAVA_HOME="$HOME/jdk19/Contents/Home"
           Scripts/package-apple-runtime.sh ios
       - name: Xcode project
         script: |
@@ -60,4 +70,3 @@ workflows:
           ls -lh Yingxia-ios16.ipa
     artifacts:
       - Yingxia-ios16.ipa
-      - build/apple-runtime/**/build.log
