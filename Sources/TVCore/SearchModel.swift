@@ -12,6 +12,8 @@ import Observation
     public var stopped = false
     /// Sources this search left out because they are failing (`SourceHealth.paused`); a retry asks them.
     public private(set) var paused: [Site] = []
+    /// Keys of the sources this search asks: searchable, not hidden by the viewer, not paused.
+    public private(set) var asking: Set<String> = []
     /// Paused because the viewer left the results, not by Stop; `resumeSuspended` continues it.
     public private(set) var suspended = false
     public var scrollID: String?
@@ -139,7 +141,7 @@ import Observation
 
     public func reset() {
         stop()
-        draft = ""; keyword = ""; results = []; completed = 0; total = 0; paused = []
+        draft = ""; keyword = ""; results = []; completed = 0; total = 0; paused = []; asking = []
         selectedSource = nil; scrollID = nil; stopped = false
         clearPages()
         cache = [:]; subscriptionID = nil
@@ -169,6 +171,7 @@ import Observation
         paused = eligible.filter { SourceHealth.shared.paused($0, origin: config.origin, now: now) }
         let held = Set(paused.map(\.id))
         let sites = eligible.filter { !held.contains($0.id) }
+        asking = Set(sites.map(\.key))
         let preferred = UserDefaults.standard.string(forKey: Self.sourceKey)
         selectedSource = sites.contains { $0.id == preferred } ? preferred : nil; scrollID = nil
         rank = Dictionary(arrange(eligible, config: config, failing: failing(config)).enumerated().map { ($1.id, $0) }) { first, _ in first }
@@ -196,6 +199,7 @@ import Observation
             results.removeAll { failed.contains($0.id) }; completed = results.count
             total += paused.count; paused = []
         }
+        asking.formUnion(sites.map(\.key))
         run(sites, config: config)
     }
 
