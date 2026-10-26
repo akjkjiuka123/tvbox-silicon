@@ -40,11 +40,12 @@ struct GlobalSearchView: View {
         let later = model.batches.flatMap { batch in sites[batch.source].map { site in batch.videos.map { SearchPoster(site: site, video: $0) } } ?? [] }
         return (first + later).filter { seen.insert($0.id).inserted }
     }
-    /// Built-in sources can be selected while their first search is still in flight.
+    /// Built-in sources can be selected while their first search is still in flight. One the viewer
+    /// hid, or one paused for failing, isn't asked and gets no chip.
     private var sourceItems: [SearchSourceItem] {
         let builtins = Site.builtInSites.filter { site in
             model.total > 0 && (model.results.contains { $0.site.key == site.key } ||
-                (model.busy && store.subscription?.sites.contains { $0.key == site.key && $0.searchable } == true))
+                (model.busy && model.asking.contains(site.key)))
         }.map { site in
             SearchSourceItem(id: site.key, name: site.name,
                              count: model.results.contains { $0.site.key == site.key } ? uniqueVideos(model.videos(for: site.key)).count : nil)

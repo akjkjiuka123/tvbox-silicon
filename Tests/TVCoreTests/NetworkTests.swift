@@ -194,6 +194,20 @@ private actor SearchCollector {
     #expect(model.keyword.isEmpty)
 }
 
+@Test @MainActor func searchDoesNotAskBuiltInsTheViewerHid() async throws {
+    let base = URL(string: "https://example.com/config")!
+    let sub = try Subscription.parse(Data(#"{"sites":[{"key":"a","type":4,"api":"/api"}]}"#.utf8), origin: base).withBuiltInSites()
+    let model = SearchModel(http: client())
+    model.search("movie", config: sub) { $0.isBuiltIn }
+    // The search page shows a chip for each built-in it is still asking; hidden ones get none.
+    #expect(model.busy)
+    #expect(model.asking == ["a"])
+    await model.task?.value
+    #expect(model.results.map(\.id) == ["a"])
+    model.reset()
+    #expect(model.asking.isEmpty)
+}
+
 @Test @MainActor func replacingSearchDiscardsOldCompletion() async throws {
     let base = URL(string: "https://example.com/config")!
     let sub = try Subscription.parse(Data(#"{"sites":[{"key":"a","type":4,"api":"/api"},{"key":"b","type":4,"api":"/api"}]}"#.utf8), origin: base)
