@@ -64,6 +64,7 @@ workflows:
           set -uo pipefail
           rm -f build-swift.log
           xcodebuild -project TVBox.xcodeproj -scheme TVBox-iOS \
+            -skipMacroValidation -skipPackagePluginValidation \
             -destination 'generic/platform=iOS' \
             -derivedDataPath build/DerivedData-ios \
             CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=YES \
