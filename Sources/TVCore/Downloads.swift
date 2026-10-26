@@ -1,5 +1,5 @@
-import Foundation
-import Observation
+﻿import Foundation
+import Perception
 
 /// Where a download came from: enough to resolve the episode again when its links expire.
 public struct DownloadSource: Codable, Hashable, Sendable {
