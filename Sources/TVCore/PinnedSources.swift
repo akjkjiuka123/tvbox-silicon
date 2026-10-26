@@ -1,5 +1,5 @@
-import Foundation
-import Observation
+﻿import Foundation
+import Perception
 
 /// Subscription-qualified keys survive imports and cannot pin an unrelated site's reused key.
 @MainActor @Observable public final class PinnedSources {
