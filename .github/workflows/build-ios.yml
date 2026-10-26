@@ -21,7 +21,7 @@ jobs:
 
       - name: Install build tools
         run: |
-          brew install xcodegen maven
+          brew install xcodegen maven autoconf automake libtool
           npm install -g node || true
           curl -LsSf https://astral.sh/uv/install.sh | sh
           echo "$HOME/.local/bin" >> "$GITHUB_PATH"
