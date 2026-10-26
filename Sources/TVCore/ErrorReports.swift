@@ -142,16 +142,17 @@ public final class ErrorReports: @unchecked Sendable {
 
     /// Megabytes: this process's footprint (what the system counts against it), and on iPhone, iPad and
     /// Apple TV how much more it may use before the system ends it.
-    /// `mach_task_self_` is a mutable global; Swift 6 rejects reading it from any isolation.
-    nonisolated(unsafe) private static let machTask = mach_task_self_
-
     static func memory() -> (footprint: Int?, available: Int?) {
-        var info = task_vm_info_data_t()
-        var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
-        let result = withUnsafeMutablePointer(to: &info) {
-            $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) { task_info(Self.machTask, task_flavor_t(TASK_VM_INFO), $0, &count) }
+        // `mach_task_self_` is a mutable global, which Swift 6 rejects from any isolation;
+        // `proc_pid_rusage` reports the same physical footprint without touching it.
+        var usage = rusage_info_v4()
+        let footprint: Int? = withUnsafeMutablePointer(to: &usage) { pointer in
+            pointer.withMemoryRebound(to: rusage_info_t?.self, capacity: 1) { rebound in
+                proc_pid_rusage(getpid(), RUSAGE_INFO_V4, rebound) == 0
+                    ? Int(usage.ri_phys_footprint / 1_048_576)
+                    : nil
+            }
         }
-        let footprint = result == KERN_SUCCESS ? Int(info.phys_footprint / 1_048_576) : nil
         #if os(iOS) || os(tvOS)
         let left = os_proc_available_memory()
         return (footprint, left > 0 ? left / 1_048_576 : nil)
