@@ -69,6 +69,10 @@ typedef struct {
     int channels;
     /// How copied HEVC keeps a Dolby Vision configuration (TVMDolbyVision...).
     int dolbyVision;
+    /// Non-zero: converted HDR video is tone mapped to 8-bit SDR (BT.709), for a device that doesn't show HDR.
+    int toneMap;
+    /// The size converted video is made at; 0 keeps the source's.
+    int width, height;
 } TVMTrack;
 
 void tvm_set_log(TVMLogFunction log);

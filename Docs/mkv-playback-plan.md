@@ -61,6 +61,18 @@ Cloud drive / HTTP / file ──bytes──▶ TVMedia (C, FFmpeg) ──fMP4─
 - **Serving** (`RemuxServer`): a per-launch token, `master.m3u8`, `<track>.m3u8`, `<track>.mp4` (initialization),
   `<track>-<segment>.m4s|vtt`. A segment is sent chunked while it is written, in fragments of about a second,
   so the first frame doesn't wait for the whole segment.
+- **HDR on a display without it**: AVPlayer refuses every HDR variant of an HLS stream when
+  `AVPlayer.eligibleForHDRPlayback` is false ("cannot be played on the device", CoreMedia -17223), although it tone
+  maps the same picture in a plain file. There an HDR10 or HLG picture is converted: swscale's color management
+  (`sws_scale_frame`, perceptual intent) maps it to 8-bit BT.709, and the playlist says SDR. Apple TVs and iPhones
+  shrink it to 1080p first (4K costs about four times as much); Macs keep its size. Dolby Vision 5 stays as it is.
+  Normally none of that runs on the CPU: VideoToolbox decodes the picture, a `VTPixelTransferSession` shrinks it
+  and tone maps it to BT.709, and the encoder takes it from a VideoToolbox frame pool. An Apple TV 4K decoding and
+  mapping 4K HEVC Main 10 in software ran below real time (6 to 12 s for each 6 s segment), so playback after a
+  seek kept stopping. swscale is the fallback when VideoToolbox can't decode the picture or the transfer fails.
+  An Apple TV can report HDR playback and still refuse the stream (-11868 with -17223): the player then opens the
+  file again converted, and so are the files opened after it until the app quits (`Remux.refusesHDR`). A picture
+  whose container has no colour tags (an x265 encode in MKV) is read from its first frame, so its HDR is known.
 - **Subtitles**: SubRip, ASS/SSA, WebVTT and tx3g become WebVTT renditions (italics and bold kept, ASS styling and
   drawings dropped), placed with `X-TIMESTAMP-MAP`. Picture subtitles (PGS, VobSub) are not shown yet.
 

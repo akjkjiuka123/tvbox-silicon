@@ -57,6 +57,20 @@ struct RemuxTests {
         // Dolby Vision 5 keeps its own sample entry, 8 its HDR10 base with the configuration, 7 its base alone.
         let vision = { (profile: Int) in RemuxPlan.videoTrack(Stream(index: 0, kind: .video, codec: "hevc", width: 3840, height: 2160, bitDepth: 10, doviProfile: profile), device: device).dolbyVision }
         #expect(vision(5) == .dvh1 && vision(8) == .hvc1 && vision(7) == .drop && vision(-1) == .drop)
+        // Where AVPlayer shows no HDR, HDR10 and HLG pictures are converted to SDR and declared so.
+        let sdr = RemuxPlan.Device(hevc: true, av1: false, hevcEncoder: true, hdr: false)
+        let hdr10 = Stream(index: 0, kind: .video, codec: "hevc", width: 3840, height: 1608, bitDepth: 10, frameRate: 25, colorTransfer: 16)
+        let mapped = RemuxPlan.videoTrack(hdr10, device: sdr)
+        #expect(mapped.mode == .hevc && mapped.toneMap && mapped.bitRate > 0 && mapped.width == 0)
+        var small = sdr
+        (small.toneMapWidth, small.toneMapHeight) = (1920, 1080)
+        let shrunk = RemuxPlan.videoTrack(hdr10, device: small)
+        #expect(shrunk.width == 1920 && shrunk.height == 804 && shrunk.bitRate < mapped.bitRate)
+        #expect(RemuxPlan(tracks: [shrunk], bounds: [0, 1_000_000]).masterPlaylist(codecs: [:]).contains("RESOLUTION=1920x804"))
+        #expect(RemuxPlan(tracks: [mapped], bounds: [0, 1_000_000]).videoRange == "SDR")
+        #expect(RemuxPlan(tracks: [RemuxPlan.videoTrack(hdr10, device: device)], bounds: [0, 1_000_000]).videoRange == "PQ")
+        #expect(!RemuxPlan.videoTrack(Stream(index: 0, kind: .video, codec: "hevc", width: 3840, height: 2160, bitDepth: 10), device: sdr).toneMap)
+        #expect(!RemuxPlan.videoTrack(Stream(index: 0, kind: .video, codec: "hevc", width: 3840, height: 2160, bitDepth: 10, colorTransfer: 16, doviProfile: 5), device: sdr).toneMap)
         let converted = RemuxPlan.videoTrack(Stream(index: 0, kind: .video, codec: "mpeg4", width: 720, height: 404, frameRate: 25, bitRate: 1_200_000), device: device)
         #expect(converted.bitRate == 1_500_000)
     }

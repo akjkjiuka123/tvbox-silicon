@@ -1,7 +1,7 @@
 #!/bin/bash
 # Builds the small FFmpeg that Sources/TVMedia uses to repackage MKV, AVI, FLV, WMV and RMVB for AVPlayer
 # (Docs/mkv-playback-plan.md): demuxers, the MP4 muxer, the decoders and AudioToolbox/VideoToolbox encoders
-# of the conversion path, and nothing else (no network, no programs, no external libraries but zlib).
+# of the conversion path, VideoToolbox decoding for HDR to SDR, and nothing else (no network, no programs, no external libraries but zlib).
 # LGPL only. Output: build/FFmpeg/FFmpeg.xcframework (Vendor/FFmpeg links to it), one static library per
 # platform. Builds are kept in a cache shared by every checkout and worktree, one per recipe (the lines
 # between RECIPE and END below), so a checkout usually just links the one already built (about 4 minutes
@@ -45,6 +45,8 @@ AUDIO_DECODERS=aac,aac_latm,ac3,eac3,dca,truehd,mlp,mp1,mp2,mp3,vorbis,opus,flac
 PARSERS=h264,hevc,aac,aac_latm,ac3,mpegaudio,dca,mlp,flac,vorbis,opus,mpeg4video,mpegvideo,vc1,vp8,vp9,av1,h263,rv34,cook
 BSFS=aac_adtstoasc,extract_extradata,vp9_superframe
 ENCODERS=aac_at,h264_videotoolbox,hevc_videotoolbox
+# VideoToolbox decoding, for the picture that is converted (HDR to SDR) on the media engine, not the CPU.
+HWACCELS=h264_videotoolbox,hevc_videotoolbox
 
 build_slice() {
   local name=$1 sdk=$2 arch=$3 triple=$4
@@ -65,7 +67,7 @@ build_slice() {
       --disable-everything --disable-network --disable-avdevice --disable-avfilter \
       --enable-demuxer="$DEMUXERS" --enable-muxer=mp4 \
       --enable-decoder="$VIDEO_DECODERS,$AUDIO_DECODERS" --enable-encoder="$ENCODERS" \
-      --enable-parser="$PARSERS" --enable-bsf="$BSFS" \
+      --enable-parser="$PARSERS" --enable-bsf="$BSFS" --enable-hwaccel="$HWACCELS" \
       ${extra[@]+"${extra[@]}"} > configure.log 2>&1 || { tail -30 configure.log; exit 1; }
     make -j "${JOBS:-$(sysctl -n hw.ncpu)}" > make.log 2>&1 || { tail -40 make.log; exit 1; }
     make install > install.log 2>&1

@@ -41,6 +41,21 @@ public enum Remux {
 
     public static func isRemuxed(_ url: URL) -> Bool { session(url) != nil }
 
+    /// Whether the picture behind `url` is served as HDR (PQ or HLG), not converted to SDR.
+    public static func isHDR(_ url: URL) -> Bool {
+        guard let plan = session(url)?.plan, plan.tracks.first?.kind == .video else { return false }
+        return plan.videoRange != "SDR"
+    }
+
+    /// Set once AVPlayer refused an HDR stream although the device reported HDR playback (an Apple TV can):
+    /// files opened after that convert HDR pictures to SDR, as for a display that shows no HDR.
+    public static var refusesHDR: Bool {
+        get { hdrLock.withLock { hdrRefused } }
+        set { hdrLock.withLock { hdrRefused = newValue } }
+    }
+    private static let hdrLock = NSLock()
+    nonisolated(unsafe) private static var hdrRefused = false
+
     /// Stops reading and writing the file behind `url`.
     public static func stop(_ url: URL) {
         guard let id = identifier(url) else { return }

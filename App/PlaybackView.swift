@@ -262,6 +262,30 @@ import TVCore
         return true
     }
 
+    /// An Apple TV can report HDR playback and still refuse a repackaged HDR10 file (-11868 with Core Media
+    /// -17223, "cannot be played on this device"). The file opens again with its picture converted to SDR,
+    /// and so do the files opened after it.
+    private func retryHDR(after failure: Error?, channel: Channel, url: URL, generation active: UUID) -> Bool {
+        guard !Remux.refusesHDR, Remux.isHDR(url), Self.refusedContent(failure) else { return false }
+        Remux.refusesHDR = true
+        detachItem(); observation = nil
+        Diagnostics.shared.record(.warning, "player", "hdr refused; converting to sdr \(failure.map(Self.describe) ?? "-")")
+        Remux.stop(url)
+        preparation = Task { [weak self] in
+            guard let self else { return }
+            let prepared: Prepared
+            do { prepared = try await self.prepare(channel) }
+            catch {
+                guard self.generation == active, !Task.isCancelled else { return }
+                self.error = error.localizedDescription; self.loading = false; return
+            }
+            guard self.generation == active, !Task.isCancelled, !prepared.matroska else { return Self.stopAdapter(prepared) }
+            self.configure(channel, url: prepared.url, generation: active)
+            self.automatic = prepared.url
+        }
+        return true
+    }
+
     /// The other line could not be resolved either: show why instead of loading forever.
     func lineSwitchFailed(_ message: String) {
         guard switchNotice != nil else { return }
@@ -439,6 +463,7 @@ import TVCore
                 }
                 if status == .failed {
                     if self.retryRange(after: failure, channel: channel, url: url, generation: activeGeneration) { return }
+                    if self.retryHDR(after: failure, channel: channel, url: url, generation: activeGeneration) { return }
                     Diagnostics.shared.record(.error, "player", "failed host=\(self.transfer.host ?? channel.url.host() ?? "-") \(self.transfer.failure.map { "upstream=\($0) " } ?? "")\(detail) \(self.failureContext(channel, url: url, item: item))")
                     if self.retryLive(after: failure) { return }
                     // A refused link is usually an expired one: say so in plain words rather than the system's.
@@ -977,6 +1002,17 @@ extension PlaybackSession {
         var current = error as NSError?
         while let error = current {
             if ["CoreMediaErrorDomain", NSOSStatusErrorDomain].contains(error.domain), error.code == -12939 { return true }
+            current = error.userInfo[NSUnderlyingErrorKey] as? NSError
+        }
+        return false
+    }
+
+    /// AVPlayer won't play the stream's content on this device (AVFoundation -11868, Core Media -17223).
+    nonisolated static func refusedContent(_ error: Error?) -> Bool {
+        var current = error as NSError?
+        while let error = current {
+            if error.domain == AVFoundationErrorDomain, error.code == -11868 { return true }
+            if error.domain == "CoreMediaErrorDomain", error.code == -17223 { return true }
             current = error.userInfo[NSUnderlyingErrorKey] as? NSError
         }
         return false
