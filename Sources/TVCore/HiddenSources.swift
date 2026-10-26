@@ -1,5 +1,5 @@
-import Foundation
-import Observation
+﻿import Foundation
+import Perception
 
 /// Subscription-qualified hides. The same key scheme as `PinnedSources`.
 @MainActor @Observable public final class HiddenSources {
