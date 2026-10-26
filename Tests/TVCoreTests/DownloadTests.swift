@@ -124,3 +124,57 @@ import Testing
     library.remove(library.items.map(\.id))
     #expect(library.collections.isEmpty)
 }
+
+@MainActor @Test func downloadsWhoseFilesWereDeletedOrMovedAreForgotten() async throws {
+    let root = FileManager.default.temporaryDirectory.appending(path: "downloads-\(UUID().uuidString)")
+    defer { try? FileManager.default.removeItem(at: root) }
+    let site = Site(key: "s", name: "S", type: 3, api: "csp_Test", raw: [:])
+    let items = (1...3).map { number in
+        let episode = Episode(id: "\(number)", name: "第 \(number) 集", address: "https://example.com/\(number).mp4", flag: "line")
+        return DownloadItem(id: "e\(number)", title: "Show", episode: episode.name, poster: nil, posterHeaders: [:],
+                            source: DownloadSource(site: site, videoID: "v", episode: episode), created: Date(), status: .completed, media: "media.mp4")
+    }
+    for item in items {
+        try FileManager.default.createDirectory(at: root.appending(path: item.id), withIntermediateDirectories: true)
+        try Data("mp4".utf8).write(to: root.appending(path: item.id).appending(path: "media.mp4"))
+    }
+    try JSONEncoder().encode(items).write(to: root.appending(path: "downloads.json"))
+    let defaults = try #require(UserDefaults(suiteName: UUID().uuidString))
+    let library = DownloadLibrary(root: root, defaults: defaults)
+    #expect(library.items.map(\.id) == ["e1", "e2", "e3"])
+    #expect(library.file(for: items[0]) == root.appending(path: "e1").appending(path: "media.mp4"))
+
+    // Moved away in Finder: playing it says so and it leaves the list.
+    try FileManager.default.removeItem(at: root.appending(path: "e1").appending(path: "media.mp4"))
+    await #expect(throws: TVError.self) { try await library.playbackAddress(for: URL(string: "tvbox-download://e1")!) }
+    #expect(library.items.map(\.id) == ["e2", "e3"])
+    // Deleted while the app was open: the next look at the page drops it, and a relaunch agrees.
+    try FileManager.default.removeItem(at: root.appending(path: "e2"))
+    library.forgetMissing()
+    #expect(library.items.map(\.id) == ["e3"])
+    #expect(DownloadLibrary(root: root, defaults: defaults).items.map(\.id) == ["e3"])
+    // The whole folder deleted: the list is still saved, in a new folder.
+    try FileManager.default.removeItem(at: root)
+    library.forgetMissing()
+    #expect(library.items.isEmpty)
+    #expect(FileManager.default.fileExists(atPath: root.appending(path: "downloads.json").path))
+}
+
+@MainActor @Test func savedSongsWhoseFilesAreGoneAreForgotten() throws {
+    let root = FileManager.default.temporaryDirectory.appending(path: "music-downloads-\(UUID().uuidString)")
+    defer { try? FileManager.default.removeItem(at: root) }
+    let songs = (1...2).map { MusicTrack(platform: .qq, songID: "s\($0)", title: "Song \($0)", artists: ["A"]) }
+    let items = songs.map { MusicDownload(track: $0, created: Date(), status: .completed, media: "audio.flac") }
+    for item in items {
+        let folder = root.appending(path: item.id.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!)
+        try FileManager.default.createDirectory(at: folder, withIntermediateDirectories: true)
+        try Data("fLaC".utf8).write(to: folder.appending(path: "audio.flac"))
+    }
+    try JSONEncoder().encode(items).write(to: root.appending(path: "music-downloads.json"))
+    let library = MusicDownloadLibrary(root: root)
+    #expect(library.completed.count == 2)
+    try FileManager.default.removeItem(at: root.appending(path: items[0].id.addingPercentEncoding(withAllowedCharacters: .alphanumerics)!))
+    #expect(library.localSelection(for: songs[0]) == nil)
+    library.forgetMissing()
+    #expect(library.items.map(\.id) == [songs[1].id])
+}

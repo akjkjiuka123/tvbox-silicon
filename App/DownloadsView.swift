@@ -32,6 +32,20 @@ struct DownloadsView: View {
         .tabTitle(L10n.text("Downloads"))
         .task { await library.measure() }
         .onChange(of: library.items.filter { $0.status == .completed }.count) { Task { await library.measure() } }
+        #if os(macOS)
+        // Files may have been deleted or moved in Finder while the app was in the background.
+        .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in
+            Task { await library.measure() }
+        }
+        .toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button { NSWorkspace.shared.open(hasMusic && kind == .music ? MusicDownloadLibrary.shared.root : library.root) } label: {
+                    Label(L10n.text("Show in Finder"), systemImage: "folder")
+                }
+                .help(L10n.text("Show in Finder"))
+            }
+        }
+        #endif
         .confirmationDialog(L10n.text("Delete all downloaded episodes of %@?", deleting?.title ?? ""),
                             isPresented: Binding(get: { deleting != nil }, set: { if !$0 { deleting = nil } }), titleVisibility: .visible) {
             Button(L10n.text("Delete Downloads"), role: .destructive) {
@@ -410,6 +424,11 @@ private struct ShowPanel: View {
         .glassRow()
         .accessibilityLabel(L10n.text("Play %@", item.episode))
         .contextMenu {
+            #if os(macOS)
+            if let file = library.file(for: item) {
+                Button(L10n.text("Show in Finder"), systemImage: "folder") { NSWorkspace.shared.activateFileViewerSelecting([file]) }
+            }
+            #endif
             Button(L10n.text("Delete Download"), systemImage: "trash", role: .destructive) { library.remove([item.id]) }
         }
     }
