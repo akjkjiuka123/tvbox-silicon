@@ -4,7 +4,7 @@ cd "$(dirname "$0")/.."
 ROOT="$PWD"
 TARGET="${1:-ios-simulator}"
 case "$TARGET" in
-  ios-simulator) SDK=iphonesimulator; CONF=ios-aarch64-zero-simulator; TRIPLE=arm64-apple-ios17.0-simulator; FAMILY=1 ;;
+  ios-simulator) SDK=iphonesimulator; CONF=ios-aarch64-zero-simulator; TRIPLE=arm64-apple-ios16.0-simulator; FAMILY=1 ;;
   tvos-simulator) SDK=appletvsimulator; CONF=tvos-aarch64-zero-simulator; TRIPLE=arm64-apple-tvos17.0-simulator; FAMILY=3 ;;
   *) echo "Usage: $0 [ios-simulator|tvos-simulator]" >&2; exit 2 ;;
 esac
