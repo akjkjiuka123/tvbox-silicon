@@ -1,5 +1,5 @@
-import Foundation
-import Observation
+﻿import Foundation
+import Perception
 
 @MainActor @Observable public final class SearchModel {
     public var draft = ""
