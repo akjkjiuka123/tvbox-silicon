@@ -1,5 +1,5 @@
-import Foundation
-import Observation
+﻿import Foundation
+import Perception
 
 /// Music search across the catalogs, for songs, albums or playlists. Typing waits 350 ms before
 /// searching; each catalog answers on its own, and results show as they arrive, merged and
