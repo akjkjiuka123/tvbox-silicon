@@ -113,10 +113,17 @@ workflows:
           APP=$(find build/DerivedData-ios/Build/Products -name '*.app' -maxdepth 4 2>/dev/null | head -1)
           if [ -z "$APP" ]; then echo "no app produced"; exit 0; fi
           echo "app: $APP"
+          du -sh "$APP" || true
+          ls "$APP" | head -20 || true
+          EXE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist" 2>/dev/null || echo "")
+          echo "executable: $EXE"
+          if [ -n "$EXE" ] && [ ! -f "$APP/$EXE" ]; then echo "ERROR: app binary missing"; exit 0; fi
           rm -rf Payload && mkdir -p Payload
-          cp -R "$APP" Payload/
-          zip -qr Yingxia-ios16.ipa Payload
+          ditto "$APP" "Payload/$(basename "$APP")"
+          find Payload -maxdepth 2 | head -25
+          zip -qry Yingxia-ios16.ipa Payload
           ls -lh Yingxia-ios16.ipa
+          unzip -l Yingxia-ios16.ipa | tail -5
     artifacts:
       - Yingxia-ios16.ipa
       - build-swift.log
