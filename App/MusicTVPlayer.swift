@@ -43,8 +43,8 @@ struct MusicTabLabel: View {
 @MainActor @Perceptible final class MusicTabBars {
     private(set) var image = MusicTabBars.frames[0]
     var animates = false { didSet { if animates != oldValue { restart() } } }
-    @ObservationIgnored private var frame = 0
-    @ObservationIgnored private var timer: Timer?
+    @PerceptionIgnored private var frame = 0
+    @PerceptionIgnored private var timer: Timer?
     private static let still = render([0.35, 0.35, 0.35])
     private static let frames = [[0.45, 0.9, 0.6], [0.8, 0.5, 1.0], [0.6, 1.0, 0.4], [1.0, 0.65, 0.8]].map { render($0) }
 

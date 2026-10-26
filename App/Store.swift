@@ -60,11 +60,11 @@ import Perception
     /// Rebuilt source rows are expensive (every source is classified and copied) and Watch Now reads
     /// them many times while drawing one frame. The stamp is the inputs, so a later frame reuses the row.
     /// Not observed: views fill these while drawing, and a write would draw every reader again.
-    @ObservationIgnored private var siteListStamp = ""
-    @ObservationIgnored private var automaticCache: [Site]?
-    @ObservationIgnored private var orderedCache: [Site]?
-    @ObservationIgnored private var recommendationCache: [Site]?
-    @ObservationIgnored private var groupsCache: [Bool: [SourceGroup]] = [:]
+    @PerceptionIgnored private var siteListStamp = ""
+    @PerceptionIgnored private var automaticCache: [Site]?
+    @PerceptionIgnored private var orderedCache: [Site]?
+    @PerceptionIgnored private var recommendationCache: [Site]?
+    @PerceptionIgnored private var groupsCache: [Bool: [SourceGroup]] = [:]
     /// What the cached rows were built from: the merged subscription, which subscriptions are on, and the viewer's pins, hides, and order.
     private func currentSiteListStamp() -> String {
         let imported = subscription?.importedAt.timeIntervalSince1970 ?? 0

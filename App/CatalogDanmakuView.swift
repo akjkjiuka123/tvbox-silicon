@@ -37,8 +37,8 @@ import Perception
     private(set) var fromCache = false
     var context: PlaybackHistoryContext? { automaticContext }
 
-    @ObservationIgnored private var renderedKey: String?
-    @ObservationIgnored private var rendered: [Danmaku] = []
+    @PerceptionIgnored private var renderedKey: String?
+    @PerceptionIgnored private var rendered: [Danmaku] = []
     var renderedRevision: String { "\(revision):\(offset):\(fontSize)" }
     var renderedComments: [Danmaku] {
         let key = renderedRevision

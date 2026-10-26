@@ -28,8 +28,8 @@ import Perception
     static var enabled: Bool { UserDefaults.standard.object(forKey: key) as? Bool ?? true }
     /// What is being opened and who sent it, shown until the player opens.
     private(set) var incoming: (title: String, sender: String)?
-    @ObservationIgnored private weak var store: Store?
-    @ObservationIgnored private var task: Task<Void, Never>?
+    @PerceptionIgnored private weak var store: Store?
+    @PerceptionIgnored private var task: Task<Void, Never>?
 
     func start(_ store: Store) {
         self.store = store

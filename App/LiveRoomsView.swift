@@ -325,7 +325,7 @@ extension LivePlatform {
 @MainActor @Perceptible final class LivePreviews {
     static let shared = LivePreviews()
     private(set) var rooms: [LivePlatform: LiveRoom] = [:]
-    @ObservationIgnored private var asked: [LivePlatform: Date] = [:]
+    @PerceptionIgnored private var asked: [LivePlatform: Date] = [:]
 
     func load(_ platform: LivePlatform) {
         if let date = asked[platform], Date.now.timeIntervalSince(date) < 600 { return }

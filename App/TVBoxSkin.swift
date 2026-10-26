@@ -308,6 +308,7 @@ struct TVBoxBrowse: View {
                         HStack(spacing: 6) {
                             TVBoxMonogram(name: site.name, size: 20)
                             Text(site.name).lineLimit(1)
+                            SourceHealthDot(status: store.health(of: site))
                         }
                     }
                     .buttonStyle(TVBoxChipStyle(selected: selected?.key == site.key))
@@ -580,21 +581,29 @@ struct TVBoxCatalog: View {
 
 // MARK: - Tiles
 
-/// A source on the home wall: monogram, name, and its engine/compatibility line.
+/// A source on the home wall: monogram, name, its engine line, and how it has been answering.
 struct TVBoxSiteTile: View {
+    @Environment(Store.self) private var store
     let site: Site
+
+    /// Recent answers, as the native source cards show them; unknown until the source is asked.
+    private var status: SourceHealth.Status { store.health(of: site) }
 
     var body: some View {
         HStack(spacing: 10) {
             TVBoxMonogram(name: site.name, size: 40)
             VStack(alignment: .leading, spacing: 3) {
-                Text(site.name)
-                    .font(.system(size: 14, weight: .semibold))
-                    .foregroundStyle(.white)
-                    .lineLimit(1)
-                Text(site.compatibility)
+                HStack(spacing: 6) {
+                    Text(site.name)
+                        .font(.system(size: 14, weight: .semibold))
+                        .foregroundStyle(.white)
+                        .lineLimit(1)
+                    SourceHealthDot(status: status)
+                }
+                // Trouble replaces the engine line: a source that keeps failing is the thing to know.
+                Text(status.warning != nil ? status.summary : site.compatibility)
                     .font(.system(size: 11))
-                    .foregroundStyle(TVBoxTheme.secondary)
+                    .foregroundStyle(status.warning ?? TVBoxTheme.secondary)
                     .lineLimit(1)
             }
             Spacer(minLength: 0)

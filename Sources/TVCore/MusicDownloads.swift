@@ -53,10 +53,10 @@ public struct MusicDownloadedCollection: Codable, Identifiable, Hashable, Sendab
     /// Albums and playlists downloaded from their pages, most recent first.
     public private(set) var collections: [MusicDownloadedCollection] = []
     public let root: URL
-    @ObservationIgnored private let session: URLSession
-    @ObservationIgnored private var running: [String: (run: UUID, task: Task<Void, Never>, meter: DownloadMeter)] = [:]
-    @ObservationIgnored private var ticker: Task<Void, Never>?
-    @ObservationIgnored private var savedAt = Date.distantPast
+    @PerceptionIgnored private let session: URLSession
+    @PerceptionIgnored private var running: [String: (run: UUID, task: Task<Void, Never>, meter: DownloadMeter)] = [:]
+    @PerceptionIgnored private var ticker: Task<Void, Never>?
+    @PerceptionIgnored private var savedAt = Date.distantPast
 
     public init(root: URL = MusicDownloadLibrary.defaultRoot) {
         self.root = root

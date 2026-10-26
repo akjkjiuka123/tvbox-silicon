@@ -93,15 +93,15 @@ public struct DownloadItem: Codable, Identifiable, Hashable, Sendable {
         }
     }
     /// Resolves an episode to its current media address; set by the app, which knows the sources.
-    @ObservationIgnored public var resolver: (@MainActor @Sendable (DownloadItem) async throws -> Channel)?
+    @PerceptionIgnored public var resolver: (@MainActor @Sendable (DownloadItem) async throws -> Channel)?
 
     public let root: URL
-    @ObservationIgnored private let defaults: UserDefaults
-    @ObservationIgnored private let session: URLSession
-    @ObservationIgnored private var running: [String: (run: UUID, task: Task<Void, Never>, meter: DownloadMeter)] = [:]
-    @ObservationIgnored private var samples: [String: (date: Date, bytes: Int64)] = [:]
-    @ObservationIgnored private var ticker: Task<Void, Never>?
-    @ObservationIgnored private var savedAt = Date.distantPast
+    @PerceptionIgnored private let defaults: UserDefaults
+    @PerceptionIgnored private let session: URLSession
+    @PerceptionIgnored private var running: [String: (run: UUID, task: Task<Void, Never>, meter: DownloadMeter)] = [:]
+    @PerceptionIgnored private var samples: [String: (date: Date, bytes: Int64)] = [:]
+    @PerceptionIgnored private var ticker: Task<Void, Never>?
+    @PerceptionIgnored private var savedAt = Date.distantPast
 
     public init(root: URL = DownloadLibrary.defaultRoot, defaults: UserDefaults = .standard) {
         self.root = root; self.defaults = defaults

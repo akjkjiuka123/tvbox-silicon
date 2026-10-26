@@ -176,7 +176,7 @@ public final class PlayOnReceiver: @unchecked Sendable {
     }
 
     public private(set) var receivers: [Receiver] = []
-    @ObservationIgnored private var browser: NWBrowser?
+    @PerceptionIgnored private var browser: NWBrowser?
 
     public init() {}
 
