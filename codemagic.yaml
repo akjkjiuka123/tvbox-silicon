@@ -8,7 +8,6 @@ workflows:
       node: 20
       vars:
         LANG: en_US.UTF-8
-        JAVA_HOME: /Users/builder/jdk19/Contents/Home
     scripts:
       - name: Toolchain
         script: |
