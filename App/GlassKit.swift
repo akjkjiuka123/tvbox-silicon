@@ -28,6 +28,7 @@ struct GlassStyle {
     static let identity = GlassStyle(isVisible: false)
     func tint(_ color: Color) -> GlassStyle { var style = self; style.tint = color; return style }
     func interactive() -> GlassStyle { var style = self; style.isInteractive = true; return style }
+    #if compiler(>=6.2)
     @available(macOS 26, iOS 26, tvOS 26, *)
     var glass: Glass {
         guard isVisible else { return .identity }
@@ -35,6 +36,7 @@ struct GlassStyle {
         if let tint { glass = glass.tint(tint) }
         return isInteractive ? glass.interactive() : glass
     }
+    #endif
 }
 
 /// `GlassEffectContainer` where it exists, so nearby glass shapes blend; a plain group before OS 26.
@@ -42,25 +44,33 @@ struct GlassGroup<Content: View>: View {
     var spacing: CGFloat?
     @ViewBuilder var content: Content
     var body: some View {
+        #if compiler(>=6.2)
         if #available(macOS 26, iOS 26, tvOS 26, *) {
             GlassEffectContainer(spacing: spacing) { content }
         } else {
             content
         }
+        #else
+        content
+        #endif
     }
 }
 
 extension View {
     @ViewBuilder func glassSurface(_ style: GlassStyle = .regular, in shape: some Shape) -> some View {
+        #if compiler(>=6.2)
         if #available(macOS 26, iOS 26, tvOS 26, *) {
             glassEffect(style.glass, in: shape)
         } else if style.isVisible {
+        #else
+        if style.isVisible {
             background {
                 shape.fill(.ultraThinMaterial).overlay { if let tint = style.tint { shape.fill(tint) } }
             }
         } else {
             self
         }
+        #endif
     }
 
     #if !os(tvOS)
@@ -68,17 +78,25 @@ extension View {
     /// `hardEdge` for a tall bar, which content must not show through.
     @ViewBuilder func topBar<Bar: View>(hardEdge: Bool = false, @ViewBuilder _ bar: () -> Bar) -> some View {
         let bar = bar()
+        #if compiler(>=6.2)
         if #available(macOS 26, iOS 26, *) {
             scrollEdgeEffectStyle(hardEdge ? .hard : .soft, for: .top).safeAreaBar(edge: .top, spacing: 0) { bar }
         } else {
             safeAreaInset(edge: .top, spacing: 0) { bar.background(.bar) }
         }
+        #else
+        safeAreaInset(edge: .top, spacing: 0) { bar.background(.bar) }
+        #endif
     }
     #endif
 
     #if os(iOS)
     @ViewBuilder func minimizesTabBarOnScroll() -> some View {
+        #if compiler(>=6.2)
         if #available(iOS 26, *) { tabBarMinimizeBehavior(.onScrollDown) } else { self }
+        #else
+        self
+        #endif
     }
     #endif
 

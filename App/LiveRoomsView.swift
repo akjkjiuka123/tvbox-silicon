@@ -211,7 +211,10 @@ struct LiveSearchResults: View {
             guard !Task.isCancelled else { return }
             await withTaskGroup(of: (LivePlatform, Result<[LiveRoom], Error>).self) { group in
                 for platform in platforms {
-                    group.addTask { await (platform, Result { try await LiveCatalog.search(platform, keyword: query) }) }
+                    group.addTask {
+                        do { return (platform, .success(try await LiveCatalog.search(platform, keyword: query))) }
+                        catch { return (platform, .failure(error)) }
+                    }
                 }
                 for await (platform, result) in group where !Task.isCancelled {
                     switch result {
