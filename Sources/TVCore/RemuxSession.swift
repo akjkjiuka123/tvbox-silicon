@@ -1,5 +1,6 @@
 import Foundation
 import TVMedia
+import AVFoundation
 import VideoToolbox
 
 /// The bytes of a file being repackaged for AVPlayer.
@@ -156,9 +157,15 @@ final class RemuxSession: @unchecked Sendable {
                 _ = tvm_keyframes(input, video, &keyframes, count)
             }
         }
-        let device = RemuxPlan.Device(hevc: VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC),
+        var device = RemuxPlan.Device(hevc: VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC),
                                       av1: VTIsHardwareDecodeSupported(kCMVideoCodecType_AV1),
-                                      hevcEncoder: VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC))
+                                      hevcEncoder: VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC),
+                                      hdr: AVPlayer.eligibleForHDRPlayback)
+        #if !os(macOS)
+        // An Apple TV or iPhone tone maps a 4K picture too slowly to keep up; one that shows no HDR gets 1080p.
+        device.toneMapWidth = 1920
+        device.toneMapHeight = 1080
+        #endif
         guard let plan = RemuxPlan.make(streams: streams, keyframes: keyframes, start: tvm_start_time(input), duration: tvm_duration(input),
                                         size: source.length, device: device) else {
             throw TVError.unsupported(L10n.text("This media cannot be played. Try another channel or source."))
@@ -166,7 +173,8 @@ final class RemuxSession: @unchecked Sendable {
         self.plan = plan
         var tracks = plan.tracks.map { track in
             TVMTrack(stream: Int32(track.stream.index), mode: track.mode.rawValue, bitRate: Int32(track.bitRate),
-                     channels: Int32(track.channels), dolbyVision: track.dolbyVision.rawValue)
+                     channels: Int32(track.channels), dolbyVision: track.dolbyVision.rawValue, toneMap: track.toneMap ? 1 : 0,
+                     width: Int32(track.width), height: Int32(track.height))
         }
         guard let cursor = tvm_cursor_create(input, &tracks, Int32(tracks.count), Self.offset) else { throw TVError.unsupported("remux cursor") }
         self.cursor = cursor
@@ -183,7 +191,7 @@ final class RemuxSession: @unchecked Sendable {
         }
         master = plan.masterPlaylist(codecs: codecs, supplemental: initializations[0].flatMap(plan.supplementalCodec))
         for index in plan.tracks.indices where plan.tracks[index].kind != .other { playlists[index] = plan.mediaPlaylist(track: index) }
-        let summary = plan.tracks.map { "\($0.stream.codec)\($0.mode == .copy ? "" : ">\($0.mode)")" }.joined(separator: ",")
+        let summary = plan.tracks.map { "\($0.stream.codec)\($0.mode == .copy ? "" : ">\($0.mode)")\($0.toneMap ? "(sdr)" : "")" }.joined(separator: ",")
         Diagnostics.shared.record(.info, "remux", "open format=\(format) tracks=\(summary) segments=\(plan.segments) keyframes=\(keyframes.count) size=\(source.length) ms=\(Int(Date().timeIntervalSince(began) * 1000))")
     }
 

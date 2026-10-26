@@ -33,11 +33,20 @@ struct RemuxPlan: Sendable, Equatable {
         var bitRate = 0
         var channels = 0
         var dolbyVision: DolbyVision = .drop
+        /// Converted HDR video becomes SDR (BT.709), for a device that doesn't show HDR.
+        var toneMap = false
+        /// The size converted video is made at; 0 keeps the stream's.
+        var width = 0, height = 0
         var kind: Stream.Kind { stream.kind }
     }
     /// What the device decodes and encodes in hardware.
     struct Device: Sendable {
         var hevc = true, av1 = false, hevcEncoder = true
+        /// Whether AVPlayer plays HDR here. Without it, it refuses every HDR variant of an HLS stream ("cannot be
+        /// played on the device"), although it tone maps the same picture in a plain file.
+        var hdr = true
+        /// The largest picture tone mapping makes, which costs the CPU by the pixel; 0 for no limit.
+        var toneMapWidth = 0, toneMapHeight = 0
     }
 
     /// The video track first, then the audio, then the text subtitles.
@@ -65,6 +74,19 @@ struct RemuxPlan: Sendable, Equatable {
     static func videoTrack(_ stream: Stream, device: Device) -> Track {
         var track = Track(stream: stream)
         let plain = stream.chroma == 420 || stream.chroma == 0
+        // Dolby Vision 5 has no HDR10 picture to map; it stays as it is.
+        if !device.hdr, [16, 18].contains(stream.colorTransfer), stream.doviProfile != 5 {
+            track.mode = device.hevcEncoder ? .hevc : .h264
+            track.toneMap = true
+            var sized = stream
+            if device.toneMapWidth > 0, stream.width > device.toneMapWidth || stream.height > device.toneMapHeight {
+                let scale = min(Double(device.toneMapWidth) / Double(stream.width), Double(device.toneMapHeight) / Double(stream.height))
+                (track.width, track.height) = (Int(Double(stream.width) * scale / 2) * 2, Int(Double(stream.height) * scale / 2) * 2)
+                (sized.width, sized.height) = (track.width, track.height)
+            }
+            track.bitRate = videoBitRate(sized, hevc: track.mode == .hevc)
+            return track
+        }
         switch stream.codec {
         case "h264" where stream.bitDepth <= 8 && plain: return track
         case "hevc" where device.hevc && stream.bitDepth <= 10 && plain:
@@ -163,7 +185,7 @@ struct RemuxPlan: Sendable, Equatable {
             if audio.allSatisfy({ codecs[$0] != nil }) { attributes.append("CODECS=\"\(list.joined(separator: ","))\"") }
             if let supplemental { attributes.append("SUPPLEMENTAL-CODECS=\"\(supplemental)\"") }
         }
-        attributes.append("RESOLUTION=\(video.stream.width)x\(video.stream.height)")
+        attributes.append(video.width > 0 ? "RESOLUTION=\(video.width)x\(video.height)" : "RESOLUTION=\(video.stream.width)x\(video.stream.height)")
         if video.stream.frameRate > 0 { attributes.append(String(format: "FRAME-RATE=%.3f", video.stream.frameRate)) }
         attributes.append("VIDEO-RANGE=\(videoRange)")
         if !audio.isEmpty { attributes.append("AUDIO=\"audio\"") }
@@ -192,6 +214,7 @@ struct RemuxPlan: Sendable, Equatable {
 
     var videoRange: String {
         let stream = tracks[0].stream
+        if tracks[0].toneMap { return "SDR" }
         if tracks[0].mode == .copy, tracks[0].dolbyVision == .dvh1 { return "PQ" }
         return stream.colorTransfer == 16 ? "PQ" : stream.colorTransfer == 18 ? "HLG" : "SDR"
     }

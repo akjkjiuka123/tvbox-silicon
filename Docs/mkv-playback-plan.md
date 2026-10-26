@@ -61,6 +61,11 @@ Cloud drive / HTTP / file ──bytes──▶ TVMedia (C, FFmpeg) ──fMP4─
 - **Serving** (`RemuxServer`): a per-launch token, `master.m3u8`, `<track>.m3u8`, `<track>.mp4` (initialization),
   `<track>-<segment>.m4s|vtt`. A segment is sent chunked while it is written, in fragments of about a second,
   so the first frame doesn't wait for the whole segment.
+- **HDR on a display without it**: AVPlayer refuses every HDR variant of an HLS stream when
+  `AVPlayer.eligibleForHDRPlayback` is false ("cannot be played on the device", CoreMedia -17223), although it tone
+  maps the same picture in a plain file. There an HDR10 or HLG picture is converted: swscale's color management
+  (`sws_scale_frame`, perceptual intent) maps it to 8-bit BT.709, and the playlist says SDR. Apple TVs and iPhones
+  shrink it to 1080p first (4K costs about four times as much); Macs keep its size. Dolby Vision 5 stays as it is.
 - **Subtitles**: SubRip, ASS/SSA, WebVTT and tx3g become WebVTT renditions (italics and bold kept, ASS styling and
   drawings dropped), placed with `X-TIMESTAMP-MAP`. Picture subtitles (PGS, VobSub) are not shown yet.
 
