@@ -1,5 +1,5 @@
-import Foundation
-import Observation
+﻿import Foundation
+import Perception
 
 public enum FavoriteKind: String, Codable, Sendable {
     case live, video, episode, music, cloud
