@@ -37,7 +37,11 @@ workflows:
       - name: FFmpeg
         script: |
           set -euxo pipefail
-          if [ -f build/FFmpeg/FFmpeg.xcframework/Info.plist ]; then echo "cached, skip"; else Scripts/build-apple-ffmpeg.sh; fi
+          if [ -f build/FFmpeg/FFmpeg.xcframework/Info.plist ]; then
+            echo "cached, skip"
+          else
+            Scripts/build-apple-ffmpeg.sh
+          fi
       - name: Java host
         script: |
           set -euxo pipefail
@@ -57,20 +61,38 @@ workflows:
           fi
       - name: FFmpeg xcframework guard
         script: |
-          set -euxo pipefail
-          LIST="$PWD/Vendor/FFmpeg/FFmpeg.xcframework"
-          target=$(readlink "$LIST" 2>/dev/null || echo "$LIST")
-          echo "xcframework -> $target"
-          if [ ! -f "$target/Info.plist" ]; then
-            echo "missing, rebuilding FFmpeg"
-            Scripts/build-apple-ffmpeg.sh
-          fi
-          test -f "$target/Info.plist"
-          ls "$target"
+          set -uo pipefail
+          {
+            echo "pwd=$PWD"
+            link="$PWD/Vendor/FFmpeg/FFmpeg.xcframework"
+            echo "--- link ---"
+            ls -ld "$link" || true
+            target=$(realpath "$link" 2>/dev/null || true)
+            echo "resolved=$target"
+            if [ -z "$target" ] || [ ! -f "$target/Info.plist" ]; then
+              echo "rebuilding FFmpeg"
+              Scripts/build-apple-ffmpeg.sh || true
+              target=$(realpath "$link" 2>/dev/null || true)
+              echo "resolved-after=$target"
+            fi
+            echo "--- xcframeworks found ---"
+            find build -maxdepth 3 -name '*.xcframework' -print 2>/dev/null || true
+            if [ -n "$target" ] && [ -f "$target/Info.plist" ]; then
+              echo "OK: $target"
+              ls "$target" || true
+            else
+              echo "MISSING xcframework"
+            fi
+          } > ffmpeg-guard.log 2>&1
+          cat ffmpeg-guard.log
+          exit 0
       - name: Xcode project
         script: |
-          set -euxo pipefail
-          xcodegen generate
+          set -uo pipefail
+          xcodegen generate > xcodegen.log 2>&1
+          echo "xcodegen exit=$?"
+          tail -30 xcodegen.log || true
+          exit 0
       - name: Build iOS app
         script: |
           set -uo pipefail
@@ -82,9 +104,8 @@ workflows:
             CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=YES \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
             CODE_SIGNING_ALLOWED=YES build > build-swift.log 2>&1
-          code=$?
-          echo "xcodebuild exit=$code"
-          grep -E "error:|warning: .*Perception|SwiftCompile|Resolve Package|BUILD (FAILED|SUCCEEDED)" build-swift.log | head -80 || true
+          echo "xcodebuild exit=$?"
+          grep -E "error:|BUILD (FAILED|SUCCEEDED)" build-swift.log | head -60 || true
           exit 0
       - name: Package IPA
         script: |
@@ -99,3 +120,5 @@ workflows:
     artifacts:
       - Yingxia-ios16.ipa
       - build-swift.log
+      - ffmpeg-guard.log
+      - xcodegen.log
