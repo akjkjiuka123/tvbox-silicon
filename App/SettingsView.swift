@@ -243,6 +243,32 @@ struct FormLink<Destination: View>: View {
     }
 }
 
+/// A row that opens a web page outside the app, with an arrow where other rows have a chevron.
+struct SettingsWebRow: View {
+    let symbol: String
+    var tint: Color = .gray
+    let title: String
+    var subtitle: String? = nil
+    let url: URL
+    @Environment(\.openURL) private var openURL
+    var body: some View {
+        Button { openURL(url) } label: {
+            HStack(spacing: 8) {
+                FormLabel(symbol: symbol, tint: tint, title: title, subtitle: subtitle).foregroundStyle(.primary)
+                Spacer(minLength: 0)
+                Image(systemName: "arrow.up.right").font(.footnote.weight(.semibold)).foregroundStyle(.tertiary)
+            }
+            .contentShape(Rectangle())
+        }
+        #if os(macOS)
+        .buttonStyle(.plain)
+        #else
+        // A button in a list draws its title in the tint; this one reads like the rows around it.
+        .tint(.primary)
+        #endif
+    }
+}
+
 extension View {
     /// A button that fills its row: tinted text on iPhone, a plain clickable row on the Mac, where a
     /// form would otherwise draw a push button around the whole label.
@@ -327,6 +353,12 @@ struct FormSettingsView: View {
                                 subtitle: L10n.text("Report a problem or share an idea")) { FeedbackView() }
                 #else
                 FormLink(symbol: "bubble.left.and.text.bubble.right.fill", tint: Brand.indigo, title: L10n.text("Send Feedback")) { FeedbackView() }
+                #endif
+                #if os(macOS)
+                SettingsWebRow(symbol: "paperplane.fill", tint: Brand.cyan, title: L10n.text("Telegram Group"),
+                               subtitle: L10n.text("Chat with the developer and other users"), url: Support.telegram)
+                #else
+                SettingsWebRow(symbol: "paperplane.fill", tint: Brand.cyan, title: L10n.text("Telegram Group"), url: Support.telegram)
                 #endif
             }
 
@@ -1300,6 +1332,7 @@ struct TVSettingsView: View {
             // First in the list, beside the app: a problem or an idea is one press away.
             TVSettingsSection {
                 TVSettingsLink(title: L10n.text("Send Feedback")) { FeedbackView() }
+                TVSettingsLink(title: L10n.text("Telegram Group")) { TelegramGroupView() }
             }
             subscriptionSection
             TVSettingsSection(title: L10n.text("Accounts")) {

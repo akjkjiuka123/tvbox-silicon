@@ -18,6 +18,8 @@
   <a href="#-get-it">iPhone, iPad &amp; Apple TV beta</a>
   &nbsp;·&nbsp;
   <a href="Docs/DEVELOPMENT.md">Developer guide</a>
+  &nbsp;·&nbsp;
+  <a href="https://t.me/+knKAmySfMycyMzg5">Telegram group</a>
 </p>
 
 <p align="center">
