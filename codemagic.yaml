@@ -5,53 +5,70 @@ workflows:
     max_build_duration: 120
     environment:
       xcode: 16.2
+      java: 17
       node: 20
       vars:
         LANG: en_US.UTF-8
+        HOMEBREW_NO_AUTO_UPDATE: "1"
+        HOMEBREW_NO_INSTALL_CLEANUP: "1"
     scripts:
-      - name: Toolchain
+      - name: Tools
         script: |
-          set -e
-          brew install xcodegen maven autoconf automake libtool pkg-config
-          # Temurin 19 (Codemagic ships 8/11/17/21 only; the JVM host build pins 19)
-          mkdir -p "$HOME/jdk19"
-          curl -fsSL -o /tmp/jdk19.tar.gz \
-            "https://api.adoptium.net/v3/binary/latest/19/ga/mac/aarch64/jdk/hotspot/normal/eclipse"
-          tar -xzf /tmp/jdk19.tar.gz -C "$HOME/jdk19" --strip-components=1
-          ls "$HOME/jdk19/Contents/Home/bin/java"
-          echo "JAVA_HOME=$HOME/jdk19/Contents/Home" >> "$CM_ENV"
-          export JAVA_HOME="$HOME/jdk19/Contents/Home"
-          "$JAVA_HOME/bin/java" -version
+          set -euxo pipefail
+          echo "JAVA_HOME=$JAVA_HOME"
+          java -version || true
+          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen || true
+          brew list maven    >/dev/null 2>&1 || brew install maven    || true
+          brew list autoconf >/dev/null 2>&1 || brew install autoconf || true
+          brew list automake >/dev/null 2>&1 || brew install automake || true
+          brew list libtool  >/dev/null 2>&1 || brew install libtool  || true
+
+          # xcodegen fallback: release binary from GitHub
+          if ! command -v xcodegen >/dev/null; then
+            echo "fallback: xcodegen from release"
+            curl -fsSL -o /tmp/xcodegen.zip \
+              https://github.com/yonaskolb/XcodeGen/releases/latest/download/xcodegen.zip
+            unzip -qo /tmp/xcodegen.zip -d /tmp/xg
+            sudo cp /tmp/xg/xcodegen/bin/xcodegen /usr/local/bin/
+          fi
+          # maven fallback: apache tarball
+          if ! command -v mvn >/dev/null; then
+            echo "fallback: maven from apache"
+            curl -fsSL -o /tmp/mvn.tar.gz \
+              https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz
+            mkdir -p "$HOME/maven" && tar -xzf /tmp/mvn.tar.gz -C "$HOME/maven" --strip-components=1
+            echo "PATH=$HOME/maven/bin:$PATH" >> "$CM_ENV"
+            export PATH="$HOME/maven/bin:$PATH"
+          fi
+
           xcodebuild -version
           xcodegen --version
           mvn -v | head -2
+          autoconf --version | head -1
       - name: FFmpeg
         script: |
-          set -e
-          export JAVA_HOME="$HOME/jdk19/Contents/Home"
+          set -euxo pipefail
           Scripts/build-apple-ffmpeg.sh
       - name: Java host
         script: |
-          set -e
-          export JAVA_HOME="$HOME/jdk19/Contents/Home"
+          set -euxo pipefail
           Scripts/build-java-host.sh
       - name: Mac-only host dirs
         script: |
-          set -e
+          set -euxo pipefail
           mkdir -p build/ScriptHost build/PythonHost
           touch build/ScriptHost/.keep build/PythonHost/.keep
       - name: Apple runtime (JVM + interpreter)
         script: |
-          set -e
-          export JAVA_HOME="$HOME/jdk19/Contents/Home"
+          set -euxo pipefail
           Scripts/package-apple-runtime.sh ios
       - name: Xcode project
         script: |
-          set -e
+          set -euxo pipefail
           xcodegen generate
       - name: Build iOS app
         script: |
-          set -e
+          set -euxo pipefail
           xcodebuild -project TVBox.xcodeproj -scheme TVBox-iOS \
             -destination 'generic/platform=iOS' \
             -derivedDataPath build/DerivedData-ios \
@@ -60,7 +77,7 @@ workflows:
             CODE_SIGNING_ALLOWED=YES build
       - name: Package IPA
         script: |
-          set -e
+          set -euxo pipefail
           APP=$(find build/DerivedData-ios/Build/Products -name '*.app' -maxdepth 4 | head -1)
           echo "app: $APP"
           rm -rf Payload && mkdir -p Payload
