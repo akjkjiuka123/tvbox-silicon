@@ -1,5 +1,5 @@
-import Foundation
-import Observation
+﻿import Foundation
+import Perception
 
 /// The viewer's own source order. While it is on, it replaces the automatic one (`SourceStrategy`):
 /// the Sources page lists sources in it, and search asks sources and lists their matches in it, top first.
