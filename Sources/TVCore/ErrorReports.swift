@@ -1,8 +1,8 @@
 import Foundation
-import Darwin
 #if os(iOS) || os(tvOS)
 import os
 import Perception
+import TVShim
 #endif
 
 /// Sends the app's errors to the developer, so bugs nobody reports still get found
@@ -143,16 +143,12 @@ public final class ErrorReports: @unchecked Sendable {
 
     /// Megabytes: this process's footprint (what the system counts against it), and on iPhone, iPad and
     /// Apple TV how much more it may use before the system ends it.
-    /// `mach_task_self_` is a mutable global. A computed property marked
-    /// `nonisolated(unsafe)` silences Swift 6's check, which only covers the declaration it is on.
-    nonisolated(unsafe) private static var machTask: mach_port_t { mach_task_self_ }
-
     static func memory() -> (footprint: Int?, available: Int?) {
         var info = task_vm_info_data_t()
         var count = mach_msg_type_number_t(MemoryLayout<task_vm_info_data_t>.size / MemoryLayout<integer_t>.size)
         let result = withUnsafeMutablePointer(to: &info) {
             $0.withMemoryRebound(to: integer_t.self, capacity: Int(count)) {
-                task_info(Self.machTask, task_flavor_t(TASK_VM_INFO), $0, &count)
+                task_info(tvbox_mach_task_self(), task_flavor_t(TASK_VM_INFO), $0, &count)
             }
         }
         let footprint = result == KERN_SUCCESS ? Int(info.phys_footprint / 1_048_576) : nil
