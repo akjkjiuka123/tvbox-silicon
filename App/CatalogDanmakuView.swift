@@ -172,7 +172,7 @@ struct CatalogDanmakuSettingsView: View {
     @State private var showsImporter = false
 
     var body: some View {
-        @Perception.Bindable var model = model
+        @TVBindable var model = model
         NavigationStack {
             Form {
                 Section {

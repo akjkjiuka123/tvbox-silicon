@@ -344,7 +344,7 @@ struct FormSettingsView: View {
     }
 
     var body: some View {
-        @Perception.Bindable var store = store
+        @TVBindable var store = store
         ScrollViewReader { proxy in
         Form { Group {
             heroSection
@@ -772,7 +772,7 @@ private struct AddSubscriptionSheet: View {
     private var canAdd: Bool { !store.importing && !store.subscriptionAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     var body: some View {
-        @Perception.Bindable var store = store
+        @TVBindable var store = store
         NavigationStack {
             Form { Group {
                 Section {
@@ -1722,7 +1722,7 @@ private struct TVAddSubscriptionPage: View {
     @Environment(Store.self) private var store
     @Environment(\.dismiss) private var dismiss
     var body: some View {
-        @Perception.Bindable var store = store
+        @TVBindable var store = store
         let empty = store.subscriptionAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         TVSettingsSubpage(symbol: "plus.rectangle.on.rectangle", title: L10n.text("Add Subscription")) {
             TVSettingsSection(title: L10n.text("Subscription"), footer: store.error ?? store.notice) {

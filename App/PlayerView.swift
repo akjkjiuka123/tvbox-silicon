@@ -789,7 +789,7 @@ private struct DesktopPlaybackRoot: View {
 private struct DesktopPlaybackView: View {
     @Environment(Store.self) private var store
     let channel: Channel
-    @Perception.Bindable var session: PlaybackSession
+    @TVBindable var session: PlaybackSession
     let window: PlaybackWindow
     @State private var fillsFrame = false
     @State private var floats = false

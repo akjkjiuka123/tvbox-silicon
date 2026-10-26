@@ -455,7 +455,7 @@ struct MusicSettingsView: View {
     }
 
     var body: some View {
-        @Perception.Bindable var music = store.music
+        @TVBindable var music = store.music
         #if os(tvOS)
         // A page like Settings' own, over the whole screen: a tvOS sheet is a small card that cut the
         // channels off. Quality steps through its choices; Menu closes the page.

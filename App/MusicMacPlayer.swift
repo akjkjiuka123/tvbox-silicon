@@ -297,7 +297,7 @@ struct MusicMacVolume: View {
         volume <= 0 ? "speaker.slash.fill" : volume < 0.34 ? "speaker.wave.1.fill" : volume < 0.67 ? "speaker.wave.2.fill" : "speaker.wave.3.fill"
     }
     var body: some View {
-        @Perception.Bindable var music = store.music
+        @TVBindable var music = store.music
         HStack(spacing: 8) {
             Image(systemName: "speaker.fill").font(.caption).foregroundStyle(.secondary)
             Slider(value: $music.volume, in: 0...1).controlSize(.small)

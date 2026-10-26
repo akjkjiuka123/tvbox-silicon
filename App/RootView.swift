@@ -88,7 +88,7 @@ struct RootView: View {
         return busy
     }
     var body: some View {
-        @Perception.Bindable var store = store
+        @TVBindable var store = store
         Group {
             #if os(macOS)
             NavigationSplitView {
@@ -205,7 +205,7 @@ struct RootView: View {
     }
 
     @ViewBuilder private var tabView: some View {
-        @Perception.Bindable var store = store
+        @TVBindable var store = store
         if #available(iOS 18, tvOS 18, *) {
             TabView(selection: $store.section) {
                 ForEach(tabs) { item in
