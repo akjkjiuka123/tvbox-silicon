@@ -4,6 +4,8 @@
 #include <libavformat/avformat.h>
 #include <libavutil/audio_fifo.h>
 #include <libavutil/dovi_meta.h>
+#include <libavutil/hwcontext.h>
+#include <libavutil/hwcontext_videotoolbox.h>
 #include <libavutil/intreadwrite.h>
 #include <libavutil/opt.h>
 #include <libavutil/pixdesc.h>
@@ -11,6 +13,7 @@
 #include <libswscale/swscale.h>
 #include <stdio.h>
 #include <string.h>
+#include <VideoToolbox/VideoToolbox.h>
 
 /// How far before a keyframe's time a packet still counts as that keyframe (index times are rounded).
 #define TOLERANCE 2000
@@ -262,6 +265,11 @@ typedef struct Track {
     /// Tone mapping at a smaller size: the picture is shrunk first, in its own colors, which costs far less.
     struct SwsContext *shrinker;
     AVFrame *shrunk;
+    /// Tone mapping on the media engine: VideoToolbox decodes, a pixel transfer shrinks and maps the picture, and
+    /// the encoder takes it from a VideoToolbox frame pool, with no copy through memory.
+    AVBufferRef *hwDevice, *hwFrames;
+    VTPixelTransferSessionRef transfer;
+    AVFrame *uploaded, *downloaded;
     /// Audio: the next sample's time (output clock, before the offset); AV_NOPTS_VALUE after a reset.
     int64_t nextSample;
     /// Audio conversion just restarted: the encoder's priming before the segment's start is dropped.
@@ -448,6 +456,50 @@ static int write_out(Track *track, AVPacket *packet) {
     return av_packet_ref(track->waiting, packet);
 }
 
+static AVBufferRef *hardware_device(Track *track) {
+    if (!track->hwDevice) av_hwdevice_ctx_create(&track->hwDevice, AV_HWDEVICE_TYPE_VIDEOTOOLBOX, NULL, NULL, 0);
+    return track->hwDevice;
+}
+
+static enum AVPixelFormat hardware_format(AVCodecContext *decoder, const enum AVPixelFormat *formats) {
+    for (const enum AVPixelFormat *format = formats; *format != AV_PIX_FMT_NONE; format++)
+        if (*format == AV_PIX_FMT_VIDEOTOOLBOX) return *format;
+    return avcodec_default_get_format(decoder, formats);
+}
+
+/// The VideoToolbox frame pool the encoder takes tone-mapped pictures from: 8-bit 4:2:0 at its size.
+static int hardware_frames(Track *track, int width, int height) {
+    if (track->hwFrames) return 0;
+    if (!hardware_device(track)) return AVERROR(ENOSYS);
+    AVBufferRef *frames = av_hwframe_ctx_alloc(track->hwDevice);
+    if (!frames) return AVERROR(ENOMEM);
+    AVHWFramesContext *context = (AVHWFramesContext *)frames->data;
+    context->format = AV_PIX_FMT_VIDEOTOOLBOX;
+    context->sw_format = AV_PIX_FMT_NV12;
+    context->width = width;
+    context->height = height;
+    int status = av_hwframe_ctx_init(frames);
+    if (status >= 0 && !(track->uploaded = av_frame_alloc())) status = AVERROR(ENOMEM);
+    if (status < 0) { av_buffer_unref(&frames); return status; }
+    track->hwFrames = frames;
+    return 0;
+}
+
+/// Shrinks a decoded HDR picture and maps it to SDR BT.709 (VideoToolbox's own tone mapping) into `out`.
+static int transfer_picture(Track *track, const AVFrame *frame, AVFrame *out) {
+    if (!track->transfer) {
+        if (VTPixelTransferSessionCreate(kCFAllocatorDefault, &track->transfer) != noErr) { track->transfer = NULL; return AVERROR_EXTERNAL; }
+        VTSessionSetProperty(track->transfer, kVTPixelTransferPropertyKey_DestinationColorPrimaries, kCVImageBufferColorPrimaries_ITU_R_709_2);
+        VTSessionSetProperty(track->transfer, kVTPixelTransferPropertyKey_DestinationTransferFunction, kCVImageBufferTransferFunction_ITU_R_709_2);
+        VTSessionSetProperty(track->transfer, kVTPixelTransferPropertyKey_DestinationYCbCrMatrix, kCVImageBufferYCbCrMatrix_ITU_R_709_2);
+    }
+    CVPixelBufferRef source = (CVPixelBufferRef)frame->data[3], target = (CVPixelBufferRef)out->data[3];
+    if (av_vt_pixbuf_set_attachments(NULL, source, frame) < 0 || av_vt_pixbuf_set_attachments(NULL, target, out) < 0) return AVERROR_EXTERNAL;
+    OSStatus result = VTPixelTransferSessionTransferImage(track->transfer, source, target);
+    if (result != noErr) av_log(NULL, AV_LOG_WARNING, "pixel transfer failed: %d\n", (int)result);
+    return result == noErr ? 0 : AVERROR_EXTERNAL;
+}
+
 static int open_decoder(Track *track) {
     const AVCodec *codec = avcodec_find_decoder(track->in->codecpar->codec_id);
     if (!codec) return AVERROR_DECODER_NOT_FOUND;
@@ -458,6 +510,11 @@ static int open_decoder(Track *track) {
     decoder->pkt_timebase = track->in->time_base;
     decoder->thread_count = 0;
     decoder->thread_type = FF_THREAD_FRAME | FF_THREAD_SLICE;
+    // A picture tone mapped on the media engine is decoded there too; FFmpeg decodes it itself when it can't.
+    if (track->spec.toneMap && hardware_device(track)) {
+        decoder->hw_device_ctx = av_buffer_ref(track->hwDevice);
+        decoder->get_format = hardware_format;
+    }
     status = avcodec_open2(decoder, codec, NULL);
     if (status < 0) { avcodec_free_context(&decoder); return status; }
     track->decoder = decoder;
@@ -496,6 +553,11 @@ static int open_video_encoder(Track *track, AVCodecContext **out) {
         encoder->color_primaries = AVCOL_PRI_BT709;
         encoder->color_trc = AVCOL_TRC_BT709;
         encoder->colorspace = AVCOL_SPC_BT709;
+        // On the media engine the picture reaches the encoder as VideoToolbox frames; otherwise as above.
+        if (hardware_frames(track, encoder->width, encoder->height) == 0) {
+            encoder->pix_fmt = AV_PIX_FMT_VIDEOTOOLBOX;
+            encoder->hw_frames_ctx = av_buffer_ref(track->hwFrames);
+        }
     }
     encoder->flags |= AV_CODEC_FLAG_GLOBAL_HEADER;
     av_opt_set_int(encoder->priv_data, "allow_sw", 1, 0);
@@ -632,6 +694,11 @@ void tvm_cursor_free(TVMCursor *cursor) {
         av_frame_free(&track->scaled);
         sws_freeContext(track->shrinker);
         av_frame_free(&track->shrunk);
+        av_frame_free(&track->uploaded);
+        av_frame_free(&track->downloaded);
+        if (track->transfer) { VTPixelTransferSessionInvalidate(track->transfer); CFRelease(track->transfer); }
+        av_buffer_unref(&track->hwFrames);
+        av_buffer_unref(&track->hwDevice);
         drop_held(track);
         av_free(track->held);
         av_packet_free(&track->sample);
@@ -802,6 +869,54 @@ static int receive_video(TVMCursor *cursor, Track *track) {
     return status == AVERROR(EAGAIN) || status == AVERROR_EOF ? 0 : status;
 }
 
+/// HDR to SDR in software, into `track->scaled`.
+static int tone_map_software(Track *track, const AVFrame *frame, enum AVPixelFormat format, int width, int height) {
+    int status;
+    // HDR to SDR: swscale's color management maps PQ or HLG BT.2020 to BT.709 (perceptual tone mapping, from
+    // the frame's own mastering metadata) on the way to the encoder's 8-bit format.
+    const AVFrame *source = frame;
+    if (frame->width != width || frame->height != height) {
+        if (!track->shrinker) {
+            if (!(track->shrinker = sws_alloc_context())) return AVERROR(ENOMEM);
+            track->shrinker->flags = SWS_BILINEAR;
+            track->shrinker->threads = 0;
+        }
+        if (!track->shrunk) {
+            if (!(track->shrunk = av_frame_alloc())) return AVERROR(ENOMEM);
+            track->shrunk->format = frame->format;
+            track->shrunk->width = width;
+            track->shrunk->height = height;
+            if ((status = av_frame_get_buffer(track->shrunk, 0)) < 0) return status;
+        }
+        if ((status = av_frame_make_writable(track->shrunk)) < 0) return status;
+        // Same colors and metadata (the mastering display the tone mapping reads), smaller picture.
+        if ((status = av_frame_copy_props(track->shrunk, frame)) < 0) return status;
+        if ((status = sws_scale_frame(track->shrinker, track->shrunk, frame)) < 0) return status;
+        source = track->shrunk;
+    }
+    if (!track->scaler) {
+        if (!(track->scaler = sws_alloc_context())) return AVERROR(ENOMEM);
+        track->scaler->flags = SWS_BILINEAR;
+        track->scaler->intent = SWS_INTENT_PERCEPTUAL;
+        track->scaler->threads = 0;
+    }
+    if (!track->scaled) {
+        if (!(track->scaled = av_frame_alloc())) return AVERROR(ENOMEM);
+        track->scaled->format = format;
+        track->scaled->width = width;
+        track->scaled->height = height;
+        if ((status = av_frame_get_buffer(track->scaled, 0)) < 0) return status;
+    }
+    if ((status = av_frame_make_writable(track->scaled)) < 0) return status;
+    track->scaled->color_range = AVCOL_RANGE_MPEG;
+    track->scaled->color_primaries = AVCOL_PRI_BT709;
+    track->scaled->color_trc = AVCOL_TRC_BT709;
+    track->scaled->colorspace = AVCOL_SPC_BT709;
+    track->scaled->sample_aspect_ratio = frame->sample_aspect_ratio;
+    if ((status = sws_scale_frame(track->scaler, track->scaled, source)) < 0) return status;
+    return 0;
+}
+
 static int encode_video(TVMCursor *cursor, Track *track, AVFrame *frame) {
     int status;
     if (!track->encoder) {
@@ -812,49 +927,29 @@ static int encode_video(TVMCursor *cursor, Track *track, AVFrame *frame) {
     AVCodecContext *encoder = track->encoder;
     AVFrame *input = frame;
     if (track->spec.toneMap) {
-        // HDR to SDR: swscale's color management maps PQ or HLG BT.2020 to BT.709 (perceptual tone mapping, from
-        // the frame's own mastering metadata) on the way to the encoder's 8-bit format.
-        const AVFrame *source = frame;
-        if (frame->width != encoder->width || frame->height != encoder->height) {
-            if (!track->shrinker) {
-                if (!(track->shrinker = sws_alloc_context())) return AVERROR(ENOMEM);
-                track->shrinker->flags = SWS_BILINEAR;
-                track->shrinker->threads = 0;
+        if (track->hwFrames) {
+            av_frame_unref(track->uploaded);
+            if ((status = av_hwframe_get_buffer(track->hwFrames, track->uploaded, 0)) < 0) return status;
+            track->uploaded->color_range = AVCOL_RANGE_MPEG;
+            track->uploaded->color_primaries = AVCOL_PRI_BT709;
+            track->uploaded->color_trc = AVCOL_TRC_BT709;
+            track->uploaded->colorspace = AVCOL_SPC_BT709;
+            track->uploaded->sample_aspect_ratio = frame->sample_aspect_ratio;
+            input = track->uploaded;
+        }
+        if (!(track->hwFrames && frame->format == AV_PIX_FMT_VIDEOTOOLBOX && transfer_picture(track, frame, track->uploaded) == 0)) {
+            const AVFrame *source = frame;
+            if (frame->format == AV_PIX_FMT_VIDEOTOOLBOX) {
+                if (!track->downloaded && !(track->downloaded = av_frame_alloc())) return AVERROR(ENOMEM);
+                av_frame_unref(track->downloaded);
+                if ((status = av_hwframe_transfer_data(track->downloaded, frame, 0)) < 0) return status;
+                if ((status = av_frame_copy_props(track->downloaded, frame)) < 0) return status;
+                source = track->downloaded;
             }
-            if (!track->shrunk) {
-                if (!(track->shrunk = av_frame_alloc())) return AVERROR(ENOMEM);
-                track->shrunk->format = frame->format;
-                track->shrunk->width = encoder->width;
-                track->shrunk->height = encoder->height;
-                if ((status = av_frame_get_buffer(track->shrunk, 0)) < 0) return status;
-            }
-            if ((status = av_frame_make_writable(track->shrunk)) < 0) return status;
-            // Same colors and metadata (the mastering display the tone mapping reads), smaller picture.
-            if ((status = av_frame_copy_props(track->shrunk, frame)) < 0) return status;
-            if ((status = sws_scale_frame(track->shrinker, track->shrunk, frame)) < 0) return status;
-            source = track->shrunk;
+            if ((status = tone_map_software(track, source, track->hwFrames ? AV_PIX_FMT_NV12 : encoder->pix_fmt, encoder->width, encoder->height)) < 0) return status;
+            if (track->hwFrames) { if ((status = av_hwframe_transfer_data(track->uploaded, track->scaled, 0)) < 0) return status; }
+            else input = track->scaled;
         }
-        if (!track->scaler) {
-            if (!(track->scaler = sws_alloc_context())) return AVERROR(ENOMEM);
-            track->scaler->flags = SWS_BILINEAR;
-            track->scaler->intent = SWS_INTENT_PERCEPTUAL;
-            track->scaler->threads = 0;
-        }
-        if (!track->scaled) {
-            if (!(track->scaled = av_frame_alloc())) return AVERROR(ENOMEM);
-            track->scaled->format = encoder->pix_fmt;
-            track->scaled->width = encoder->width;
-            track->scaled->height = encoder->height;
-            if ((status = av_frame_get_buffer(track->scaled, 0)) < 0) return status;
-        }
-        if ((status = av_frame_make_writable(track->scaled)) < 0) return status;
-        track->scaled->color_range = encoder->color_range;
-        track->scaled->color_primaries = encoder->color_primaries;
-        track->scaled->color_trc = encoder->color_trc;
-        track->scaled->colorspace = encoder->colorspace;
-        track->scaled->sample_aspect_ratio = frame->sample_aspect_ratio;
-        if ((status = sws_scale_frame(track->scaler, track->scaled, source)) < 0) return status;
-        input = track->scaled;
     } else if (frame->format != encoder->pix_fmt || frame->width != encoder->width || frame->height != encoder->height) {
         track->scaler = sws_getCachedContext(track->scaler, frame->width, frame->height, frame->format,
                                              encoder->width, encoder->height, encoder->pix_fmt, SWS_BILINEAR, NULL, NULL, NULL);
