@@ -1,5 +1,5 @@
-import Foundation
-import Observation
+﻿import Foundation
+import Perception
 
 /// How each source has been answering lately. Search leaves a failing source out, and the source
 /// lists mark it, until it answers again or its cooldown ends; it stays listed and opens as usual.
