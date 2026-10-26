@@ -34,6 +34,9 @@ jobs:
       - name: Build FFmpeg
         run: Scripts/build-apple-ffmpeg.sh
 
+      - name: Build Java host (downloads keystone/jna/bouncycastle deps)
+        run: Scripts/build-java-host.sh
+
       - name: Build Apple runtime (JVM + interpreter) for iOS
         run: Scripts/package-apple-runtime.sh ios
 
