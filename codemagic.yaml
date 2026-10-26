@@ -13,7 +13,10 @@ workflows:
         HOMEBREW_NO_INSTALL_CLEANUP: "1"
     cache:
       cache_paths:
-        - $CM_BUILD_DIR/build
+        - $CM_BUILD_DIR/build/FFmpeg
+        - $CM_BUILD_DIR/build/AppleRuntime
+        - $CM_BUILD_DIR/build/JavaHost
+        - $CM_BUILD_DIR/build/JavaHost-jre*
     scripts:
       - name: Tools
         script: |
