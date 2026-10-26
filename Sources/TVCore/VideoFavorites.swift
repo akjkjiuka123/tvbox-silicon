@@ -1,5 +1,5 @@
-import Foundation
-import Observation
+﻿import Foundation
+import Perception
 
 /// A show saved to Favorites: its catalog identity and what its card shows. Episodes and their
 /// addresses are left out, since they expire; opening the show loads its details from the source again.
