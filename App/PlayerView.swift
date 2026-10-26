@@ -30,7 +30,8 @@ struct PlaybackView: View {
                                  qualities: session.qualities, quality: session.quality, choose: { session.choose(quality: $0) },
                                  live: session.isLive, previous: episodeAction(store.step(back: true, from: channel, session: session)),
                                  next: episodeAction(store.step(back: false, from: channel, session: session)), waiting: waitContent,
-                                 enhancer: session.enhancer, upscale: $upscalesVideo, smooth: $smoothsVideo).ignoresSafeArea()
+                                 enhancer: session.enhancer, upscale: $upscalesVideo, smooth: $smoothsVideo,
+                                 exitWhileWaiting: session.showsPicture ? nil : { dismiss() }).ignoresSafeArea()
             }
             // Until the picture starts, AVKit's player keeps the Back press to itself, so a stream that never
             // loads (a dead live channel) left no way out but quitting the app. This takes focus and closes instead.
@@ -553,7 +554,22 @@ private struct NativePlayerView: UIViewControllerRepresentable {
     var enhancer: VideoEnhancer? = nil
     var upscale: Binding<Bool> = .constant(false)
     var smooth: Binding<Bool> = .constant(false)
-    final class Coordinator { var host: UIHostingController<AnyView>?; var listed = ""; var criteria: DisplayCriteriaKeeper? }
+    /// Closes the player on Back until the picture starts. The overlay that takes focus for that loses it
+    /// once the transport bar shows (an episode button takes it), and AVKit then keeps the press to itself.
+    var exitWhileWaiting: (() -> Void)? = nil
+    final class Coordinator: NSObject, UIGestureRecognizerDelegate {
+        var host: UIHostingController<AnyView>?; var listed = ""; var criteria: DisplayCriteriaKeeper?
+        var exit: (() -> Void)?
+        let back = UITapGestureRecognizer()
+        override init() {
+            super.init()
+            back.allowedPressTypes = [NSNumber(value: UIPress.PressType.menu.rawValue)]
+            back.delegate = self
+            back.addTarget(self, action: #selector(pressedBack))
+        }
+        @objc private func pressedBack() { exit?() }
+        func gestureRecognizer(_ gestureRecognizer: UIGestureRecognizer, shouldRecognizeSimultaneouslyWith other: UIGestureRecognizer) -> Bool { true }
+    }
     func makeCoordinator() -> Coordinator { Coordinator() }
     func makeUIViewController(context: Context) -> AVPlayerViewController {
         let controller = TitleSafePlayerController()
@@ -576,6 +592,7 @@ private struct NativePlayerView: UIViewControllerRepresentable {
             host.didMove(toParent: controller)
         }
         context.coordinator.host = host
+        controller.view.addGestureRecognizer(context.coordinator.back)
         return controller
     }
     func updateUIViewController(_ controller: AVPlayerViewController, context: Context) {
@@ -583,6 +600,8 @@ private struct NativePlayerView: UIViewControllerRepresentable {
         // Live has no timeline worth scrubbing: keep it at the live edge.
         if controller.requiresLinearPlayback != live { controller.requiresLinearPlayback = live }
         context.coordinator.host?.rootView = overlay
+        context.coordinator.exit = exitWhileWaiting
+        context.coordinator.back.isEnabled = exitWhileWaiting != nil
         // The comment list is a tab in the info panel (swipe down), beside the video's own info.
         if context.coordinator.listed != "\(revision):\(comments.count)" {
             context.coordinator.listed = "\(revision):\(comments.count)"

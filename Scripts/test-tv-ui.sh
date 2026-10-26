@@ -21,6 +21,9 @@ cat > "$OUT/RuntimeUnavailable.c" <<'C'
 char *TVAppleRuntimeRequest(const char *resources, const char *request) {
     return strdup("{\"error\":\"JAR runtime excluded from isolated UI acceptance\"}");
 }
+char *TVPythonRequest(const char *resources, const char *request) {
+    return strdup("{\"error\":\"Python runtime excluded from isolated UI acceptance\"}");
+}
 C
 cat > "$OUT/project.yml" <<'YAML'
 name: TVUI

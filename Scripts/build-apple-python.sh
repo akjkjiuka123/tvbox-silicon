@@ -112,10 +112,6 @@ find "$DEST/python" "$DEST/PythonHost" -name '*.so' | sort | while read -r libra
   cp "$XCFRAMEWORK/build/$FAMILY-dylib-Info-template.plist" "$DEST/$framework/Info.plist"
   plutil -replace CFBundleExecutable -string "$module" "$DEST/$framework/Info.plist"
   plutil -replace CFBundleIdentifier -string "com.tvbox.yingxia.python.$(echo "$module" | tr _ -)" "$DEST/$framework/Info.plist"
-  # BeeWare's template says iOS 13 / tvOS 9, but our wheels target 17.0 and some tvOS modules 12.0. App Store
-  # processing rejects a framework whose binary needs a newer OS than its MinimumOSVersion (ITMS-90208), so
-  # declare the app's deployment target, which covers them all.
-  plutil -replace MinimumOSVersion -string "$MINIMUM_OS" "$DEST/$framework/Info.plist"
   mv "$library" "$DEST/$framework/$module"
   if lipo -archs "$DEST/$framework/$module" | grep -q ' '; then
     lipo -thin arm64 "$DEST/$framework/$module" -output "$DEST/$framework/$module.arm64"
@@ -124,7 +120,11 @@ find "$DEST/python" "$DEST/PythonHost" -name '*.so' | sort | while read -r libra
   echo "$framework/$module" > "${library%.so}.fwork"
   echo "${relative%.so}.fwork" > "$DEST/$framework/$module.origin"
 done
+# BeeWare's templates say iOS 13 / tvOS 9, but our wheels target 17.0, some tvOS modules 12.0 and the simulator's
+# Python.framework 14.0. App Store processing rejects a framework whose binary needs a newer OS than its
+# MinimumOSVersion (ITMS-90208), so declare the app's deployment target, which covers them all.
 for framework in "$DEST/Frameworks/"*.framework; do
+  plutil -replace MinimumOSVersion -string "$MINIMUM_OS" "$framework/Info.plist"
   binary="$framework/$(plutil -extract CFBundleExecutable raw "$framework/Info.plist")"
   declared="$(plutil -extract MinimumOSVersion raw "$framework/Info.plist")"
   needed="$(vtool -show-build "$binary" | awk '/minos/ {print $2; exit}')"

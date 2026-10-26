@@ -1186,8 +1186,9 @@ struct VideoDetailView: View {
         .accessibilityLabel(title).help(title)
         .accessibilityIdentifier("detail.favorite")
     }
+    #if os(tvOS)
     /// Stands in for a watch-page player: the cover over a blur of itself, the title and the primary action.
-    /// Apple TV keeps a 16:9 stage; elsewhere the stage is a banner, so a full-width page is not half hero.
+    /// A 16:9 stage, like the player it stands in for.
     private var hero: some View {
         heroStage
             .overlay {
@@ -1223,21 +1224,37 @@ struct VideoDetailView: View {
             .foregroundStyle(.white).environment(\.colorScheme, .dark)
             .clipShape(RoundedRectangle(cornerRadius: 24, style: .continuous))
     }
-    @ViewBuilder private var heroStage: some View {
-        #if os(tvOS)
-        Color.clear.aspectRatio(16.0 / 9.0, contentMode: .fit)
-        #else
-        Color.clear.frame(maxWidth: .infinity).frame(height: min(max(heroWidth * 9 / 16, 260), 340))
-            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { heroWidth = $0 }
-        #endif
+    private var heroStage: some View { Color.clear.aspectRatio(16.0 / 9.0, contentMode: .fit) }
+    private var heroInset: CGFloat { 28 }
+    #else
+    /// The cover and, beside it, the title and actions, on the page itself. The cover keeps its own shape,
+    /// portrait or landscape, at one height, and the buttons line up with its bottom edge.
+    private var hero: some View {
+        let aspect = min(max(artAspect ?? 2.0 / 3.0, 0.6), 1.8)
+        // A landscape cover may take at most ~45% of the row, so the title keeps its room.
+        let artWidth = min((heroWidth < 600 ? 200 : 240) * aspect, heroWidth > 0 ? heroWidth * 0.45 : .infinity)
+        let artHeight = artWidth / aspect
+        return HStack(alignment: .top, spacing: heroWidth < 600 ? 18 : 24) {
+            PosterImage(url: video.poster, headers: video.posterHeaders, aspect: $artAspect)
+                .frame(width: artWidth, height: artHeight)
+                .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
+                .shadow(color: .black.opacity(0.18), radius: 14, y: 6)
+            MinHeightLayout(minHeight: artHeight) {
+                VStack(alignment: .leading, spacing: 10) {
+                    Text(video.name).font(.system(size: heroTitleSize, weight: .bold))
+                        .lineLimit(3).minimumScaleFactor(0.7).fixedSize(horizontal: false, vertical: true)
+                    if !video.remarks.isEmpty {
+                        Text(video.remarks).font(.title3).foregroundStyle(.secondary).lineLimit(2)
+                    }
+                    Spacer(minLength: 12)
+                    playControl
+                }
+            }
+            .frame(maxWidth: .infinity, alignment: .leading)
+        }
+        .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { heroWidth = $0 }
     }
-    private var heroInset: CGFloat {
-        #if os(tvOS)
-        28
-        #else
-        heroWidth < 600 ? 20 : 28
-        #endif
-    }
+    #endif
     private var header: some View {
         VStack(alignment: .leading, spacing: 18) {
             if isWide {
