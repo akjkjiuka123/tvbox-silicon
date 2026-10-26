@@ -1,5 +1,5 @@
 import { useI18n } from "../i18n/I18nProvider";
-import { Brand, DownloadButton, GitHubLink, LanguageSelect } from "./controls";
+import { Brand, DownloadButton, GitHubLink, LanguageSelect, TELEGRAM } from "./controls";
 import { Headline } from "./Headline";
 import { Reveal } from "./Reveal";
 
@@ -28,6 +28,7 @@ export function Footer() {
             © {new Date().getFullYear()}
           </span>
           <GitHubLink label={t("footer.source")} />
+          <a href={TELEGRAM} target="_blank" rel="noreferrer">{t("footer.telegram")}</a>
           <a href="/privacy/">Privacy</a>
           <LanguageSelect />
         </div>

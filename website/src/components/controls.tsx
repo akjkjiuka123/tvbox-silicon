@@ -55,6 +55,9 @@ export const AGENTS: { name: string; cjk?: string; href: string }[] = [
 /** The app's public source repository (GPL-3.0). */
 export const REPO = "https://github.com/jo32/tvbox-silicon";
 
+/** The Telegram group where users talk with the developer and each other. */
+export const TELEGRAM = "https://t.me/+knKAmySfMycyMzg5";
+
 /** The full install guide (with troubleshooting) in the public repository. */
 export const INSTALL_GUIDE = `${REPO}/blob/main/Docs/INSTALL.md`;
 

@@ -19,6 +19,7 @@ export type TextKey =
   | "footer.disclaimer"
   | "footer.lang"
   | "footer.source"
+  | "footer.telegram"
   | "g.devices.b"
   | "g.devices.t"
   | "g.dl.b"
@@ -89,6 +90,7 @@ export const LOCALES: Record<Lang, Locale> = {
       "footer.disclaimer": "Yingxia does not host, provide or endorse any media content. Apple TV, iPhone, iPad and Mac are trademarks of Apple Inc. This project is not affiliated with Apple.",
       "footer.lang": "Language",
       "footer.source": "Open source on GitHub",
+      "footer.telegram": "Telegram group",
       "g.devices.b": "Apple TV, iPhone, iPad and Mac share the same subscriptions and favorites.",
       "g.devices.t": "Every Apple screen",
       "g.dl.t": "Watch offline",
@@ -153,6 +155,7 @@ export const LOCALES: Record<Lang, Locale> = {
       "footer.disclaimer": "映匣はいかなるメディアコンテンツもホスト・提供・推奨しません。Apple TV、iPhone、iPad、Mac は Apple Inc. の商標です。本プロジェクトは Apple とは関係ありません。",
       "footer.lang": "言語",
       "footer.source": "GitHub でオープンソース公開中",
+      "footer.telegram": "Telegram グループ",
       "g.devices.b": "Apple TV、iPhone、iPad、Mac で同じ配信設定とお気に入りを使えます。",
       "g.devices.t": "すべての Apple の画面で",
       "g.dl.t": "オフラインで観る",
@@ -217,6 +220,7 @@ export const LOCALES: Record<Lang, Locale> = {
       "footer.disclaimer": "Yingxia는 어떠한 미디어 콘텐츠도 호스팅, 제공 또는 보증하지 않습니다. Apple TV, iPhone, iPad, Mac은 Apple Inc.의 상표입니다. 이 프로젝트는 Apple과 관련이 없습니다.",
       "footer.lang": "언어",
       "footer.source": "GitHub에서 오픈 소스로 공개",
+      "footer.telegram": "텔레그램 그룹",
       "g.devices.b": "Apple TV, iPhone, iPad, Mac에서 같은 구독과 즐겨찾기를 사용합니다.",
       "g.devices.t": "모든 Apple 화면에서",
       "g.dl.t": "오프라인 시청",
@@ -281,6 +285,7 @@ export const LOCALES: Record<Lang, Locale> = {
       "footer.disclaimer": "映匣不託管、提供或認可任何媒體內容。Apple TV、iPhone、iPad 與 Mac 是 Apple Inc. 的商標。本專案與 Apple 無關。",
       "footer.lang": "語言",
       "footer.source": "在 GitHub 開放原始碼",
+      "footer.telegram": "Telegram 群組",
       "g.devices.b": "Apple TV、iPhone、iPad 與 Mac 共用同樣的訂閱與收藏。",
       "g.devices.t": "所有 Apple 螢幕",
       "g.dl.t": "離線觀看",
