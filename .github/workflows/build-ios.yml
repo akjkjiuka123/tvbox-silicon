@@ -37,10 +37,10 @@ jobs:
       - name: Build Java host (downloads keystone/jna/bouncycastle deps)
         run: Scripts/build-java-host.sh
 
-      - name: Build Script host (Node.js) and Python host
+      - name: Create Mac-only host dirs (iOS does not need them, but xcodegen validates)
         run: |
-          Scripts/build-script-host.sh
-          Scripts/build-python-host.sh
+          mkdir -p build/ScriptHost build/PythonHost
+          touch build/ScriptHost/.keep build/PythonHost/.keep
 
       - name: Build Apple runtime (JVM + interpreter) for iOS
         run: Scripts/package-apple-runtime.sh ios
