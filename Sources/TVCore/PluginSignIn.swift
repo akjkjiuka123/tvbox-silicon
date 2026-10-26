@@ -1,5 +1,5 @@
-import Foundation
-import Observation
+﻿import Foundation
+import Perception
 
 /// A Baidu Netdisk or Aliyun Drive sign-in a plugin is waiting for. The plugin signs in itself
 /// and saves the account; it only needs someone to scan its QR code, which this host can't show
