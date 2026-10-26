@@ -681,6 +681,9 @@
 "Move Up" = "上移";
 "Move Down" = "下移";
 "Remove" = "移除";
+"Remove Subscriptions" = "移除訂閱";
+"Select Turned-Off Subscriptions" = "選擇已關閉的訂閱";
+"Remove %lld Subscriptions" = "移除 %lld 個訂閱";
 "Couldn't refresh: %@" = "更新失敗：%@";
 "Not loaded yet" = "尚未載入";
 "This address lists %lld subscriptions. They were added switched off; turn on the ones you want." = "此位址包含 %lld 個訂閱，已全部新增並處於關閉狀態；請開啟你想使用的訂閱。";

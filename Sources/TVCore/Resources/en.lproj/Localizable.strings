@@ -682,6 +682,9 @@
 "Move Up" = "Move Up";
 "Move Down" = "Move Down";
 "Remove" = "Remove";
+"Remove Subscriptions" = "Remove Subscriptions";
+"Select Turned-Off Subscriptions" = "Select Turned-Off Subscriptions";
+"Remove %lld Subscriptions" = "Remove %lld Subscriptions";
 "Couldn't refresh: %@" = "Couldn't refresh: %@";
 "Not loaded yet" = "Not loaded yet";
 "This address lists %lld subscriptions. They were added switched off; turn on the ones you want." = "This address lists %lld subscriptions. They were added switched off; turn on the ones you want.";

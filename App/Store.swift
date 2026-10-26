@@ -240,10 +240,16 @@ import TVCore
         subscriptions[index].name = name
         saveSubscriptionList()
     }
-    func removeSubscription(_ entry: SubscriptionEntry) {
-        subscriptions.removeAll { $0.address == entry.address }
-        documents[entry.address] = nil; subscriptionErrors[entry.address] = nil
-        if persistsChanges { try? FileManager.default.removeItem(at: Self.file(for: entry)) }
+    func removeSubscription(_ entry: SubscriptionEntry) { removeSubscriptions([entry.address]) }
+    /// Removes several subscriptions and their saved copies, then merges what is left once.
+    func removeSubscriptions(_ addresses: Set<String>) {
+        let removed = subscriptions.filter { addresses.contains($0.address) }
+        guard !removed.isEmpty else { return }
+        subscriptions.removeAll { addresses.contains($0.address) }
+        for entry in removed {
+            documents[entry.address] = nil; subscriptionErrors[entry.address] = nil
+            if persistsChanges { try? FileManager.default.removeItem(at: Self.file(for: entry)) }
+        }
         saveSubscriptionList()
         rebuildSubscription()
     }
