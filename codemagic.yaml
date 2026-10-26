@@ -1,0 +1,63 @@
+workflows:
+  ios-ipa:
+    name: Build iOS 16 IPA
+    instance_type: mac_mini_m2
+    max_build_duration: 180
+    environment:
+      xcode: 16.2
+      java: 19
+      node: 20
+      vars:
+        LANG: en_US.UTF-8
+    scripts:
+      - name: Toolchain
+        script: |
+          set -e
+          brew install xcodegen maven autoconf automake libtool pkg-config
+          echo "--- versions ---"
+          xcodebuild -version
+          xcodegen --version
+          mvn -v | head -2
+          java -version 2>&1 | head -2
+      - name: FFmpeg
+        script: |
+          set -e
+          Scripts/build-apple-ffmpeg.sh
+      - name: Java host
+        script: |
+          set -e
+          Scripts/build-java-host.sh
+      - name: Mac-only host dirs
+        script: |
+          set -e
+          mkdir -p build/ScriptHost build/PythonHost
+          touch build/ScriptHost/.keep build/PythonHost/.keep
+      - name: Apple runtime (JVM + interpreter)
+        script: |
+          set -e
+          Scripts/package-apple-runtime.sh ios
+      - name: Xcode project
+        script: |
+          set -e
+          xcodegen generate
+      - name: Build iOS app
+        script: |
+          set -e
+          xcodebuild -project TVBox.xcodeproj -scheme TVBox-iOS \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData-ios \
+            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=YES \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGNING_ALLOWED=YES build
+      - name: Package IPA
+        script: |
+          set -e
+          APP=$(find build/DerivedData-ios/Build/Products -name '*.app' -maxdepth 4 | head -1)
+          echo "app: $APP"
+          rm -rf Payload && mkdir -p Payload
+          cp -R "$APP" Payload/
+          zip -qr Yingxia-ios16.ipa Payload
+          ls -lh Yingxia-ios16.ipa
+    artifacts:
+      - Yingxia-ios16.ipa
+      - build/apple-runtime/**/build.log
