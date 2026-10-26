@@ -1,4 +1,5 @@
 import SwiftUI
+import TVCore
 
 /// iOS 16 replacement for `EmptyState` (iOS 17+).
 /// Same call shapes as the system type, so call sites only need the type name changed.
