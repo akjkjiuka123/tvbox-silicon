@@ -3,7 +3,7 @@ set -euo pipefail
 cd "$(dirname "$0")/.."
 ROOT="$PWD"; TARGET="${1:-ios-simulator}"
 case "$TARGET" in
- ios-simulator) PLATFORM=iphonesimulator; TRIPLE=arm64-apple-ios17.0-simulator; FAMILY=1 ;;
+ ios-simulator) PLATFORM=iphonesimulator; TRIPLE=arm64-apple-ios16.0-simulator; FAMILY=1 ;;
  tvos-simulator) PLATFORM=appletvsimulator; TRIPLE=arm64-apple-tvos17.0-simulator; FAMILY=3 ;;
  *) exit 2 ;;
 esac
