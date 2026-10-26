@@ -1,6 +1,11 @@
 import SwiftUI
 import TVCore
 
+/// Where people talk with the developer and each other, besides Send Feedback's public issues.
+enum Support {
+    static let telegram = URL(string: "https://t.me/+knKAmySfMycyMzg5")!
+}
+
 /// Settings › Send Feedback: a problem or an idea in the user's own words, posted as a public GitHub
 /// issue (Feedback). Under the message go the subscriptions and what was played lately
 /// (Feedback.context), filled in when the page opens, for the viewer to edit or remove. Once the issue
@@ -294,6 +299,10 @@ private struct FeedbackPage: View {
             }
             Label(FeedbackView.note, systemImage: "globe").font(compact ? .footnote : .callout).foregroundStyle(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
+            Link(destination: Support.telegram) {
+                Label(L10n.text("Prefer to chat? Join the Telegram group."), systemImage: "paperplane")
+            }
+            .font(compact ? .footnote : .callout)
         }
         .padding(.horizontal, 4)
     }
@@ -425,6 +434,28 @@ private extension Feedback.Kind {
         case .bug: L10n.text("What happened? What did you expect instead?")
         case .idea: L10n.text("What would make Yingxia better for you?")
         case .other: L10n.text("What's on your mind?")
+        }
+    }
+}
+#endif
+
+#if os(tvOS)
+/// Settings › Telegram Group: Apple TV can't open the invite, so it goes to a phone as a QR code.
+struct TelegramGroupView: View {
+    @Environment(\.dismiss) private var dismiss
+    var body: some View {
+        TVSettingsSubpage(symbol: "paperplane", title: L10n.text("Telegram Group"), subtitle: L10n.text("Chat with the developer and other users")) {
+            VStack(spacing: 24) {
+                if let image = QRCode.image(Support.telegram.absoluteString) {
+                    Image(decorative: image, scale: 1).interpolation(.none).resizable().scaledToFit()
+                        .frame(width: 320, height: 320).padding(24)
+                        .background(.white, in: RoundedRectangle(cornerRadius: 24, style: .continuous))
+                        // Nothing else here takes focus, and Back with nothing focused would leave the app.
+                        .loadingFocus(takeFocus: true) { dismiss() }
+                }
+                Text(L10n.text("Scan with your iPhone to join the group.")).font(.system(size: 24)).foregroundStyle(.secondary)
+            }
+            .frame(maxWidth: .infinity)
         }
     }
 }

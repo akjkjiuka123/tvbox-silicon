@@ -1023,3 +1023,7 @@
 "Name" = "名前";
 "Name (optional)" = "名前（省略可）";
 "Show in Finder" = "Finderで表示";
+"Telegram Group" = "Telegram グループ";
+"Chat with the developer and other users" = "開発者やほかのユーザーと話せます";
+"Prefer to chat? Join the Telegram group." = "チャットで話したいときは、Telegram グループへどうぞ。";
+"Scan with your iPhone to join the group." = "iPhone でスキャンしてグループに参加します。";
