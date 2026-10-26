@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 extension Site {
     public var searchable: Bool { (raw["searchable"]?.int ?? 1) == 1 }

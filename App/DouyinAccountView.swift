@@ -2,6 +2,7 @@ import SwiftUI
 import TVCore
 #if !os(tvOS)
 import WebKit
+import Perception
 #endif
 
 /// The Douyin account, which Douyin requires for live search. Douyin signs in only on its own web

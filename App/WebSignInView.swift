@@ -3,6 +3,7 @@ import Photos
 import SwiftUI
 import TVCore
 import WebKit
+import Perception
 
 /// Sign in on the service's own page, in a private web view: a phone can't scan a code on its own
 /// screen. The sheet closes by itself once the page has signed in and the sign-in is saved. `code`

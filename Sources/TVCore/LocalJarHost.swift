@@ -1,6 +1,7 @@
 #if os(macOS)
 import Foundation
 import CryptoKit
+import Perception
 
 /// Each source owns a bounded, reusable JVM session. Requests to a session are serialized.
 public actor LocalJarHost {

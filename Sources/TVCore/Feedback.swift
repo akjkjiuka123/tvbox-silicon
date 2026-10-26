@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Feedback written in Settings, posted as an issue on the app's public GitHub repository by the
 /// error-report server (Services/error-reports, /v1/feedback). The server holds the GitHub token, so

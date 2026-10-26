@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Kept outside disposable plugin caches; never included in subscription exports.
 public struct CloudDriveAccounts: Codable, Sendable {

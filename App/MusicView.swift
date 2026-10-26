@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 /// Music: search songs, albums or playlists by name (and artist), and play from the best channel
 /// found. With no search, the page offers to continue where listening stopped and lists what

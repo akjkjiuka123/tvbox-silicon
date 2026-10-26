@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Follow the source's ordering within the current line; never jump to another
 /// line or wrap the final episode back to the beginning.

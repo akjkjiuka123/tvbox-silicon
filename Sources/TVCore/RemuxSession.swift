@@ -2,6 +2,7 @@ import Foundation
 import TVMedia
 import AVFoundation
 import VideoToolbox
+import Perception
 
 /// The bytes of a file being repackaged for AVPlayer.
 public protocol RemuxSource: Sendable {

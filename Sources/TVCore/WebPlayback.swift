@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// A subscription `parses` entry: a service that turns a web player page into a media address.
 public struct ParseService: Hashable, Sendable {

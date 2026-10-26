@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Titles to offer while someone types a search, as FongMi's TV search does. iQiyi's suggestion service matches pinyin
 /// initials ("xyj"), full pinyin ("qingyunian") or a few characters to real titles ("西游记", "庆余年"), so a remote needs only

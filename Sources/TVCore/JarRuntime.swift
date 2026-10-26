@@ -1,6 +1,7 @@
 import Foundation
 import CryptoKit
 import DexRuntime
+import Perception
 
 public struct JarReport: Sendable {
     public let status: Int

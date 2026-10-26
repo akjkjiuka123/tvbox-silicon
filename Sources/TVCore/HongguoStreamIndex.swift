@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// The sample tables are small even when the media is large. They let a range reader decrypt
 /// just the samples intersecting a player's request, including a seek into the middle of a GOP.

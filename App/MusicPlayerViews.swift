@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 extension View {
     /// The music player panel under a page, while a song is loaded.
@@ -454,7 +455,7 @@ struct MusicSettingsView: View {
     }
 
     var body: some View {
-        @Bindable var music = store.music
+        @Perception.Bindable var music = store.music
         #if os(tvOS)
         // A page like Settings' own, over the whole screen: a tvOS sheet is a small card that cut the
         // channels off. Quality steps through its choices; Menu closes the page.

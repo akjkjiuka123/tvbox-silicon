@@ -1,6 +1,7 @@
 import Foundation
 import CryptoKit
 import Network
+import Perception
 
 /// The signed-in Douyin account, which Douyin requires for live search. Douyin's sign-in only works
 /// in its own web page, so iPhone, iPad and Mac sign in in a web view, and an Apple TV receives the

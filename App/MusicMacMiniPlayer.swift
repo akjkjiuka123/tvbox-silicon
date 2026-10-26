@@ -2,6 +2,7 @@
 import AppKit
 import SwiftUI
 import TVCore
+import Perception
 
 /// The mini player, as Spotify and Music have it on the Mac: the song and its transport in a small
 /// window that floats over other apps, for when the main window is out of the way. Minimizing the

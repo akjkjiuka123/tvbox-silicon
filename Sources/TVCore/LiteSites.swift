@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Lightweight site scripts bundled in `ScriptAssets/sites`: JavaScript ports of JAR spiders that run
 /// on the in-process QuickJS runtime on every platform, with no JVM, DEX conversion or native guard.

@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 /// The episode's artwork for the waiting screen.
 struct PlaybackArtwork: Equatable {

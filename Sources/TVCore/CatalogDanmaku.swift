@@ -1,6 +1,7 @@
 import Foundation
 #if canImport(FoundationXML)
 import FoundationXML
+import Perception
 #endif
 
 public struct CatalogDanmakuComment: Sendable, Hashable, Codable {

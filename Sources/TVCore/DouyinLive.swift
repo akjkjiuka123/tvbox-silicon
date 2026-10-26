@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Douyin (抖音) Live as a built-in platform: its recommended rooms, its categories (whose room lists
 /// need the `a_bogus` signature, `DouyinSign`), search for signed-in accounts, and HLS streams.

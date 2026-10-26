@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 /// Where people talk with the developer and each other, besides Send Feedback's public issues.
 enum Support {

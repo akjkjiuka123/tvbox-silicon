@@ -1,5 +1,6 @@
 import Foundation
 import Compression
+import Perception
 
 /// The plugin itself failed (crashed, could not convert, hit an Android gap) rather than its site.
 /// Another archive's version of the same spider may work with this source's configuration.

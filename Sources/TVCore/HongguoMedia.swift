@@ -1,5 +1,6 @@
 import Foundation
 import CommonCrypto
+import Perception
 
 /// Prepares the encrypted MP4s returned by Hongguo's app API on every Apple platform.
 /// Only small metadata and one sample at a time are held in memory. Keeping box sizes unchanged

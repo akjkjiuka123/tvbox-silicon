@@ -2,6 +2,7 @@ import SwiftUI
 import TVCore
 #if !os(macOS)
 import UIKit
+import Perception
 #endif
 
 /// Downloaded episodes, the download queue, and how much space they take.

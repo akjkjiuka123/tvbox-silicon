@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// How each music channel has been answering, by provider, catalog and operation, so a search
 /// failing says nothing about playback. A channel that fails for its own reasons cools down,

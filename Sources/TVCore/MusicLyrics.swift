@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 public struct MusicLyricLine: Hashable, Codable, Sendable {
     /// Seconds from the start; 0 for every line of unsynced lyrics.

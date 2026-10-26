@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Song identity: version tags, when two catalog entries are one recording, and how results rank
 /// against a query. Titles and durations that merely look alike never merge two recordings.

@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 /// The QR code a source's plugin made for a Baidu Netdisk or Aliyun Drive sign-in. The plugin signs
 /// in by itself once the code is scanned and confirmed, then the video it was opening plays. iPhone

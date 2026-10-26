@@ -2,6 +2,7 @@
 import MediaPlayer
 import TVCore
 import UIKit
+import Perception
 
 extension Store {
     /// The one store, which the Lock Screen controls reach outside any view.

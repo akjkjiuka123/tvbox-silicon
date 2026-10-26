@@ -1,6 +1,7 @@
 import Foundation
 import AVFoundation
 import TVCore
+import Perception
 
 @main struct Probe {
     @MainActor static func download(_ target: String, folder: URL, pauseAfter: Double?) async throws {

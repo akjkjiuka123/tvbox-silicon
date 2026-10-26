@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Messages to the people using the app, published with the website (`website/public/messages.json`).
 /// Unlike release notes they reach every build, App Store and TestFlight ones too, and each shows once.

@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Douyu (斗鱼) as a built-in live platform. Rooms come from its web directory; streams from its
 /// mobile site's API, which answers with HLS (the desktop API serves FLV, which AVPlayer can't play).

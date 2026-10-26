@@ -1,5 +1,6 @@
 import Foundation
 import CryptoKit
+import Perception
 
 /// Bilibili as a source of its own: a built-in site that runs the bundled Bili.js port in its
 /// built-in mode (feeds, rankings, zones, PGC and search), the signed-in account, and the request

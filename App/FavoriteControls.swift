@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 struct FavoriteHeartButton: View {
     @Environment(Store.self) private var store

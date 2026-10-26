@@ -1,6 +1,7 @@
 import Foundation
 import CryptoKit
 import QuickJS
+import Perception
 
 /// Runs TVBox JavaScript sources in-process on QuickJS, the engine Android TVBox uses, so they
 /// work on iOS and tvOS where no separate script process can be started. Each source keeps its

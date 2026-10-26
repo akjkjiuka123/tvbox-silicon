@@ -167,7 +167,7 @@ public final class PlayOnReceiver: @unchecked Sendable {
 }
 
 /// The sending side: the devices with Yingxia open on this network, and sending to one.
-@MainActor @Observable public final class PlayOnBrowser {
+@MainActor @Perceptible public final class PlayOnBrowser {
     public struct Receiver: Identifiable, Hashable, Sendable {
         public let name: String
         public let kind: PlayOn.Kind

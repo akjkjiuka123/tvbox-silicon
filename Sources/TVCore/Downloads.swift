@@ -69,7 +69,7 @@ public struct DownloadItem: Codable, Identifiable, Hashable, Sendable {
 /// Downloaded episodes and the queue that fetches them. A fixed number of downloads run at once
 /// (`simultaneous`); the rest wait in order. Progress survives pausing, quitting and expired links:
 /// each download keeps its finished pieces on disk and resolves the episode again when needed.
-@MainActor @Observable public final class DownloadLibrary {
+@MainActor @Perceptible public final class DownloadLibrary {
     public static let shared = DownloadLibrary()
     /// Addresses of downloaded episodes for the player: `tvbox-download://<id>`.
     public static let scheme = "tvbox-download"

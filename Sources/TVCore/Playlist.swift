@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 public enum Playlist {
     public static func parse(_ text: String, origin: URL, headers: [String: String] = [:]) throws -> [Channel] {

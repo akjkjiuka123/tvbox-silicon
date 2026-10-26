@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 extension Site {
     /// A type 3 api that is a web address naming no `.js` or `.py` file, such as a short link.

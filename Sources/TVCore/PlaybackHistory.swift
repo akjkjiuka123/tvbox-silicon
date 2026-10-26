@@ -80,7 +80,7 @@ extension PlaybackHistoryEntry {
 
 /// Shared by the library and player, bounded and atomically persisted outside
 /// UserDefaults so a growing history does not hit its size limit.
-@MainActor @Observable public final class PlaybackHistory {
+@MainActor @Perceptible public final class PlaybackHistory {
     public static let shared = PlaybackHistory()
     public static let limit = 200
     public private(set) var entries: [PlaybackHistoryEntry] = []

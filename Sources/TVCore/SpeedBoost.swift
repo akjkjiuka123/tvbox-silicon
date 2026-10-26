@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Touch and hold the picture to play faster, as in Douyin, YouTube, X and Telegram. The hold starts at the speed
 /// chosen in Settings; sliding sideways steps through `rates` (Telegram), down to half speed on the left, and sliding

@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 public struct EpisodeSkipSettings: Codable, Equatable, Sendable {
     public var enabled: Bool

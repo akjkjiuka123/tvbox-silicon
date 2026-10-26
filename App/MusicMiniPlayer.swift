@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 /// A cover, always square with the same rounding for its size, however the image is shaped:
 /// rows, the mini player and the Now Playing screen all draw covers through this.

@@ -1,5 +1,6 @@
 import Foundation
 import CryptoKit
+import Perception
 
 /// Disposable data only. History, subscriptions, pins and skip settings never live here.
 /// A ticket prevents a download started before deletion from recreating deleted data.

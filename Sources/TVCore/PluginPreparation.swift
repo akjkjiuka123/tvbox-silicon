@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Request-scoped preparation state. The UI polls only while a source is loading.
 /// Conversion is demand-driven, so class counts never masquerade as a percentage.

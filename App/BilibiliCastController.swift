@@ -2,6 +2,7 @@
 import SwiftUI
 import AVFoundation
 import TVCore
+import Perception
 
 /// Connects the Bilibili cast receiver to the app: a cast opens the player, and the phone's
 /// pause, seek and stop drive it, while the player's progress goes back to the phone.

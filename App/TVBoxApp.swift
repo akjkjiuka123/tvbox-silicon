@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 @main struct TVBoxApp: App {
     @Environment(\.scenePhase) private var scenePhase

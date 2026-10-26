@@ -1,5 +1,6 @@
 #if os(macOS)
 import Foundation
+import Perception
 
 /// Wraps a spider child process (Java / Node / Python) in a kernel Seatbelt sandbox via
 /// `/usr/bin/sandbox-exec`, so that attacker-controlled subscription spider code cannot read

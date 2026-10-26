@@ -1,6 +1,7 @@
 #if !os(tvOS)
 import SwiftUI
 import TVCore
+import Perception
 
 struct EpisodeSkipSettingsView: View {
     let session: PlaybackSession

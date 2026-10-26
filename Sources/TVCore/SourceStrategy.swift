@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Which sources to offer, and in what order.
 ///

@@ -2,6 +2,7 @@
 import Foundation
 import Network
 import TVCore
+import Perception
 
 /// A private loopback endpoint for HLS framing compatibility. Only URLs found
 /// in this playback's playlists are registered; it is not an open web proxy.

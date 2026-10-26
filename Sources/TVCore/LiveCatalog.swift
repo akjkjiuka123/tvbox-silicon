@@ -1,6 +1,7 @@
 import Foundation
 import CryptoKit
 import QuickJS
+import Perception
 
 /// The live platforms built into the app. Each lists its rooms by area, searches them, and turns a
 /// room into a playable HLS stream when it starts: stream addresses expire, so channels carry

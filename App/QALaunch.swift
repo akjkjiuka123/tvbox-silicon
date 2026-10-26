@@ -2,6 +2,7 @@
 import AVFoundation
 import SwiftUI
 import TVCore
+import Perception
 
 /// Debug-only launch hooks for screenshot QA on simulators without input:
 /// `simctl launch <device> <bundle> -qaSection live -qaPage channels:0`.

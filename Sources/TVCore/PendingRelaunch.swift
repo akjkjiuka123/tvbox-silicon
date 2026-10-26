@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// The Mac update the app was relaunching to install, kept until the next launch so that launch can say how it
 /// went. A relaunch that hung until someone force-quit the app shows up as slow, or as the old version (#122).

@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import Perception
 
 /// A virtual clear MP4. AVPlayer requests byte ranges; only those samples are fetched and
 /// decrypted. Neither opening an episode nor seeking requires a complete local movie.

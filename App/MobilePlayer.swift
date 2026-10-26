@@ -3,6 +3,7 @@ import SwiftUI
 import AVKit
 import MediaPlayer
 import TVCore
+import Perception
 
 /// The iPhone and iPad player. The picture plays in a layer of our own and every control is drawn here: AVKit's
 /// controls on iOS keep AirPlay and volume in a row of their own above anything laid over them and take no buttons
@@ -964,7 +965,7 @@ private struct PlayerLayerView: UIViewRepresentable {
 }
 
 /// Picture in Picture for the player layer: the button, and carrying on in a floating window when the app is left.
-@MainActor @Observable final class PictureInPicture: NSObject, AVPictureInPictureControllerDelegate {
+@MainActor @Perceptible final class PictureInPicture: NSObject, AVPictureInPictureControllerDelegate {
     let supported = AVPictureInPictureController.isPictureInPictureSupported()
     private(set) var possible = false
     private(set) var active = false
@@ -1002,7 +1003,7 @@ private struct PlayerLayerView: UIViewRepresentable {
 }
 
 /// The playing item's position and duration, four times a second while it plays.
-@MainActor @Observable final class PlayerClock {
+@MainActor @Perceptible final class PlayerClock {
     private(set) var position: Double = 0
     /// Zero until the item has a finite duration.
     private(set) var duration: Double = 0
@@ -1113,7 +1114,7 @@ private struct PlayerLayerView: UIViewRepresentable {
 }
 
 /// The item's audio tracks and subtitles, for the options menu.
-@MainActor @Observable final class MediaTracks {
+@MainActor @Perceptible final class MediaTracks {
     struct Group {
         let group: AVMediaSelectionGroup
         let options: [AVMediaSelectionOption]

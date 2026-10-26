@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// A live room's bullet comments as they are sent, from Bilibili's chat WebSocket.
 ///

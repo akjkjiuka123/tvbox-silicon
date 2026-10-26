@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 private struct SearchSourceItem: Identifiable {
     let id: String
@@ -57,7 +58,7 @@ struct GlobalSearchView: View {
     }
 
     var body: some View {
-        @Bindable var model = model
+        @Perception.Bindable var model = model
         #if os(tvOS)
         searchResults
             .searchable(text: $model.draft, prompt: Text(L10n.text("Search videos")))
@@ -196,7 +197,7 @@ struct GlobalSearchView: View {
     }
 
     private func searchHeader(_ config: Subscription) -> some View {
-        @Bindable var model = model
+        @Perception.Bindable var model = model
         return VStack(alignment: .leading, spacing: 14) {
             if !model.keyword.isEmpty {
                 ViewThatFits(in: .horizontal) {

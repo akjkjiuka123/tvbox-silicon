@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Taps on the picture, as in YouTube: one shows or hides the controls at once; a second soon after, on a side, skips
 /// 10 seconds with the controls hidden, and each further tap on that side skips 10 more. Two in the middle play or pause.

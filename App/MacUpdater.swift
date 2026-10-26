@@ -2,6 +2,7 @@
 import AppKit
 import Sparkle
 import TVCore
+import Perception
 
 /// Installs Mac updates in place with Sparkle and relaunches. The release feed (`Updates`) still decides
 /// what to announce and shows the sheet; this downloads, checks and swaps the app. Sparkle reads an appcast
@@ -10,7 +11,7 @@ import TVCore
 ///
 /// With automatic installs on (the default), Sparkle downloads new versions in the background and puts them
 /// in place when the app quits; the sheet's button then just relaunches.
-@MainActor @Observable final class MacUpdater: NSObject {
+@MainActor @Perceptible final class MacUpdater: NSObject {
     enum Phase: Equatable {
         case idle
         case checking

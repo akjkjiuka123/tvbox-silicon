@@ -3,6 +3,7 @@ import AVKit
 import MediaPlayer
 import SwiftUI
 import TVCore
+import Perception
 
 /// Now Playing, laid out as Music lays it out: the cover large on a backdrop tinted by it, the
 /// title, a thin scrubber, the transport, the system volume, then Lyrics, AirPlay and Up Next.

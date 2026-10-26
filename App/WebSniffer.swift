@@ -6,6 +6,7 @@ import WebKit
 import AppKit
 #else
 import UIKit
+import Perception
 #endif
 
 /// Hidden-page sniff. `SniffRules.decision` decides which address wins.

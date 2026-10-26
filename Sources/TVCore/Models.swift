@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 public enum TVError: LocalizedError, Sendable {
     case invalidURL, invalidConfiguration, emptyPlaylist, http(Int), unsupported(String)

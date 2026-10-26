@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 public struct Category: Identifiable, Sendable {
     public let id: String

@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// What a file AVPlayer can't open (MKV, AVI, FLV, ...) becomes for it: which streams are copied and which
 /// converted, where the HLS segments begin, and the playlists that describe them. Copying is the rule, since

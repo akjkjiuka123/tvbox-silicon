@@ -44,7 +44,7 @@ public struct MusicDownloadedCollection: Codable, Identifiable, Hashable, Sendab
 /// Downloaded songs and the queue that fetches them, beside the episode downloads. Each song is
 /// resolved as playing it would be (best channel, lossless first) and saved by the same transfer
 /// as an episode, so a stopped download continues and an expired link is resolved again.
-@MainActor @Observable public final class MusicDownloadLibrary {
+@MainActor @Perceptible public final class MusicDownloadLibrary {
     public static let shared = MusicDownloadLibrary()
     /// A song is one file, so a couple at a time is enough to keep the connection busy.
     static let simultaneous = 2

@@ -1,6 +1,7 @@
 #if !os(tvOS)
 import SwiftUI
 import TVCore
+import Perception
 
 /// Lyrics on the Now Playing screen, as Music shows them: large and bold, the line being sung
 /// bright and held a third of the way down, the rest faded. Tapping a line plays from it. Without

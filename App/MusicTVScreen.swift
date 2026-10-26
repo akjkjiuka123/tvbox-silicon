@@ -1,6 +1,7 @@
 import AVKit
 import SwiftUI
 import TVCore
+import Perception
 
 #if os(tvOS)
 /// Now Playing on Apple TV through AVKit's own player, as the video player does: the remote

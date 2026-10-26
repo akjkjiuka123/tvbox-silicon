@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import Perception
 
 /// Cloud-drive files streamed straight from the CDN address the plugin resolved. AVPlayer asks
 /// for byte ranges through a resource loader; they are served from aligned chunks fetched over a

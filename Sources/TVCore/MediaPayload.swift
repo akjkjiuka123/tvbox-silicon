@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 public enum MediaPayload {
     /// Some HLS hosts prefix MPEG-TS with a tiny image. Require five packet syncs

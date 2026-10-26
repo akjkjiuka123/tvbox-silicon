@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 public enum LogLevel: String, CaseIterable, Codable, Sendable {
     case debug, info, warning, error

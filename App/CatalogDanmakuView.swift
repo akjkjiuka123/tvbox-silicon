@@ -2,8 +2,9 @@ import SwiftUI
 import AVKit
 import TVCore
 import UniformTypeIdentifiers
+import Perception
 
-@MainActor @Observable final class CatalogDanmakuModel {
+@MainActor @Perceptible final class CatalogDanmakuModel {
     private(set) var comments: [CatalogDanmakuComment] = []
     private(set) var track = ""
     private(set) var revision = UUID()
@@ -171,7 +172,7 @@ struct CatalogDanmakuSettingsView: View {
     @State private var showsImporter = false
 
     var body: some View {
-        @Bindable var model = model
+        @Perception.Bindable var model = model
         NavigationStack {
             Form {
                 Section {

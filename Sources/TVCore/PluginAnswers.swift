@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// When each JAR source last answered its home or first category page with content. A plugin that
 /// worked last week and now answers `{}` fails silently: the user sees an empty source and no error

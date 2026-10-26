@@ -1,5 +1,6 @@
 #if os(iOS) || os(tvOS)
 import Foundation
+import Perception
 
 @_silgen_name("TVPythonRequest")
 private func pythonRequest(_ resources: UnsafePointer<CChar>, _ request: UnsafePointer<CChar>) -> UnsafeMutablePointer<CChar>?

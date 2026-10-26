@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 /// Watched titles, newest first: resume where you left off, or select titles to remove.
 struct PlaybackHistoryView: View {

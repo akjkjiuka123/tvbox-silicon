@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// A music catalog the app searches. Each has its own song IDs; one recording can carry an ID in each.
 public enum MusicPlatform: String, Codable, Sendable, CaseIterable, Hashable {

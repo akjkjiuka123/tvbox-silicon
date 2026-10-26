@@ -2,6 +2,7 @@ import SwiftUI
 import TVCore
 #if os(macOS)
 import WebKit
+import Perception
 
 struct CloudDriveView: View {
     @Environment(Store.self) private var store

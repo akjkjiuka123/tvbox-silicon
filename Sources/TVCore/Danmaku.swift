@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// One bullet comment (弹幕): text shown over the video at a moment of its timeline.
 public struct Danmaku: Sendable, Hashable {

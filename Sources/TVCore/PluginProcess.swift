@@ -1,5 +1,6 @@
 #if os(macOS)
 import Foundation
+import Perception
 
 /// The Mac's plugin runtime: one long-lived desktop JVM (`tvbox.runtime.ProcessHost`) serving
 /// the same requests the embedded JVM serves on iOS and tvOS. Requests run concurrently in it;

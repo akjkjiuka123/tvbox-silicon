@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 struct HomeView: View {
     @Environment(Store.self) private var store

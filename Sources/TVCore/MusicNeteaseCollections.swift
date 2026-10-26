@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 extension NeteaseMusicCatalog: MusicCollectionSource {
     /// NetEase's own search: albums and playlists, which GD Studio's API does not search. Not

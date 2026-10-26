@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// What a music search looks for.
 public enum MusicSearchKind: String, Codable, Sendable, CaseIterable, Hashable {

@@ -2,7 +2,7 @@
 import Perception
 
 /// Subscription-qualified keys survive imports and cannot pin an unrelated site's reused key.
-@MainActor @Observable public final class PinnedSources {
+@MainActor @Perceptible public final class PinnedSources {
     private var keys: [String]
     /// Bumps when the pin list changes, so a cached source row can be reused until then.
     public private(set) var revision = 0

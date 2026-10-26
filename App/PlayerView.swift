@@ -1,6 +1,7 @@
 import SwiftUI
 import AVKit
 import TVCore
+import Perception
 
 struct PlaybackView: View {
     let channel: Channel
@@ -737,7 +738,7 @@ private struct NativePlayerView: UIViewControllerRepresentable {
 
 /// Auto-hiding chrome driven by real pointer movement and key presses (not hover
 /// phases, which AVPlayerView's own overlay and layout passes keep re-firing).
-@MainActor @Observable private final class ChromeIdle {
+@MainActor @Perceptible private final class ChromeIdle {
     var visible = true
     private var task: Task<Void, Never>?
     private var monitor: Any?
@@ -788,7 +789,7 @@ private struct DesktopPlaybackRoot: View {
 private struct DesktopPlaybackView: View {
     @Environment(Store.self) private var store
     let channel: Channel
-    @Bindable var session: PlaybackSession
+    @Perception.Bindable var session: PlaybackSession
     let window: PlaybackWindow
     @State private var fillsFrame = false
     @State private var floats = false

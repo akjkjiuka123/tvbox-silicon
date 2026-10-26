@@ -34,7 +34,7 @@ public struct VideoFavorite: Identifiable, Codable, Hashable, Sendable {
 }
 
 /// Saved shows, newest first, kept on this device beside the favorite channels.
-@MainActor @Observable public final class VideoFavorites {
+@MainActor @Perceptible public final class VideoFavorites {
     public static let limit = 300
     public private(set) var items: [VideoFavorite] = []
     private let defaults: UserDefaults

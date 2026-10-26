@@ -3,6 +3,7 @@ import CommonCrypto
 import CryptoKit
 import Compression
 import Security
+import Perception
 
 /// Native AES, hashes and HMAC for scripts (`nativeCrypto` in the prelude). Pure-JavaScript
 /// crypto is too slow on QuickJS for multi-megabyte payloads such as bridge relays.

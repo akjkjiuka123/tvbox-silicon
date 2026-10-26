@@ -2,6 +2,7 @@ import SwiftUI
 import ImageIO
 import CoreImage
 import TVCore
+import Perception
 
 extension View {
     @ViewBuilder func catalogSearchable(text: Binding<String>, prompt: String) -> some View {

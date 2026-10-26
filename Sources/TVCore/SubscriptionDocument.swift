@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Compatibility belongs at the subscription boundary, not in API response decoding.
 enum SubscriptionDocument {

@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 extension QQMusicCatalog: MusicCollectionSource {
     public func searchCollections(_ query: String, kind: MusicCollection.Kind, page: Int) async throws -> [MusicCollection] {

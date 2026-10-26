@@ -1,6 +1,7 @@
 #if os(macOS) || os(tvOS)
 import SwiftUI
 import TVCore
+import Perception
 
 /// Search results in rows, as Music on the Mac and Spotify on Apple TV lay them out: albums and
 /// playlists as rows of covers, songs as columns of a few rows, each scrolling sideways. On the

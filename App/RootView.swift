@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 enum AppSection: String, CaseIterable, Identifiable, Hashable {
     case home = "Watch Now", live = "Live TV", music = "Music", search = "Global Search", sites = "Sources", files = "Cloud Files", favorites = "Favorites", history = "Playback History", downloads = "Downloads", settings = "Settings", more = "More"
@@ -87,7 +88,7 @@ struct RootView: View {
         return busy
     }
     var body: some View {
-        @Bindable var store = store
+        @Perception.Bindable var store = store
         Group {
             #if os(macOS)
             NavigationSplitView {
@@ -204,7 +205,7 @@ struct RootView: View {
     }
 
     @ViewBuilder private var tabView: some View {
-        @Bindable var store = store
+        @Perception.Bindable var store = store
         if #available(iOS 18, tvOS 18, *) {
             TabView(selection: $store.section) {
                 ForEach(tabs) { item in

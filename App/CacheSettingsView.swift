@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 struct CacheSettingsView: View {
     @State private var summary = MediaCache.shared.summary()

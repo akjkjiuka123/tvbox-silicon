@@ -2,6 +2,7 @@
 import AVKit
 import SwiftUI
 import TVCore
+import Perception
 
 /// The player while a song is loaded, as Music has it on the Mac: one glass bar floating over the
 /// bottom of the window, on every page. The transport is on the left, the song in the middle (a
@@ -296,7 +297,7 @@ struct MusicMacVolume: View {
         volume <= 0 ? "speaker.slash.fill" : volume < 0.34 ? "speaker.wave.1.fill" : volume < 0.67 ? "speaker.wave.2.fill" : "speaker.wave.3.fill"
     }
     var body: some View {
-        @Bindable var music = store.music
+        @Perception.Bindable var music = store.music
         HStack(spacing: 8) {
             Image(systemName: "speaker.fill").font(.caption).foregroundStyle(.secondary)
             Slider(value: $music.volume, in: 0...1).controlSize(.small)

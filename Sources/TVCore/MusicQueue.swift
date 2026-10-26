@@ -83,7 +83,7 @@ public struct MusicHistoryEntry: Codable, Equatable, Identifiable, Sendable {
 }
 
 /// Songs played recently, newest first, and where to continue: kept in one file.
-@MainActor @Observable public final class MusicLibrary {
+@MainActor @Perceptible public final class MusicLibrary {
     public static let shared = MusicLibrary(file: MusicLibrary.directory.appending(path: "music-library.json"))
     /// tvOS only keeps app files in Caches, as for subscriptions.
     static var directory: URL {

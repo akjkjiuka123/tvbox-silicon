@@ -1,6 +1,7 @@
 #if os(iOS) || os(tvOS) || os(macOS)
 import Foundation
 import CryptoKit
+import Perception
 
 #if !os(macOS)
 @_silgen_name("TVAppleRuntimeRequest")

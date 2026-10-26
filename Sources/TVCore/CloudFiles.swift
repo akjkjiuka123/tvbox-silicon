@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// A file or folder in Cloud Files: on a signed-in Quark or UC drive, or on an AList server.
 public struct CloudFile: Identifiable, Hashable, Codable, Sendable {

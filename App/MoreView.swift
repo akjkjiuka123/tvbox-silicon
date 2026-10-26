@@ -1,6 +1,7 @@
 #if os(iOS)
 import SwiftUI
 import TVCore
+import Perception
 
 /// The phone's tab bar: up to four sections in the user's order, then More with the rest.
 /// Stored as "bar|more", each half a comma-separated list of `AppSection` raw values.

@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 public enum OfficialVideoPage {
     /// Allow listed, episode-specific public pages only. Strip tracking and credentials.

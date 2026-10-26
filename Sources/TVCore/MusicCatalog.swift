@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// A catalog's song search. It only finds songs: a song a catalog lists may still have no audio.
 public protocol MusicCatalogSource: Sendable {

@@ -1,6 +1,7 @@
 import Foundation
 #if os(iOS) || os(tvOS)
 import os
+import Perception
 #endif
 
 /// Sends the app's errors to the developer, so bugs nobody reports still get found

@@ -1,5 +1,6 @@
 import CryptoKit
 import Foundation
+import Perception
 
 // Migu and Kuwo, from the BakaMusic plugins (github.com/Zencok/baka-plugins, 2026-10-14). In a
 // test of 14 songs from this Mac, Migu's own servers played 12 in full (all of Jay Chou's, which

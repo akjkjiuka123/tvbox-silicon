@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 /// Sign in to a cloud drive by scanning a code with the drive's phone app; there is no browser
 /// on Apple TV. (The Mac uses it for Baidu and Aliyun; iPhone and iPad, to sign in with another

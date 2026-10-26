@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Native plugin calls on two lanes. Searches run up to `width` at a time. Everything else (home,
 /// detail, playback) is what the viewer is waiting on: it has its own `interactiveWidth` slots

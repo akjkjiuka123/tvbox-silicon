@@ -1,5 +1,6 @@
 import AVFoundation
 import Foundation
+import Perception
 
 /// Reads what an audio address really serves: the first 256 KiB at most, by Range, parsed for the
 /// format, and the platform decoder when the header leaves the codec or duration open. Extensions,

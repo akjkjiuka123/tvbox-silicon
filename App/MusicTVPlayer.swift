@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 #if os(tvOS)
 /// Now Playing at the top of a music page, as a small pill like the filter chips beside it: the
@@ -39,7 +40,7 @@ struct MusicTabLabel: View {
 }
 
 /// Three bars drawn at a few heights, cycled while the song plays; low and still while it is paused.
-@MainActor @Observable final class MusicTabBars {
+@MainActor @Perceptible final class MusicTabBars {
     private(set) var image = MusicTabBars.frames[0]
     var animates = false { didSet { if animates != oldValue { restart() } } }
     @ObservationIgnored private var frame = 0

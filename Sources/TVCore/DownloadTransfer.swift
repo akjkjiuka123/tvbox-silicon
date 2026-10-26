@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// How one download's media is laid out, saved beside it as `plan.json`: a stopped download
 /// reads it back and fetches only what is missing.

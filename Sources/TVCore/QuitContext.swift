@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// What an iPhone, iPad or Apple TV launch was doing while on screen. ErrorReports saves it as it goes
 /// (every 30 seconds, on memory pressure, and when playback starts or stops), so that when a launch ends

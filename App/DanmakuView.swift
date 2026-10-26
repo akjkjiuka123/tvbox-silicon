@@ -2,6 +2,7 @@ import SwiftUI
 import AVFoundation
 import CoreText
 import TVCore
+import Perception
 
 /// Bullet comments over the video. Positions come from the player's clock on every frame, so the
 /// comments pause, seek and change speed with the video; each comment's text is drawn once.

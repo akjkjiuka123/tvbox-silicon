@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Shared by the SwiftUI app and core errors. Source keys are readable English.
 /// Production follows Apple's per-app language selection; explicit languages are

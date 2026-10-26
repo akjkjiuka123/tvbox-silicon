@@ -2,7 +2,7 @@
 import Perception
 
 /// Subscription-qualified hides. The same key scheme as `PinnedSources`.
-@MainActor @Observable public final class HiddenSources {
+@MainActor @Perceptible public final class HiddenSources {
     private var keys: [String]
     /// Bumps when a source is hidden or shown, so a cached source row can be reused until then.
     public private(set) var revision = 0

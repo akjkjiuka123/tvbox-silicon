@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Signing in on a service's own web page. A phone can't scan a code on its own screen, so iPhone
 /// and iPad open the page in a private web view, and these read the sign-in it leaves behind: the

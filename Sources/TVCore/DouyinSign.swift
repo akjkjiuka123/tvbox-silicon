@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Douyin web's `a_bogus` request signature, which its category room lists (and other data
 /// endpoints) require. Ported from the Apache-2.0 clean-room implementation in

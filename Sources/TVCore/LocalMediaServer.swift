@@ -1,5 +1,6 @@
 import Foundation
 import Network
+import Perception
 
 /// Serves downloaded HLS to AVPlayer over loopback. AVPlayer plays HLS only over HTTP(S), not from
 /// file URLs, so a downloaded playlist and its segments are read from disk through here. Only files

@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// An HTTP answer for music requests: status and headers are kept, and the body stops at a byte
 /// limit, so probing a server that ignores Range never downloads a whole song.

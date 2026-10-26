@@ -1,6 +1,7 @@
 import Foundation
 #if canImport(MetricKit) && !os(tvOS)
 import MetricKit
+import Perception
 #endif
 
 /// Crashes and hangs on iPhone, iPad and Mac, from MetricKit, which hands them over on a later launch.

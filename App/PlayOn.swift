@@ -5,6 +5,7 @@ import UIKit
 #endif
 #if os(iOS)
 import AVKit
+import Perception
 #endif
 
 /// How other devices name this one.
@@ -21,7 +22,7 @@ import AVKit
 #if os(tvOS) || os(macOS)
 /// Plays what Yingxia on another device sends (PlayOn): a catalog episode through this device's own copy
 /// of its source, so Next and the episode list work here too, else the stream as the sender had it.
-@MainActor @Observable final class PlayOnController {
+@MainActor @Perceptible final class PlayOnController {
     static let shared = PlayOnController()
     static let key = "playOnReceives"
     static var enabled: Bool { UserDefaults.standard.object(forKey: key) as? Bool ?? true }

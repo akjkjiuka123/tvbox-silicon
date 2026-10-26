@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 public enum Hongguo {
     public static let siteKey = "builtin.hongguo"

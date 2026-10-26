@@ -1,4 +1,5 @@
 import SwiftUI
+import Perception
 
 /// The built-in Bilibili source's icon: Bilibili's TV logo, white on Bilibili blue like its app icon.
 /// The logo is the official glyph as vector data (Assets.xcassets/BilibiliLogo, from Simple Icons),

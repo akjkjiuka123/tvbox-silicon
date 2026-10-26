@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 public struct DanmakuResolver: Sendable {
     public let cache: MediaCache

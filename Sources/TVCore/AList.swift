@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// An AList (or OpenList) server in Cloud Files: where its API lives, the folder browsing starts
 /// in, and the account and folder password it may need. Kept beside the cloud-drive accounts.

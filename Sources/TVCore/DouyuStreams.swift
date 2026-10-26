@@ -1,5 +1,6 @@
 import Foundation
 import AVFoundation
+import Perception
 
 /// Douyu's live HLS, read through a resource loader. When a room is new to Douyu's edge server, the
 /// edge starts it at MEDIA-SEQUENCE 0 and marks that first segment as a discontinuity in some reloads

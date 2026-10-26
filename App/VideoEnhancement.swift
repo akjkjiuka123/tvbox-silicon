@@ -5,6 +5,7 @@ import CoreVideo
 import VideoToolbox
 import Metal
 import TVCore
+import Perception
 
 /// Sharper and smoother video with Apple's own machine-learning frame processors (VideoToolbox, OS 26):
 /// super resolution upscales a picture smaller than the screen, and frame interpolation lifts 24–30 fps
@@ -72,7 +73,7 @@ private protocol EnhancementEngine: AnyObject, Sendable {
 }
 
 /// One per playback session: follows the player's item and owns the layer the surfaces show.
-@MainActor @Observable final class VideoEnhancer {
+@MainActor @Perceptible final class VideoEnhancer {
     /// What is on screen now: processed frames drawn over AVKit's picture.
     private(set) var status = VideoEnhancementStatus()
     /// A line for logs and QA: the processors running, frame counts and timing.

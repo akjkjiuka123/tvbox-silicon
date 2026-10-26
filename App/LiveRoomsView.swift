@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 /// A built-in live platform: its areas as chips over a grid of rooms, like the platform's own live
 /// home, more rooms as the grid scrolls, and its search.
@@ -321,7 +322,7 @@ extension LivePlatform {
 /// A room each built-in platform is showing now, for its card: the busiest room with a cover in the
 /// first of its areas that has one (a signed-out "Following" list is empty), asked again after ten
 /// minutes. The fetch outlives the card's appearance: a slow platform would otherwise never finish.
-@MainActor @Observable final class LivePreviews {
+@MainActor @Perceptible final class LivePreviews {
     static let shared = LivePreviews()
     private(set) var rooms: [LivePlatform: LiveRoom] = [:]
     @ObservationIgnored private var asked: [LivePlatform: Date] = [:]

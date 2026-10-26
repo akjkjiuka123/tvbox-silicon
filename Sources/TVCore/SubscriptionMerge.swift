@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Where a merged source came from. Its relative addresses, `ext` and default spider resolve
 /// against its own subscription, never against the first one in the list.

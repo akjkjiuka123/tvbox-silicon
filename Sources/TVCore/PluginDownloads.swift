@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Coalesces downloads and reuses verified disk artifacts across app launches.
 /// SHA-256 is computed locally; expiration triggers HTTP revalidation.

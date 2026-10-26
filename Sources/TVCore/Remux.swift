@@ -1,5 +1,6 @@
 import Foundation
 import Network
+import Perception
 
 /// Plays files AVPlayer can't open: MKV and WebM, AVI, FLV, WMV/ASF, RMVB, MPEG program streams. They are
 /// repackaged as HLS that AVPlayer plays like any other stream, so the picture keeps hardware decoding,

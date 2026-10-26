@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 public struct SniffRule: Hashable, Sendable {
     public let hosts: [String]

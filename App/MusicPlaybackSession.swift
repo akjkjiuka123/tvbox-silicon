@@ -1,6 +1,7 @@
 import AVFoundation
 import SwiftUI
 import TVCore
+import Perception
 
 /// AVFoundation brings AudioToolbox's `MusicTrack` (a sequencer track) into scope too; in this app the name means the song.
 typealias MusicTrack = TVCore.MusicTrack
@@ -11,7 +12,7 @@ typealias MusicTrack = TVCore.MusicTrack
 /// length. A song no channel can play is skipped, until several in a row fail. Songs that play go
 /// into the history, and where listening is gets saved, to continue later.
 /// A new song, or Stop, cancels everything for the old one, so a late answer never plays.
-@MainActor @Observable final class MusicPlaybackSession {
+@MainActor @Perceptible final class MusicPlaybackSession {
     enum Phase: Equatable {
         case idle
         /// Finding a channel.

@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Huya (虎牙) as a built-in live platform. Room lists and search are plain JSON; a room's HLS lines
 /// come from its mobile page, each with an anti-hotlinking token that is re-signed for this client.

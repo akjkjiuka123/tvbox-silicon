@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// A hidden web view that returns the first video address TVBox would accept.
 /// Nil means the page produced nothing before the timeout.

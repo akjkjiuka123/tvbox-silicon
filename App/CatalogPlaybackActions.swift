@@ -1,6 +1,7 @@
 #if !os(tvOS)
 import SwiftUI
 import TVCore
+import Perception
 
 /// Catalog-only actions alongside the existing native transport controls.
 struct CatalogPlaybackActions: View {

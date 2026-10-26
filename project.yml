@@ -26,6 +26,10 @@ packages:
   Sparkle:
     url: https://github.com/sparkle-project/Sparkle
     exactVersion: 2.10.0
+  # Back-ports Observation (@Perceptible, WithPerceptionTracking) so the app runs on iOS 16.
+  Perception:
+    url: https://github.com/pointfreeco/swift-perception
+    from: 1.3.0
 targetTemplates:
   SharedApp:
     type: application
@@ -36,6 +40,7 @@ targetTemplates:
         buildPhase: resources
     dependencies:
       - package: TVCore
+      - package: Perception
     info:
       path: Config/Info-${target_name}.plist
       properties:

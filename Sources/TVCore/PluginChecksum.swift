@@ -1,5 +1,6 @@
 import Foundation
 import CryptoKit
+import Perception
 
 /// Local content identity shared by download artifacts and Java conversion caches.
 enum PluginChecksum {

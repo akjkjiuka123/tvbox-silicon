@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// Release announcements published with the website (`website/public/releases.json`).
 /// The apps bundle a copy too, so "What's New" works offline right after an update.

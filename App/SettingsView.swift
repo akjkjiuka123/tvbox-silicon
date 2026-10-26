@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 // MARK: Settings building blocks
 // The pages under Settings are built from these, so they match the Settings page itself: the
@@ -341,7 +342,7 @@ struct FormSettingsView: View {
     }
 
     var body: some View {
-        @Bindable var store = store
+        @Perception.Bindable var store = store
         ScrollViewReader { proxy in
         Form { Group {
             heroSection
@@ -755,7 +756,7 @@ private struct AddSubscriptionSheet: View {
     private var canAdd: Bool { !store.importing && !store.subscriptionAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     var body: some View {
-        @Bindable var store = store
+        @Perception.Bindable var store = store
         NavigationStack {
             Form { Group {
                 Section {
@@ -1696,7 +1697,7 @@ private struct TVAddSubscriptionPage: View {
     @Environment(Store.self) private var store
     @Environment(\.dismiss) private var dismiss
     var body: some View {
-        @Bindable var store = store
+        @Perception.Bindable var store = store
         let empty = store.subscriptionAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         TVSettingsSubpage(symbol: "plus.rectangle.on.rectangle", title: L10n.text("Add Subscription")) {
             TVSettingsSection(title: L10n.text("Subscription"), footer: store.error ?? store.notice) {

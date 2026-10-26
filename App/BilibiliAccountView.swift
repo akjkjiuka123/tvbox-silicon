@@ -1,5 +1,6 @@
 import SwiftUI
 import TVCore
+import Perception
 
 /// The Bilibili account: sign in, or sign out. Signing in unlocks 1080P+ and the account's PGC rights.
 /// Apple TV and the Mac show a code to scan with the Bilibili phone app (there is no browser on

@@ -1,4 +1,5 @@
 import Foundation
+import Perception
 
 /// raw.githubusercontent.com, where many TVBox subscriptions and plugins live, is slow or blocked on many
 /// networks in mainland China. When GitHub can't be reached, the same public file comes from a mirror.

@@ -2,6 +2,7 @@ import Foundation
 import AVFoundation
 import CoreMedia
 import VideoToolbox
+import Perception
 
 /// Bilibili serves each quality as separate DASH video and audio files (fragmented MP4), which
 /// AVPlayer cannot open. Every file starts with a `sidx` index of its fragments, so the same files
