@@ -91,6 +91,33 @@ static int input_interrupt(void *opaque) {
     return input->interrupted ? input->interrupted(input->context) : 0;
 }
 
+/// A picture whose container doesn't say how its colours are coded (an x265 encode in MKV, often) says it in
+/// its frames: whether it is HDR10 or HLG must be known before the plan is made.
+static void probe_colors(AVFormatContext *format) {
+    for (unsigned index = 0; index < format->nb_streams; index++) {
+        AVCodecParameters *par = format->streams[index]->codecpar;
+        if (par->codec_type != AVMEDIA_TYPE_VIDEO || par->color_trc != AVCOL_TRC_UNSPECIFIED) continue;
+        if (par->codec_id != AV_CODEC_ID_HEVC && par->codec_id != AV_CODEC_ID_H264 && par->codec_id != AV_CODEC_ID_AV1) return;
+        const AVCodec *codec = avcodec_find_decoder(par->codec_id);
+        AVCodecContext *decoder = codec ? avcodec_alloc_context3(codec) : NULL;
+        AVPacket *packet = av_packet_alloc();
+        AVFrame *frame = av_frame_alloc();
+        if (decoder && packet && frame && avcodec_parameters_to_context(decoder, par) >= 0 && avcodec_open2(decoder, codec, NULL) >= 0) {
+            for (int count = 0; count < 300 && av_read_frame(format, packet) >= 0; count++) {
+                int sent = packet->stream_index == (int)index ? avcodec_send_packet(decoder, packet) : 0;
+                av_packet_unref(packet);
+                if (sent < 0 && sent != AVERROR(EAGAIN)) break;
+                if (avcodec_receive_frame(decoder, frame) < 0) continue;
+                par->color_trc = frame->color_trc; par->color_primaries = frame->color_primaries;
+                par->color_space = frame->colorspace;
+                break;
+            }
+        }
+        av_frame_free(&frame); av_packet_free(&packet); avcodec_free_context(&decoder);
+        return;
+    }
+}
+
 TVMInput *tvm_open(void *context, TVMReadFunction read, TVMInterruptFunction interrupted, int64_t size,
                    char *error, int errorSize) {
     TVMInput *input = av_mallocz(sizeof(TVMInput));
@@ -116,6 +143,7 @@ TVMInput *tvm_open(void *context, TVMReadFunction read, TVMInterruptFunction int
     input->format = format;
     status = avformat_find_stream_info(format, NULL);
     if (status < 0) { tvm_close(input); fail(error, errorSize, status, "stream info"); return NULL; }
+    if (size >= 0) probe_colors(format);
     // Matroska reads its Cues (the keyframe index) at the first seek; back to the start does it now.
     if (size >= 0) av_seek_frame(format, -1, format->start_time == AV_NOPTS_VALUE ? 0 : format->start_time, AVSEEK_FLAG_BACKWARD);
     return input;

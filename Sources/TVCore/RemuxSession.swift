@@ -160,7 +160,7 @@ final class RemuxSession: @unchecked Sendable {
         var device = RemuxPlan.Device(hevc: VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC),
                                       av1: VTIsHardwareDecodeSupported(kCMVideoCodecType_AV1),
                                       hevcEncoder: VTIsHardwareDecodeSupported(kCMVideoCodecType_HEVC),
-                                      hdr: AVPlayer.eligibleForHDRPlayback)
+                                      hdr: AVPlayer.eligibleForHDRPlayback && !Remux.refusesHDR)
         #if !os(macOS)
         // An Apple TV or iPhone tone maps a 4K picture too slowly to keep up; one that shows no HDR gets 1080p.
         device.toneMapWidth = 1920
@@ -192,7 +192,7 @@ final class RemuxSession: @unchecked Sendable {
         master = plan.masterPlaylist(codecs: codecs, supplemental: initializations[0].flatMap(plan.supplementalCodec))
         for index in plan.tracks.indices where plan.tracks[index].kind != .other { playlists[index] = plan.mediaPlaylist(track: index) }
         let summary = plan.tracks.map { "\($0.stream.codec)\($0.mode == .copy ? "" : ">\($0.mode)")\($0.toneMap ? "(sdr)" : "")" }.joined(separator: ",")
-        Diagnostics.shared.record(.info, "remux", "open format=\(format) tracks=\(summary) segments=\(plan.segments) keyframes=\(keyframes.count) size=\(source.length) ms=\(Int(Date().timeIntervalSince(began) * 1000))")
+        Diagnostics.shared.record(.info, "remux", "open format=\(format) tracks=\(summary) segments=\(plan.segments) keyframes=\(keyframes.count) size=\(source.length) transfer=\(plan.tracks[0].stream.colorTransfer) hdr=\(device.hdr) ms=\(Int(Date().timeIntervalSince(began) * 1000))")
     }
 
     private struct Job { var segment: Int, active: [UInt8] }

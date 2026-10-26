@@ -66,6 +66,9 @@ Cloud drive / HTTP / file ──bytes──▶ TVMedia (C, FFmpeg) ──fMP4─
   maps the same picture in a plain file. There an HDR10 or HLG picture is converted: swscale's color management
   (`sws_scale_frame`, perceptual intent) maps it to 8-bit BT.709, and the playlist says SDR. Apple TVs and iPhones
   shrink it to 1080p first (4K costs about four times as much); Macs keep its size. Dolby Vision 5 stays as it is.
+  An Apple TV can report HDR playback and still refuse the stream (-11868 with -17223): the player then opens the
+  file again converted, and so are the files opened after it until the app quits (`Remux.refusesHDR`). A picture
+  whose container has no colour tags (an x265 encode in MKV) is read from its first frame, so its HDR is known.
 - **Subtitles**: SubRip, ASS/SSA, WebVTT and tx3g become WebVTT renditions (italics and bold kept, ASS styling and
   drawings dropped), placed with `X-TIMESTAMP-MAP`. Picture subtitles (PGS, VobSub) are not shown yet.
 
