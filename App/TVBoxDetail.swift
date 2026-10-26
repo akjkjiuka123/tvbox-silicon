@@ -480,7 +480,7 @@ struct TVBoxEpisodeStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         Body(configuration: configuration, loaded: loaded)
     }
-    private struct Body: View {
+    struct Body: View {
         let configuration: ButtonStyleConfiguration
         let loaded: Bool
         @Environment(\.isFocused) private var focused
