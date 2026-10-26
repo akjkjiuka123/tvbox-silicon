@@ -152,6 +152,16 @@ struct SettingsView: View {
     }
 }
 
+extension Store {
+    /// What a subscription row shows before its chevron.
+    fileprivate func subscriptionValue(_ entry: SubscriptionEntry) -> String {
+        if subscriptionErrors[entry.address] != nil { return L10n.text("Couldn't refresh") }
+        if !entry.enabled { return L10n.text("Off") }
+        guard let copy = documents[entry.address] else { return L10n.text("Not loaded yet") }
+        return L10n.text("%lld sources", copy.sites.count)
+    }
+}
+
 #if !os(tvOS)
 // MARK: Settings on iPhone, iPad and Mac
 // A native grouped form, as in the Settings app and System Settings: the app as the first card,
@@ -325,9 +335,12 @@ struct FormSettingsView: View {
                     let failure = store.subscriptionErrors[entry.address]
                     FormLink(symbol: failure == nil ? "list.bullet.rectangle.fill" : "exclamationmark.triangle.fill",
                              tint: failure != nil ? .orange : entry.enabled ? .blue : .gray,
-                             title: entry.title, value: subscriptionValue(entry), warning: failure != nil) {
+                             title: entry.title, value: store.subscriptionValue(entry), warning: failure != nil) {
                         SubscriptionDetailView(entry: entry)
                     }
+                }
+                if store.subscriptions.count > 1 {
+                    FormLink(symbol: "trash.fill", tint: .red, title: L10n.text("Remove Subscriptions")) { RemoveSubscriptionsView() }
                 }
                 #if os(iOS)
                 // One row instead of an always-open field and three text buttons; the address goes in a sheet.
@@ -687,13 +700,6 @@ struct FormSettingsView: View {
         }
     }
     #endif
-
-    private func subscriptionValue(_ entry: SubscriptionEntry) -> String {
-        if store.subscriptionErrors[entry.address] != nil { return L10n.text("Couldn't refresh") }
-        if !entry.enabled { return L10n.text("Off") }
-        guard let copy = store.documents[entry.address] else { return L10n.text("Not loaded yet") }
-        return L10n.text("%lld sources", copy.sites.count)
-    }
 }
 
 #if os(iOS)
@@ -813,6 +819,51 @@ private struct SubscriptionDetailView: View {
         .settingsForm(current.title)
         .confirmationDialog(L10n.text("Remove"), isPresented: $confirmsRemoval) {
             Button(L10n.text("Remove"), role: .destructive) { store.removeSubscription(current); dismiss() }
+        }
+    }
+}
+
+/// Removing many subscriptions at once: tick them, or take all or the switched-off ones, then remove.
+private struct RemoveSubscriptionsView: View {
+    @Environment(Store.self) private var store
+    @Environment(\.dismiss) private var dismiss
+    @State private var selection: Set<String> = []
+    @State private var confirmsRemoval = false
+    var body: some View {
+        let chosen = store.subscriptions.filter { selection.contains($0.address) }
+        let all = chosen.count == store.subscriptions.count
+        let off = store.subscriptions.filter { !$0.enabled }.map(\.address)
+        Form { Group {
+            Section {
+                Button(L10n.text(all ? "Deselect All" : "Select All")) { selection = all ? [] : Set(store.subscriptions.map(\.address)) }
+                if !off.isEmpty { Button(L10n.text("Select Turned-Off Subscriptions")) { selection = Set(off) } }
+            }
+            Section {
+                ForEach(store.subscriptions) { entry in
+                    let selected = selection.contains(entry.address)
+                    Button {
+                        if selected { selection.remove(entry.address) } else { selection.insert(entry.address) }
+                    } label: {
+                        HStack(spacing: 10) {
+                            Image(systemName: selected ? "checkmark.circle.fill" : "circle")
+                                .foregroundStyle(selected ? AnyShapeStyle(.red) : AnyShapeStyle(.secondary))
+                            Text(entry.title).lineLimit(1).foregroundStyle(.primary)
+                            Spacer(minLength: 6)
+                            Text(store.subscriptionValue(entry)).lineLimit(1).foregroundStyle(.secondary)
+                        }
+                    }
+                    .formRowButton()
+                    .accessibilityAddTraits(selected ? [.isSelected] : [])
+                }
+            }
+            Section {
+                Button(L10n.text("Remove %lld Subscriptions", chosen.count), role: .destructive) { confirmsRemoval = true }
+                    .disabled(chosen.isEmpty || store.importing)
+            }
+        }.settingsRows() }
+        .settingsForm(L10n.text("Remove Subscriptions"))
+        .confirmationDialog(L10n.text("Remove %lld Subscriptions", chosen.count), isPresented: $confirmsRemoval) {
+            Button(L10n.text("Remove"), role: .destructive) { store.removeSubscriptions(Set(chosen.map(\.address))); dismiss() }
         }
     }
 }
@@ -1310,9 +1361,10 @@ struct TVSettingsView: View {
         TVSettingsSection(title: L10n.text("Subscriptions"), footer: store.notice) {
             ForEach(store.subscriptions) { entry in
                 let failed = store.subscriptionErrors[entry.address] != nil
-                TVSettingsLink(title: entry.title, value: subscriptionValue(entry), warning: failed) { TVSubscriptionPage(entry: entry) }
+                TVSettingsLink(title: entry.title, value: store.subscriptionValue(entry), warning: failed) { TVSubscriptionPage(entry: entry) }
             }
             TVSettingsLink(title: L10n.text("Add Subscription")) { TVAddSubscriptionPage() }
+            if store.subscriptions.count > 1 { TVSettingsLink(title: L10n.text("Remove Subscriptions")) { TVRemoveSubscriptionsPage() } }
             if !store.subscriptions.isEmpty {
                 TVSettingsAction(title: L10n.text("Refresh All"),
                                  value: store.importing ? L10n.text("Importing…") : store.subscription.map { $0.importedAt.formatted(date: .abbreviated, time: .shortened) },
@@ -1320,13 +1372,6 @@ struct TVSettingsView: View {
                     .disabled(store.importing)
             }
         }
-    }
-
-    private func subscriptionValue(_ entry: SubscriptionEntry) -> String {
-        if store.subscriptionErrors[entry.address] != nil { return L10n.text("Couldn't refresh") }
-        if !entry.enabled { return L10n.text("Off") }
-        guard let copy = store.documents[entry.address] else { return L10n.text("Not loaded yet") }
-        return L10n.text("%lld sources", copy.sites.count)
     }
 
     private var updateSection: some View {
@@ -1569,6 +1614,46 @@ private struct TVSubscriptionPage: View {
         }
         .confirmationDialog(L10n.text("Remove"), isPresented: $confirmsRemoval) {
             Button(L10n.text("Remove"), role: .destructive) { store.removeSubscription(current); dismiss() }
+        }
+    }
+}
+
+/// Removing many subscriptions at once: tick them, or take all or the switched-off ones, then remove.
+private struct TVRemoveSubscriptionsPage: View {
+    @Environment(Store.self) private var store
+    @Environment(\.dismiss) private var dismiss
+    @State private var selection: Set<String> = []
+    @State private var confirmsRemoval = false
+    var body: some View {
+        let chosen = store.subscriptions.filter { selection.contains($0.address) }
+        let all = chosen.count == store.subscriptions.count
+        let off = store.subscriptions.filter { !$0.enabled }.map(\.address)
+        TVSettingsSubpage(symbol: "trash", title: L10n.text("Remove Subscriptions")) {
+            TVSettingsSection {
+                TVSettingsAction(title: L10n.text(all ? "Deselect All" : "Select All")) { selection = all ? [] : Set(store.subscriptions.map(\.address)) }
+                if !off.isEmpty { TVSettingsAction(title: L10n.text("Select Turned-Off Subscriptions")) { selection = Set(off) } }
+            }
+            TVSettingsSection(title: L10n.text("Subscriptions")) {
+                ForEach(store.subscriptions) { entry in
+                    let selected = selection.contains(entry.address)
+                    Button {
+                        if selected { selection.remove(entry.address) } else { selection.insert(entry.address) }
+                    } label: {
+                        TVSettingsRowLabel(title: entry.title, value: store.subscriptionValue(entry)) {
+                            Image(systemName: selected ? "checkmark.circle.fill" : "circle").font(.system(size: 30))
+                        }
+                    }
+                    .glassRow()
+                    .accessibilityAddTraits(selected ? [.isSelected] : [])
+                }
+            }
+            TVSettingsSection {
+                TVSettingsAction(title: L10n.text("Remove %lld Subscriptions", chosen.count), destructive: true) { confirmsRemoval = true }
+                    .disabled(chosen.isEmpty || store.importing)
+            }
+        }
+        .confirmationDialog(L10n.text("Remove %lld Subscriptions", chosen.count), isPresented: $confirmsRemoval) {
+            Button(L10n.text("Remove"), role: .destructive) { store.removeSubscriptions(Set(chosen.map(\.address))); dismiss() }
         }
     }
 }

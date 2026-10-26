@@ -681,6 +681,9 @@
 "Move Up" = "上へ移動";
 "Move Down" = "下へ移動";
 "Remove" = "削除";
+"Remove Subscriptions" = "配信設定を削除";
+"Select Turned-Off Subscriptions" = "オフの配信設定を選択";
+"Remove %lld Subscriptions" = "%lld 件の配信設定を削除";
 "Couldn't refresh: %@" = "更新できませんでした：%@";
 "Not loaded yet" = "まだ読み込まれていません";
 "This address lists %lld subscriptions. They were added switched off; turn on the ones you want." = "このアドレスには %lld 件の配信設定があります。オフの状態で追加しました。使いたいものをオンにしてください。";
