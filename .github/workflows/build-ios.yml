@@ -2,8 +2,6 @@ name: Build iOS IPA (iOS 16)
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
 
 jobs:
   build-ios:
