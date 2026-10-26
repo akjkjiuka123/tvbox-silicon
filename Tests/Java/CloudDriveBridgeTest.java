@@ -48,6 +48,18 @@ public class CloudDriveBridgeTest {
             var head = connection(media); head.setRequestMethod("HEAD"); head.setRequestProperty("Range", "bytes=0-1");
             check(head.getResponseCode() == 206 && head.getContentLengthLong() == 2, "HEAD lost range metadata");
             check(head.getInputStream().read() == -1, "HEAD returned a body");
+            // FTY's Quark proxy: a short range never starts and an open one says "bytes 0" with the file's length.
+            List<String> asked = Collections.synchronizedList(new ArrayList<>());
+            bridge.setProxy(params -> {
+                asked.add(params.get("range"));
+                boolean open = params.get("range").endsWith("-");
+                return new Object[]{206, "video/mp4", new ByteArrayInputStream((open ? "0123456789" : "").getBytes()),
+                    Map.of("Content-Range", "bytes 0", "Content-Length", "10", "Accept-Ranges", "bytes")};
+            });
+            var fty = connection(media); fty.setRequestProperty("Range", "bytes=0-1");
+            check(fty.getResponseCode() == 206 && "bytes 0-1/10".equals(fty.getHeaderField("Content-Range")), "FTY range not repaired");
+            check(new String(fty.getInputStream().readAllBytes()).equals("01"), "FTY range payload changed");
+            check(asked.equals(List.of("bytes=0-1", "bytes=0-")), "FTY range was not asked again open: " + asked);
             check(Files.exists(cache.resolve("proxy-active")), "Playback lease not updated");
             check(bridge.rewriteAddress("https://example.com/proxy?do=quark").startsWith("https://example.com"), "Remote proxy rewritten");
             String array = bridge.playback("{\"url\":[\"HD\",\"http://127.0.0.1:9978/proxy?do=quark\"],\"header\":{\"Referer\":\"https://example.com\"}}");

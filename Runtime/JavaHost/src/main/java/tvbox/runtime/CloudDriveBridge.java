@@ -169,12 +169,18 @@ public final class CloudDriveBridge implements AutoCloseable {
         Map<String,String> headers = new HashMap<>();
         exchange.getRequestHeaders().forEach((key, values) -> headers.put(key.toLowerCase(Locale.ROOT), String.join(",", values)));
         touch();
-        Object[] response;
-        if (resource.startsWith("drive/")) {
-            String route = resource.substring("drive".length());
-            if (route.startsWith("/proxy")) route = route.substring("/proxy".length());
-            response = driveProxy.invoke(params, route, headers);
-        } else { params.putAll(headers); response = proxy.invoke(params); }
+        String asked = headers.get("range");
+        var wanted = asked == null ? null : java.util.regex.Pattern.compile("bytes=(\\d+)-(\\d*)").matcher(asked);
+        if (wanted != null && !wanted.matches()) wanted = null;
+        Object[] response = invoke(resource, params, headers);
+        if (wanted != null && !wanted.group(2).isEmpty() && misanswered(response, wanted.group(1))) {
+            // FTY's Quark proxy skips an 8-byte prefix at the start of a range but not at its end, so a short range
+            // such as AVPlayer's 0-1 probe never starts. Android players ask for open ranges; so do we, and stop at
+            // the end we wanted.
+            try { ((InputStream) response[2]).close(); } catch (IOException ignored) { }
+            headers.put("range", "bytes=" + wanted.group(1) + "-");
+            response = invoke(resource, params, headers);
+        }
         if (response == null || response.length < 3 || !(response[0] instanceof Number) || !(response[2] instanceof InputStream)) {
             exchange.sendResponseHeaders(502, -1); return;
         }
@@ -195,20 +201,24 @@ public final class CloudDriveBridge implements AutoCloseable {
                 }
             }
             int status = ((Number)response[0]).intValue();
-            // Some Android proxies call a range starting at zero "200". AVPlayer
-            // needs the partial-response status and length, including its 0-1 probe.
+            // Some Android proxies call a range starting at zero "200", report the entire file's size for a small
+            // range or the wrong start (FTY's says "bytes 0"). AVPlayer needs the partial-response status, the range
+            // it asked for and its length, including its 0-1 probe.
             String range = exchange.getResponseHeaders().getFirst("Content-Range");
-            if ((status == 200 || status == 206) && headers.containsKey("range") && range != null) {
-                var match = java.util.regex.Pattern.compile("bytes (\\d+)-(\\d+)/(?:\\d+|\\*)").matcher(range);
-                if (match.matches()) try {
-                    long first = Long.parseLong(match.group(1)), last = Long.parseLong(match.group(2));
-                    if (last >= first && last - first < Long.MAX_VALUE) {
-                        status = 206;
-                        // Android proxies may report the entire file size for a small range.
-                        length = last - first + 1;
-                    }
-                } catch (NumberFormatException ignored) { }
-            }
+            var answered = range == null ? null : java.util.regex.Pattern.compile("bytes (\\d+)-(\\d+)/(\\d+|\\*)").matcher(range);
+            if (wanted != null && (status == 206 || status == 200 && range != null)) try {
+                long first = Long.parseLong(wanted.group(1)), total = -1, end = -1;
+                if (answered != null && answered.matches()) {
+                    if (!answered.group(3).equals("*")) total = Long.parseLong(answered.group(3));
+                    end = total > 0 ? total - 1 : Long.parseLong(answered.group(2));
+                } else if (first == 0 && length > 0) end = (total = length) - 1;
+                long last = wanted.group(2).isEmpty() ? end : Math.min(Long.parseLong(wanted.group(2)), end);
+                if (end >= 0 && first <= last) {
+                    status = 206;
+                    length = last - first + 1;
+                    exchange.getResponseHeaders().set("Content-Range", "bytes " + first + "-" + last + "/" + (total < 0 ? "*" : total));
+                }
+            } catch (NumberFormatException ignored) { }
             boolean noBody = method.equals("HEAD") || status == 204 || status == 304 || length == 0;
             if (length >= 0 && noBody) exchange.getResponseHeaders().set("Content-Length", Long.toString(length));
             exchange.sendResponseHeaders(status, noBody ? -1 : length > 0 ? length : 0);
@@ -223,6 +233,27 @@ public final class CloudDriveBridge implements AutoCloseable {
                 System.err.println("CLOUD_PROXY_COMPLETE remaining=" + remaining);
             }
         }
+    }
+
+    private Object[] invoke(String resource, Map<String,String> params, Map<String,String> headers) throws Exception {
+        if (resource.startsWith("drive/")) {
+            String route = resource.substring("drive".length());
+            if (route.startsWith("/proxy")) route = route.substring("/proxy".length());
+            return driveProxy.invoke(new HashMap<>(params), route, headers);
+        }
+        Map<String,String> request = new HashMap<>(params);
+        request.putAll(headers);
+        return proxy.invoke(request);
+    }
+
+    /** A 206 answer whose Content-Range is missing, malformed or starts somewhere other than the range asked for. */
+    private static boolean misanswered(Object[] response, String first) {
+        if (response == null || response.length < 4 || !(response[0] instanceof Number status) || status.intValue() != 206
+                || !(response[2] instanceof InputStream) || !(response[3] instanceof Map<?,?> answer)) return false;
+        for (var entry : answer.entrySet())
+            if (String.valueOf(entry.getKey()).equalsIgnoreCase("content-range"))
+                return !String.valueOf(entry.getValue()).matches("bytes " + first + "-\\d+/(\\d+|\\*)");
+        return true;
     }
 
     private static HttpServer standard;
