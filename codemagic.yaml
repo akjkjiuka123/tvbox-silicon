@@ -37,7 +37,7 @@ workflows:
       - name: FFmpeg
         script: |
           set -euxo pipefail
-          if [ -d build/FFmpeg ]; then echo "cached, skip"; else Scripts/build-apple-ffmpeg.sh; fi
+          if [ -f build/FFmpeg/FFmpeg.xcframework/Info.plist ]; then echo "cached, skip"; else Scripts/build-apple-ffmpeg.sh; fi
       - name: Java host
         script: |
           set -euxo pipefail
@@ -55,6 +55,18 @@ workflows:
           else
             Scripts/package-apple-runtime.sh ios
           fi
+      - name: FFmpeg xcframework guard
+        script: |
+          set -euxo pipefail
+          LIST="$PWD/Vendor/FFmpeg/FFmpeg.xcframework"
+          target=$(readlink "$LIST" 2>/dev/null || echo "$LIST")
+          echo "xcframework -> $target"
+          if [ ! -f "$target/Info.plist" ]; then
+            echo "missing, rebuilding FFmpeg"
+            Scripts/build-apple-ffmpeg.sh
+          fi
+          test -f "$target/Info.plist"
+          ls "$target"
       - name: Xcode project
         script: |
           set -euxo pipefail
