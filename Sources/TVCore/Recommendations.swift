@@ -1,5 +1,5 @@
-import Foundation
-import Observation
+﻿import Foundation
+import Perception
 
 public struct PosterResource: Hashable, Sendable {
     public let url: URL
