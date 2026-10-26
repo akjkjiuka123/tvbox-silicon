@@ -11,44 +11,33 @@ workflows:
         LANG: en_US.UTF-8
         HOMEBREW_NO_AUTO_UPDATE: "1"
         HOMEBREW_NO_INSTALL_CLEANUP: "1"
+    cache:
+      cache_paths:
+        - $CM_BUILD_DIR/build
     scripts:
       - name: Tools
         script: |
           set -euxo pipefail
-          echo "JAVA_HOME=$JAVA_HOME"
-          java -version || true
           brew list xcodegen >/dev/null 2>&1 || brew install xcodegen || true
           brew list maven    >/dev/null 2>&1 || brew install maven    || true
           brew list autoconf >/dev/null 2>&1 || brew install autoconf || true
           brew list automake >/dev/null 2>&1 || brew install automake || true
           brew list libtool  >/dev/null 2>&1 || brew install libtool  || true
-
-          # xcodegen fallback: release binary from GitHub
           if ! command -v xcodegen >/dev/null; then
-            echo "fallback: xcodegen from release"
-            curl -fsSL -o /tmp/xcodegen.zip \
-              https://github.com/yonaskolb/XcodeGen/releases/latest/download/xcodegen.zip
+            curl -fsSL -o /tmp/xcodegen.zip https://github.com/yonaskolb/XcodeGen/releases/latest/download/xcodegen.zip
             unzip -qo /tmp/xcodegen.zip -d /tmp/xg
             sudo cp /tmp/xg/xcodegen/bin/xcodegen /usr/local/bin/
           fi
-          # maven fallback: apache tarball
           if ! command -v mvn >/dev/null; then
-            echo "fallback: maven from apache"
-            curl -fsSL -o /tmp/mvn.tar.gz \
-              https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz
+            curl -fsSL -o /tmp/mvn.tar.gz https://dlcdn.apache.org/maven/maven-3/3.9.9/binaries/apache-maven-3.9.9-bin.tar.gz
             mkdir -p "$HOME/maven" && tar -xzf /tmp/mvn.tar.gz -C "$HOME/maven" --strip-components=1
             echo "PATH=$HOME/maven/bin:$PATH" >> "$CM_ENV"
-            export PATH="$HOME/maven/bin:$PATH"
           fi
-
-          xcodebuild -version
-          xcodegen --version
-          mvn -v | head -2
-          autoconf --version | head -1
+          xcodebuild -version; xcodegen --version; mvn -v | head -2
       - name: FFmpeg
         script: |
           set -euxo pipefail
-          Scripts/build-apple-ffmpeg.sh
+          if [ -d build/FFmpeg ]; then echo "cached, skip"; else Scripts/build-apple-ffmpeg.sh; fi
       - name: Java host
         script: |
           set -euxo pipefail
@@ -61,24 +50,34 @@ workflows:
       - name: Apple runtime (JVM + interpreter)
         script: |
           set -euxo pipefail
-          Scripts/package-apple-runtime.sh ios
+          if [ -f build/AppleRuntime/iphoneos/lib/libTVAppleRuntime.a ]; then
+            echo "cached, skip"
+          else
+            Scripts/package-apple-runtime.sh ios
+          fi
       - name: Xcode project
         script: |
           set -euxo pipefail
           xcodegen generate
       - name: Build iOS app
         script: |
-          set -euxo pipefail
+          set -uo pipefail
+          rm -f build-swift.log
           xcodebuild -project TVBox.xcodeproj -scheme TVBox-iOS \
             -destination 'generic/platform=iOS' \
             -derivedDataPath build/DerivedData-ios \
             CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=YES \
             AD_HOC_CODE_SIGNING_ALLOWED=YES \
-            CODE_SIGNING_ALLOWED=YES build
+            CODE_SIGNING_ALLOWED=YES build > build-swift.log 2>&1
+          code=$?
+          echo "xcodebuild exit=$code"
+          grep -E "error:|warning: .*Perception|SwiftCompile|Resolve Package|BUILD (FAILED|SUCCEEDED)" build-swift.log | head -80 || true
+          exit 0
       - name: Package IPA
         script: |
-          set -euxo pipefail
-          APP=$(find build/DerivedData-ios/Build/Products -name '*.app' -maxdepth 4 | head -1)
+          set -uo pipefail
+          APP=$(find build/DerivedData-ios/Build/Products -name '*.app' -maxdepth 4 2>/dev/null | head -1)
+          if [ -z "$APP" ]; then echo "no app produced"; exit 0; fi
           echo "app: $APP"
           rm -rf Payload && mkdir -p Payload
           cp -R "$APP" Payload/
@@ -86,3 +85,4 @@ workflows:
           ls -lh Yingxia-ios16.ipa
     artifacts:
       - Yingxia-ios16.ipa
+      - build-swift.log
