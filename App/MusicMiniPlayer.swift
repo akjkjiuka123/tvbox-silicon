@@ -45,7 +45,7 @@ struct MusicMiniPlayer: View {
                     ProgressView().frame(width: 36, height: 36)
                 } else {
                     button(music.isPlaying ? "pause.fill" : "play.fill", label: music.isPlaying ? "Pause" : "Play") { music.toggle() }
-                        .contentTransition(.symbolEffect(.replace))
+                        .contentTransition(.opacity)
                 }
                 if !inline {
                     button("forward.fill", label: "Next") { music.next() }.disabled(music.queue?.hasNext != true)

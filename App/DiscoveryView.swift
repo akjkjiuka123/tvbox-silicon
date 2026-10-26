@@ -78,7 +78,6 @@ struct GlobalSearchView: View {
             .onDisappear { endVisible = false; model.suspend() }
         #else
         searchResults
-            .scrollPosition(id: $model.scrollID)
             // A hard edge: the summary, the activity and the source chips are a tall bar, and results showed through it.
             .topBar(hardEdge: true) { if let config = store.subscription, showsHeader { searchHeader(config) } }
             .screenBackdrop()
@@ -91,7 +90,7 @@ struct GlobalSearchView: View {
             .catalogSearchable(text: $model.draft, prompt: L10n.text("Search videos"))
             .searchFieldFocused($inputFocused)
             .onSubmit(of: .search) { if let config = store.subscription { submit(config) } }
-            .onChange(of: model.draft) { _, draft in if draft.isEmpty && !model.keyword.isEmpty { model.reset() } }
+            .onChange(of: model.draft) { draft in if draft.isEmpty && !model.keyword.isEmpty { model.reset() } }
             #if os(iOS)
             .scrollDismissesKeyboard(.interactively)
             #endif
@@ -139,7 +138,7 @@ struct GlobalSearchView: View {
                     if model.keyword.isEmpty { idle.frame(maxWidth: 760, alignment: .leading).frame(maxWidth: .infinity) }
                     else {
                         if model.total == 0 {
-                            ContentUnavailableView(L10n.text("No searchable sources are available on this device."), systemImage: "magnifyingglass")
+                            EmptyState(L10n.text("No searchable sources are available on this device."), systemImage: "magnifyingglass")
                         } else if posters.isEmpty {
                             if model.busy {
                                 VStack(spacing: 18) {
@@ -161,14 +160,14 @@ struct GlobalSearchView: View {
                                         endVisible = visible
                                         if visible { model.loadMore(model.selectedSource, config: config) }
                                     }
-                                    .onChange(of: model.loadingMore) { _, loading in
+                                    .onChange(of: model.loadingMore) { loading in
                                         if !loading, endVisible { model.loadMore(model.selectedSource, config: config) }
                                     }
                             }
                         }
                     }
                 } else {
-                    ContentUnavailableView(L10n.text("No Sources Yet"), systemImage: "magnifyingglass", description: Text(L10n.text("Add a TVBox subscription in Settings.")))
+                    EmptyState(L10n.text("No Sources Yet"), systemImage: "magnifyingglass", description: Text(L10n.text("Add a TVBox subscription in Settings.")))
                 }
             }.pageContainer()
         }
@@ -177,7 +176,7 @@ struct GlobalSearchView: View {
     /// Separates "nothing matched" from "most sources never answered" so the empty state does not blame the keyword.
     private func emptyResults(_ config: Subscription) -> some View {
         let mostlyFailed = model.failures.count * 2 > model.completed
-        return ContentUnavailableView {
+        return EmptyState {
             Label(L10n.text(mostlyFailed ? "Most Sources Unavailable" : "No Videos"),
                   systemImage: mostlyFailed ? "wifi.exclamationmark" : "magnifyingglass")
         } description: {

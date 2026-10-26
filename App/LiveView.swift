@@ -160,7 +160,7 @@ struct ChannelListView: View {
                     ).padding(.vertical, 24).tvFocusSection()
                 }
                 if !waiting && error == nil && filtered.isEmpty {
-                    ContentUnavailableView(L10n.text("No Matching Channels"), systemImage: "magnifyingglass").frame(maxWidth: .infinity)
+                    EmptyState(L10n.text("No Matching Channels"), systemImage: "magnifyingglass").frame(maxWidth: .infinity)
                 }
                 if !filtered.isEmpty {
                     LazyVGrid(columns: [GridItem(.adaptive(minimum: Layout.cardMin), spacing: 12)], spacing: 12) {
@@ -279,7 +279,7 @@ private struct TVChannelGuide: View {
                                details: error, retry: reload, goBack: { dismiss() }, busy: refreshing)
                 Spacer()
             } else if filtered.isEmpty {
-                ContentUnavailableView(L10n.text("No Matching Channels"), systemImage: "magnifyingglass")
+                EmptyState(L10n.text("No Matching Channels"), systemImage: "magnifyingglass")
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
                 VStack(alignment: .leading, spacing: 12) {
@@ -688,7 +688,7 @@ struct ChannelCard: View {
             Button { if drag?.active != true { store.toggleFavorite(channel) } } label: {
                 Image(systemName: favorite ? "heart.fill" : "heart")
                     .font(.title3).foregroundStyle(favorite ? Brand.rose : .secondary)
-                    .frame(width: 44, height: 44).contentTransition(.symbolEffect(.replace))
+                    .frame(width: 44, height: 44).contentTransition(.opacity)
             }
             .buttonStyle(.plain)
             .accessibilityLabel(favorite ? L10n.text("Remove %@ from favorites", channel.name) : L10n.text("Add %@ to favorites", channel.name))

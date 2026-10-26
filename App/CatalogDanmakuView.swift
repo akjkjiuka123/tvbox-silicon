@@ -243,7 +243,7 @@ struct CatalogDanmakuSettingsView: View {
                         #if os(iOS)
                         .textInputAutocapitalization(.never).autocorrectionDisabled().keyboardType(.URL)
                         #endif
-                        .onChange(of: server) { _, _ in
+                        .onChange(of: server) { _ in
                             work?.cancel(); busy = false; animes = []; episodes = []; selectedAnime = nil; searched = false; error = nil
                         }
                     Button(L10n.text("Use Default URL")) { server = CatalogDanmakuClient.defaultServer }

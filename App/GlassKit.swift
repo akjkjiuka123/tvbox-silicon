@@ -122,11 +122,6 @@ extension View {
 
     /// The breathing symbol effect; iOS 17 and tvOS 17 have no breathe, so the symbol pulses instead.
     @ViewBuilder func breathingSymbol() -> some View {
-        if #available(iOS 18, tvOS 18, *) {
-            symbolEffect(.breathe, options: .repeat(.periodic(delay: 2.5)))
-        } else {
-            symbolEffect(.pulse, options: .repeating.speed(0.4))
-        }
     }
 }
 
@@ -226,7 +221,7 @@ struct Surface: View {
 }
 
 extension View {
-    /// Fills the screen first: applied to a bare `ContentUnavailableView` the backdrop would
+    /// Fills the screen first: applied to a bare `EmptyState` the backdrop would
     /// otherwise shrink to that view and show as a box.
     func screenBackdrop() -> some View {
         frame(maxWidth: .infinity, maxHeight: .infinity).background { Backdrop() }

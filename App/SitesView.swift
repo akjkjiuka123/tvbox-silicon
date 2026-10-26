@@ -53,7 +53,7 @@ struct SitesView: View {
                     arranging = true
                 }
                 #endif
-            } else { ContentUnavailableView(L10n.text("No Sources Yet"), systemImage: "square.grid.2x2", description: Text(L10n.text("Add a TVBox subscription in Settings."))) }
+            } else { EmptyState(L10n.text("No Sources Yet"), systemImage: "square.grid.2x2", description: Text(L10n.text("Add a TVBox subscription in Settings."))) }
         }
         .screenBackdrop()
         .catalogSearchable(text: $query, prompt: L10n.text("Find a source")).tabTitle(L10n.text("Sources"))
@@ -63,7 +63,7 @@ struct SitesView: View {
                 prepared = true
             }
         }
-        .onChange(of: store.section) { _, new in
+        .onChange(of: store.section) { new in
             if new != .sites { prepared = false }
         }
         .onChange(of: query) { old, new in
@@ -635,7 +635,7 @@ struct SiteView: View {
     var body: some View {
         Group {
             if !canLoad {
-                ContentUnavailableView {
+                EmptyState {
                     Label(site.compatibility, systemImage: "puzzlepiece.extension")
                 } description: {
                     if site.type != 3 {
@@ -683,7 +683,7 @@ struct SiteView: View {
                             )
                             .padding(.vertical, browser.videos.isEmpty ? 24 : 8)
                         }
-                        if browser.videos.isEmpty && browser.loaded && !browser.busy && browser.error == nil { ContentUnavailableView(L10n.text("No Videos"), systemImage: "film", description: Text(L10n.text("Try selecting a category or searching."))).frame(maxWidth: .infinity) }
+                        if browser.videos.isEmpty && browser.loaded && !browser.busy && browser.error == nil { EmptyState(L10n.text("No Videos"), systemImage: "film", description: Text(L10n.text("Try selecting a category or searching."))).frame(maxWidth: .infinity) }
                         LazyVGrid(columns: Layout.posterColumns, spacing: Layout.gridRowSpacing) {
                             ForEach(browser.videos) { video in
                                 // An index source (a ranking or list site) names titles; other sources play them.
@@ -889,7 +889,7 @@ struct VideoDetailView: View {
             #endif
         }
         .onDisappear { requestTask?.cancel() }
-        .onChange(of: choosingQuality) { _, open in if !open && !busy { loadingEpisode = nil } }
+        .onChange(of: choosingQuality) { open in if !open && !busy { loadingEpisode = nil } }
         // Sign in where playback failed, then resume the episode that needed the account.
         #if os(macOS)
         .sheet(item: $signingIn) { drive in
@@ -1460,7 +1460,8 @@ private struct PlaybackIssue {
 }
 
 /// Cloud drives whose plugins need a saved login before they can return a stream.
-private enum CloudDrive: String, Identifiable {
+/// Shared with the TVBox detail page (`App/TVBoxDetail.swift`), which offers the same sign-in.
+enum CloudDrive: String, Identifiable {
     case quark, uc
     var id: String { rawValue }
     /// FTY names its lines after drive nicknames: 夸父 is Quark, 优汐 is UC.

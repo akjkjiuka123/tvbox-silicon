@@ -50,7 +50,7 @@ struct MusicMacMiniPlayer: View {
         .onAppear { MusicMiniWindow.isOpen = true }
         .onDisappear { MusicMiniWindow.isOpen = false; MusicMiniWindow.openedForMinimize = false }
         // One opened for a minimized window goes with the song.
-        .onChange(of: music.track == nil) { _, gone in
+        .onChange(of: music.track == nil) { gone in
             if gone && MusicMiniWindow.openedForMinimize { dismissWindow(id: Self.windowID) }
         }
     }

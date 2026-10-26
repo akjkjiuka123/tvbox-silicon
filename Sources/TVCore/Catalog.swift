@@ -119,6 +119,9 @@ public struct CatalogPage: Sendable {
     public let categories: [Category]
     public let videos: [Video]
     public let pageCount: Int
+    /// The second-level filters each category offers ("类型/地区/年份"), as TVBox lists them under the
+    /// category row. Empty for sources that declare none.
+    public let filters: CatalogFilters
     public init(json: [String: JSONValue], origin: URL) {
         categories = (json["class"]?.array ?? []).compactMap {
             guard let v = $0.object, let id = v["type_id"]?.string else { return nil }
@@ -126,6 +129,7 @@ public struct CatalogPage: Sendable {
         }
         videos = (json["list"]?.array ?? []).compactMap { $0.object.flatMap { Video(json: $0, origin: origin) } }
         pageCount = max(1, json["pagecount"]?.int ?? 1)
+        filters = CatalogFilters(value: json["filters"])
     }
 }
 
@@ -164,7 +168,8 @@ public struct CatalogClient: Sendable {
         let endpoint = try WebAddress.resolve(site.api, relativeTo: origin)
         guard var parts = URLComponents(url: endpoint, resolvingAgainstBaseURL: true) else { throw TVError.invalidURL }
         var values = params
-        if let ext = site.raw["ext"] {
+        // The source's own `ext` is the default; a caller's chosen filters replace it.
+        if let ext = site.raw["ext"], values["extend"] == nil {
             if let text = ext.string { values["extend"] = text }
             else if let data = try? JSONEncoder().encode(ext) { values["extend"] = String(data: data, encoding: .utf8) }
         }
@@ -276,10 +281,13 @@ public struct CatalogClient: Sendable {
         }.filter { seen.insert($0.id).inserted }
         return (items, CatalogPage(json: json, origin: origin).categories)
     }
-    public func list(category: String?, query: String, page: Int) async throws -> CatalogPage {
+    /// A category page. `extend` carries the chosen second-level filters, already encoded by
+    /// `CatalogFilters.extend(_:)`; without it the source answers unfiltered.
+    public func list(category: String?, query: String, page: Int, extend: String? = nil) async throws -> CatalogPage {
         var params = ["pg": String(page)]
         if !query.isEmpty { params["wd"] = query; params["quick"] = "false" }
         else { params["ac"] = "detail"; params["t"] = category }
+        if let extend, !extend.isEmpty { params["extend"] = extend }
         return CatalogPage(json: try await request(params), origin: origin)
     }
     public func detail(_ id: String, cached: Bool = false) async throws -> Video {

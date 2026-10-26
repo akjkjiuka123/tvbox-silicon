@@ -1,4 +1,4 @@
-﻿import Foundation
+import Foundation
 import Perception
 
 /// Owns the requested catalog location so retries and overlapping requests stay consistent.
@@ -8,6 +8,8 @@ import Perception
         case list(category: String?, query: String, page: Int)
     }
     public private(set) var categories: [Category] = []
+    /// The second-level filters the open source declares, from its home answer.
+    public private(set) var filters = CatalogFilters()
     public private(set) var videos: [Video] = []
     public private(set) var category = ""
     public private(set) var query = ""
@@ -31,14 +33,20 @@ import Perception
         busy = false
     }
 
-    public func load(_ request: Request, client: CatalogClient) async {
+    /// `extend` carries the chosen second-level filters (`CatalogFilters.extend(_:)`), so a category
+    /// page answers the way TVBox shows it after the filter row.
+    public func load(_ request: Request, client: CatalogClient, extend: String? = nil) async {
         await load(request, context: client.reportContext) { request in
             switch request {
             case .home: return try await client.home()
-            case let .list(category, query, page): return try await client.list(category: category, query: query, page: page)
+            case let .list(category, query, page):
+                return try await client.list(category: category, query: query, page: page, extend: extend)
             }
         }
     }
+
+    /// The filters the open source offers for `category`.
+    public func filtersFor(_ category: String) -> [CatalogFilter] { filters.filters(for: category) }
 
     /// The category bar for a page that opened on a search: categories only come with the home
     /// answer, so fetch it without touching the videos on screen.
@@ -77,6 +85,7 @@ import Perception
             guard generation == current, !Task.isCancelled else { return }
             if request == .home {
                 categories = result.categories
+                filters = result.filters
                 if result.videos.isEmpty, let first = categories.first {
                     category = first.id
                     self.request = .list(category: first.id, query: "", page: 1)

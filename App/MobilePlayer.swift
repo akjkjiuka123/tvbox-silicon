@@ -113,17 +113,12 @@ struct MobilePlayerView: View {
             if let brightnessBefore { screen?.brightness = brightnessBefore }
         }
         // Played here again (the Lock Screen, say): the other device no longer has it to itself.
-        .onChange(of: session.paused) { _, paused in if !paused { playingOn = nil } }
-        .onChange(of: nowPlayingState, initial: true) { nowPlaying.update(title: channel.name, session: session) }
-        .onChange(of: nowPlayingArtwork, initial: true) { _, artwork in nowPlaying.show(artwork, session: session) }
+        .onChange(of: session.paused) { paused in if !paused { playingOn = nil } }
+        .onChange(of: nowPlayingState) { nowPlaying.update(title: channel.name, session: session) }
+        .onChange(of: nowPlayingArtwork) { artwork in nowPlaying.show(artwork, session: session) }
         // Pausing ends the faster speed in the session; another episode or quality plays at the chosen one.
-        .onChange(of: session.boost == nil) { _, ended in if ended { boost = nil } }
+        .onChange(of: session.boost == nil) { ended in if ended { boost = nil } }
         .onChange(of: clock.item) { endBoost() }
-        .sensoryFeedback(trigger: boost) { old, new in
-            guard let new else { return nil }
-            guard let old else { return .impact(weight: .light) }
-            return new.locked != old.locked ? .impact(weight: .medium) : new.rate != old.rate ? .selection : nil
-        }
         .task(id: clock.item.map(ObjectIdentifier.init)) { await tracks.load(clock.item) }
         .sheet(isPresented: $showsDanmakuList) {
             DanmakuListView(player: session.player, comments: session.danmaku) { showsDanmakuList = false }
@@ -277,7 +272,7 @@ struct MobilePlayerView: View {
             VStack(spacing: 4) {
                 Image(systemName: skipped.forward ? "goforward.10" : "gobackward.10")
                     .font(.system(size: 30, weight: .medium))
-                    .symbolEffect(.bounce, value: skipped.total)
+                    
                 Text((skipped.forward ? "+" : "\u{2212}") + L10n.text("%lld s", Int(skipped.total)))
                     .font(.footnote.weight(.semibold).monospacedDigit())
                     .contentTransition(.numericText(value: skipped.total))
@@ -551,7 +546,7 @@ struct MobilePlayerView: View {
             }
             Button { session.togglePlayback() } label: {
                 // Swapped as the music player's is.
-                Image(systemName: session.paused ? "play.fill" : "pause.fill").contentTransition(.symbolEffect(.replace))
+                Image(systemName: session.paused ? "play.fill" : "pause.fill").contentTransition(.opacity)
             }
                 .buttonStyle(PlayerCircleStyle(size: 68))
                 .accessibilityLabel(L10n.text(session.paused ? "Play" : "Pause"))
@@ -660,7 +655,6 @@ private struct SeekBar<Accessory: View>: View {
             if drag == nil { accessory().frame(height: Self.timeRow).transition(.opacity) }
         }
         .animation(.easeOut(duration: 0.15), value: drag == nil)
-        .sensoryFeedback(.selection, trigger: fineness)
     }
 
     private func bar(_ position: Double) -> some View {

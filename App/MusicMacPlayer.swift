@@ -232,7 +232,7 @@ struct MusicMacButton: View {
                 .frame(width: frame, height: frame)
                 .background(Color.primary.opacity(on ? 0.14 : hovering && enabled ? 0.07 : 0), in: Circle())
                 .contentShape(Circle())
-                .contentTransition(.symbolEffect(.replace))
+                .contentTransition(.opacity)
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
@@ -372,7 +372,7 @@ struct MusicMacNowPlaying: View {
             guard let url = music.track?.artwork, let color = await PosterPalette.average(url) else { return }
             withAnimation(.easeInOut(duration: 0.6)) { tint = color }
         }
-        .onChange(of: music.track == nil) { _, gone in if gone { music.presentsPlayer = false } }
+        .onChange(of: music.track == nil) { gone in if gone { music.presentsPlayer = false } }
         .sheet(isPresented: $showsChannels) { MusicChannelsView() }
     }
 

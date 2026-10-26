@@ -106,7 +106,7 @@ struct RootView: View {
             }
             .background { NowPlayingWindowChrome(active: hidesToolbar, store: store) }
             .background { MusicMiniPlayerTrigger() }
-            .onChange(of: store.music.presentsPlayer && store.music.track != nil) { _, show in
+            .onChange(of: store.music.presentsPlayer && store.music.track != nil) { show in
                 // Hiding the toolbar moves the page under it. The player slides up over the window
                 // first and the toolbar goes once it is covered; closing brings the toolbar back
                 // before the player slides away.
@@ -125,7 +125,7 @@ struct RootView: View {
             platformTabs
             #endif
         }
-        .onChange(of: store.section) { _, section in
+        .onChange(of: store.section) { section in
             if section != .search { store.searchModel.suspend() }
         }
         // A Baidu or Aliyun line waiting for its plugin's sign-in code to be scanned.
@@ -136,7 +136,7 @@ struct RootView: View {
         .fullScreenCover(isPresented: Binding(get: { store.music.presentsPlayer }, set: { store.music.presentsPlayer = $0 })) { MusicPlayerScreen() }
         #endif
         // A video and a song never play over each other.
-        .onChange(of: store.playing) { _, channel in if channel != nil { store.music.pause() } }
+        .onChange(of: store.playing) { channel in if channel != nil { store.music.pause() } }
         .modifier(PlayerPresentation(playing: $store.playing))
         #if os(tvOS) || os(macOS)
         // What another device sent, while it opens.
@@ -172,8 +172,8 @@ struct RootView: View {
                 store.music.presentsPlayer = true
             }
             // tvOS 17: a section in More opens there, whether a button or the Now Playing tab moved it in.
-            .onChange(of: store.section) { _, section in openInMore(section) }
-            .onChange(of: tvMore) { _, more in
+            .onChange(of: store.section) { section in openInMore(section) }
+            .onChange(of: tvMore) { more in
                 if more.isEmpty && store.section == .more { store.section = morePath.isEmpty ? .home : moreSection }
                 else { openInMore(store.section) }
             }
@@ -183,19 +183,19 @@ struct RootView: View {
             .musicAccessory(enabled: store.music.track != nil && phoneTabs)
             // Opened from the mini player; swiping down closes it, as in Music.
             .sheet(isPresented: Binding(get: { store.music.presentsPlayer }, set: { store.music.presentsPlayer = $0 })) { MusicNowPlayingScreen() }
-            .onChange(of: store.section) { _, section in
+            .onChange(of: store.section) { section in
                 if phoneTabs && inMore.contains(section) {
                     moreSection = section; morePath = NavigationPath([section])
                     store.section = .more
                 }
             }
             // Closing iPhone Duo narrows the side bar back to four: a section that just left it opens inside More.
-            .onChange(of: barSlots) { _, _ in
+            .onChange(of: barSlots) { _ in
                 if phoneTabs && inMore.contains(store.section) {
                     moreSection = store.section; morePath = NavigationPath([store.section]); store.section = .more
                 }
             }
-            .onChange(of: phoneTabs) { _, phone in
+            .onChange(of: phoneTabs) { phone in
                 if !phone && store.section == .more { store.section = morePath.isEmpty ? .settings : moreSection }
                 else if phone && inMore.contains(store.section) {
                     moreSection = store.section; morePath = NavigationPath([store.section]); store.section = .more
@@ -339,7 +339,7 @@ private struct PlayerPresentation: ViewModifier {
     #endif
     func body(content: Content) -> some View {
         #if os(macOS)
-        content.onChange(of: playing, initial: true) { _, channel in
+        content.onChange(of: playing) { channel in
             if let channel {
                 playerWindow.present(channel, store: store) { playing = nil }
             } else {

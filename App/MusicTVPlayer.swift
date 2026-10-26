@@ -16,7 +16,7 @@ struct MusicNowPlayingButton: View {
                         .frame(width: 40, height: 40)
                         .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                     // Bars in the label's own colour, so they stay visible on the focused white plate.
-                    Image(systemName: "waveform").symbolEffect(.variableColor.iterative, isActive: music.phase == .playing)
+                    Image(systemName: "waveform")
                     Text([track.title, track.artistLine].joined(separator: " · ")).lineLimit(1)
                 }
             }
@@ -35,7 +35,7 @@ struct MusicTabLabel: View {
     var body: some View {
         let music = store.music
         Label { Text(music.track?.title ?? L10n.text("Now Playing")) } icon: { Image(uiImage: bars.image) }
-            .onChange(of: music.phase == .playing, initial: true) { _, playing in bars.animates = playing }
+            .onChange(of: music.phase == .playing) { playing in bars.animates = playing }
     }
 }
 
@@ -137,7 +137,7 @@ private struct MusicSidebarCard: View {
                     ProgressView().tint(.white).scaleEffect(0.7)
                 } else {
                     Image(systemName: "waveform").font(.system(size: 24, weight: .bold)).foregroundStyle(.white)
-                        .symbolEffect(.variableColor.iterative, isActive: true)
+                        
                 }
             }
         }

@@ -327,6 +327,8 @@ struct FormSettingsView: View {
     @AppStorage(VideoEnhancement.upscaleKey) private var upscalesVideo = false
     @AppStorage(VideoEnhancement.smoothKey) private var smoothsVideo = false
     @AppStorage(ErrorReports.key) private var sendsErrorReports = true
+    /// The chrome: the native layout, or the TVBox skin.
+    @AppStorage(SkinMode.storageKey) private var skin = SkinMode.native.rawValue
     #if os(iOS)
     @State private var addingSubscription = false
     @AppStorage(SpeedBoost.key) private var holdSpeed = SpeedBoost.standard
@@ -423,6 +425,20 @@ struct FormSettingsView: View {
                 FormLink(symbol: AppSection.home.icon, tint: Brand.cyan, title: L10n.text("Watch Now")) { WatchNowSettingsView() }
             }
 
+            // The chrome: Apple's, or the TVBox layout in App/TVBoxSkin.swift.
+            Section {
+                Picker(selection: $skin) {
+                    ForEach(SkinMode.allCases) { mode in
+                        Text(mode.title).tag(mode.rawValue)
+                    }
+                } label: {
+                    FormLabel(symbol: "rectangle.3.group.fill", tint: TVBoxTheme.accent, title: L10n.text("Interface Style"))
+                }
+                .pickerStyle(.segmented)
+            } footer: {
+                Text(SkinMode(rawValue: skin)?.summary ?? "")
+            }
+
             #if os(iOS)
             Section {
                 Toggle(isOn: $showsTabLabels) {
@@ -445,7 +461,7 @@ struct FormSettingsView: View {
                         FormLabel(symbol: "tv.and.mediabox.fill", tint: BilibiliMark.blue, title: L10n.text("Cast from the Bilibili App"),
                                   subtitle: L10n.text("With your phone on the same network, tap the TV button in a Bilibili video and choose %@.", L10n.text("Yingxia")))
                     }
-                    .onChange(of: receivesCasts) { _, on in
+                    .onChange(of: receivesCasts) { on in
                         if on { BilibiliCastController.shared.start(store) } else { BilibiliCastController.shared.stop() }
                     }
                 }
@@ -454,7 +470,7 @@ struct FormSettingsView: View {
                               subtitle: L10n.text("With Yingxia open here, your other devices on the same network can send it what they play: tap Play On in their player."))
                 }
                 .settingsSwitch()
-                .onChange(of: receivesPlayOn) { _, on in
+                .onChange(of: receivesPlayOn) { on in
                     if on { PlayOnController.shared.start(store) } else { PlayOnController.shared.stop() }
                 }
                 FormLink(symbol: "play.fill", tint: Brand.indigo, title: L10n.text("Play a URL")) { PlayURLView() }
@@ -546,7 +562,7 @@ struct FormSettingsView: View {
                     #endif
                 }
                 .settingsSwitch()
-                .onChange(of: sendsErrorReports) { _, on in if !on { ErrorReports.shared.discard() } }
+                .onChange(of: sendsErrorReports) { on in if !on { ErrorReports.shared.discard() } }
             } header: {
                 Text(L10n.text("Advanced"))
             } footer: {
@@ -1148,7 +1164,7 @@ struct DiagnosticsView: View {
                 }
                 .overlay {
                     if visible.isEmpty {
-                        ContentUnavailableView {
+                        EmptyState {
                             Label(L10n.text("No Logs"), systemImage: "waveform.path")
                         } description: {
                             Text(L10n.text(search.isEmpty && level == "all" ? "Plugin activity will appear here." : "Try another level or search term."))
@@ -1324,6 +1340,8 @@ struct TVSettingsView: View {
     @AppStorage(BilibiliCastController.key) private var receivesCasts = true
     @AppStorage(PlayOnController.key) private var receivesPlayOn = true
     @AppStorage(ErrorReports.key) private var sendsErrorReports = true
+    /// The chrome: the native layout, or the TVBox skin.
+    @AppStorage(SkinMode.storageKey) private var skin = SkinMode.native.rawValue
 
     var body: some View {
         TVSettingsLayout {
@@ -1346,16 +1364,23 @@ struct TVSettingsView: View {
             TVSettingsSection {
                 TVSettingsLink(title: L10n.text("Watch Now")) { WatchNowSettingsView() }
             }
+            // The chrome: Apple's, or the TVBox layout in App/TVBoxSkin.swift.
+            TVSettingsSection(title: L10n.text("Interface Style"), footer: SkinMode(rawValue: skin)?.summary) {
+                TVSettingsToggle(title: L10n.text("TVBox Layout"), isOn: Binding(
+                    get: { skin == SkinMode.tvbox.rawValue },
+                    set: { skin = $0 ? SkinMode.tvbox.rawValue : SkinMode.native.rawValue }
+                ))
+            }
             TVSettingsSection(title: L10n.text("Playback"), footer: playbackFooter) {
                 if store.extrasUnlocked {
                     TVSettingsToggle(title: L10n.text("Show Danmaku"), isOn: $showsDanmaku)
                     TVSettingsToggle(title: L10n.text("Cast from the Bilibili App"), isOn: $receivesCasts)
-                        .onChange(of: receivesCasts) { _, on in
+                        .onChange(of: receivesCasts) { on in
                             if on { BilibiliCastController.shared.start(store) } else { BilibiliCastController.shared.stop() }
                         }
                 }
                 TVSettingsToggle(title: L10n.text("Play from Other Devices"), isOn: $receivesPlayOn)
-                    .onChange(of: receivesPlayOn) { _, on in
+                    .onChange(of: receivesPlayOn) { on in
                         if on { PlayOnController.shared.start(store) } else { PlayOnController.shared.stop() }
                     }
                 TVSettingsLink(title: L10n.text("Play a URL")) { TVPlayURLPage() }
@@ -1372,7 +1397,7 @@ struct TVSettingsView: View {
                 if store.extrasUnlocked { TVSettingsLink(title: L10n.text("JAR Runtime and Compatibility")) { RuntimeView() } }
                 TVSettingsLink(title: L10n.text("Diagnostic Logs")) { DiagnosticsView() }
                 TVSettingsToggle(title: L10n.text("Send Error Reports"), isOn: $sendsErrorReports)
-                    .onChange(of: sendsErrorReports) { _, on in if !on { ErrorReports.shared.discard() } }
+                    .onChange(of: sendsErrorReports) { on in if !on { ErrorReports.shared.discard() } }
             }
             if updates.available.isEmpty, Updates.channel != .none { updateSection }
             TVSettingsSection(title: L10n.text("About"),

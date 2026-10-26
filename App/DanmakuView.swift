@@ -312,7 +312,7 @@ struct DanmakuListView: View {
             .onScrollByHand { following = false }
             .overlay {
                 if items.isEmpty {
-                    ContentUnavailableView.search(text: query)
+                    EmptyState.search(text: query)
                 }
             }
             .overlay(alignment: .bottom) {
@@ -335,8 +335,8 @@ struct DanmakuListView: View {
             }
             .animation(.smooth(duration: 0.3), value: following)
             .onAppear { follow(proxy, animated: false) }
-            .onChange(of: now) { _, _ in if following { follow(proxy, animated: true) } }
-            .onChange(of: query) { _, text in if text.isEmpty { follow(proxy, animated: false) } }
+            .onChange(of: now) { _ in if following { follow(proxy, animated: true) } }
+            .onChange(of: query) { text in if text.isEmpty { follow(proxy, animated: false) } }
         }
     }
 

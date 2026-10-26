@@ -47,7 +47,7 @@ struct MusicActivityMark: View {
     var body: some View {
         Group {
             if store.music.busy { ProgressView().controlSize(.small) }
-            else if store.music.phase == .playing { Image(systemName: "waveform").foregroundStyle(Brand.accent).symbolEffect(.variableColor.iterative) }
+            else if store.music.phase == .playing { Image(systemName: "waveform").foregroundStyle(Brand.accent) }
             else if store.music.failure != nil { Image(systemName: "exclamationmark.circle").foregroundStyle(Brand.amber) }
             else { Image(systemName: "speaker.wave.2.fill").foregroundStyle(.secondary) }
         }
@@ -126,7 +126,7 @@ struct MusicNowPlaying: View {
         .sheet(isPresented: $showsLyrics) { MusicLyricsView() }
         #if DEBUG
         // `-qaMusicLyrics 1` opens the lyrics once they load, for screenshots.
-        .onChange(of: music.lyrics) { _, lyrics in
+        .onChange(of: music.lyrics) { lyrics in
             if lyrics != nil, UserDefaults.standard.bool(forKey: "qaMusicLyrics") { showsLyrics = true }
         }
         #endif
@@ -290,7 +290,7 @@ struct MusicLyricsView: View {
                 } else if music.lyricsLoading || music.busy {
                     ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
                 } else {
-                    ContentUnavailableView(L10n.text("No Lyrics"), systemImage: "quote.bubble",
+                    EmptyState(L10n.text("No Lyrics"), systemImage: "quote.bubble",
                                            description: Text(L10n.text("Neither catalog has lyrics for this song.")))
                 }
             }
@@ -359,7 +359,7 @@ struct MusicLyricLines: View {
         // Once the lines are laid out: set as the view appeared, the position was dropped, and
         // reopening the player left the lyrics at the top until the next line.
         .task { try? await Task.sleep(for: .milliseconds(60)); scrolled = current }
-        .onChange(of: current) { _, index in
+        .onChange(of: current) { index in
             guard let index else { return }
             withAnimation(.smooth(duration: 0.45)) { scrolled = index }
         }

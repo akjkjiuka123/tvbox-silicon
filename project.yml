@@ -5,7 +5,9 @@ options:
   knownRegions: [en, zh-Hans, zh-Hant, ja]
   deploymentTarget:
     macOS: '15.0'
-    iOS: '16.0'
+    # Matches TVBox.xcodeproj. The app already uses iOS 17 APIs (two-parameter onChange), so a
+    # regenerated project at 16.0 would fail to build; see Docs/TVBox-Skin.md.
+    iOS: '17.0'
     tvOS: '17.0'
 settings:
   base:

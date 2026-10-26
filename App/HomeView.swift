@@ -138,7 +138,6 @@ struct HomeView: View {
             }
         }
         .padding(.horizontal, welcomeInset)
-        .containerRelativeFrame(.vertical, alignment: .center) { height, _ in height * 0.82 }
         #if os(tvOS)
         // Moving right out of the sidebar lands on the primary action, not the secondary one.
         .defaultFocus($primaryFocused, true, priority: .userInitiated)
@@ -227,7 +226,7 @@ struct HomeView: View {
 
     /// Every section switched off in Settings: say so, rather than leave a blank page.
     private var allHidden: some View {
-        ContentUnavailableView {
+        EmptyState {
             Label(L10n.text("Watch Now"), systemImage: AppSection.home.icon)
         } description: {
             Text(L10n.text("Choose what Watch Now shows in Settings."))

@@ -61,7 +61,7 @@ struct LivePlatformView: View {
         LiveRoomGrid(rooms: rooms) { room in if room.id == rooms.last?.id { more() } }
         if loader != nil && rooms.isEmpty { ProgressView().frame(maxWidth: .infinity).padding(.vertical, 60) }
         if loader == nil && error == nil && page > 0 && rooms.isEmpty {
-            ContentUnavailableView(L10n.text("No Live Rooms"), systemImage: "dot.radiowaves.left.and.right")
+            EmptyState(L10n.text("No Live Rooms"), systemImage: "dot.radiowaves.left.and.right")
                 .frame(maxWidth: .infinity)
         }
     }
@@ -131,11 +131,11 @@ private struct LiveRoomSearch: View {
     var body: some View {
         Group {
             if let error {
-                ContentUnavailableView(L10n.text("Search Failed"), systemImage: "exclamationmark.magnifyingglass", description: Text(error))
+                EmptyState(L10n.text("Search Failed"), systemImage: "exclamationmark.magnifyingglass", description: Text(error))
                     .frame(maxWidth: .infinity)
             } else if rooms.isEmpty {
                 if searching { ProgressView().frame(maxWidth: .infinity).padding(.vertical, 60) }
-                else { ContentUnavailableView.search(text: query).frame(maxWidth: .infinity) }
+                else { EmptyState.search(text: query).frame(maxWidth: .infinity) }
             } else {
                 LiveRoomGrid(rooms: rooms)
             }
@@ -202,7 +202,7 @@ struct LiveSearchResults: View {
                 }
             }
             if finished && channels.isEmpty && platforms.allSatisfy({ found[$0]?.isEmpty != false }) {
-                ContentUnavailableView.search(text: query).frame(maxWidth: .infinity)
+                EmptyState.search(text: query).frame(maxWidth: .infinity)
             }
         }
         .task(id: query) {

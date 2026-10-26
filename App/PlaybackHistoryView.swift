@@ -27,7 +27,7 @@ struct PlaybackHistoryView: View {
         }
         .screenBackdrop()
         .tabTitle(L10n.text("Playback History"))
-        .onChange(of: history.entries.isEmpty) { _, empty in if empty { managing = false; selected.removeAll() } }
+        .onChange(of: history.entries.isEmpty) { empty in if empty { managing = false; selected.removeAll() } }
         // Leaving the page gives up a title still being prepared.
         .onDisappear { if store.playing == nil { store.cancelResume() } }
         .confirmationDialog(L10n.text("Remove selected history and its cached content?"), isPresented: $confirmsDelete, titleVisibility: .visible) {
@@ -210,7 +210,7 @@ struct HistoryCard: View {
                             Image(systemName: selection ? "checkmark.circle.fill" : "circle")
                                 .font(.title2).symbolRenderingMode(.palette)
                                 .foregroundStyle(selection ? Brand.onAccent : .white, selection ? Brand.accent : .black.opacity(0.35))
-                                .contentTransition(.symbolEffect(.replace))
+                                .contentTransition(.opacity)
                                 .padding(8)
                         }
                     }

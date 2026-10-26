@@ -44,7 +44,7 @@ struct MusicView: View {
         }
         .screenBackdrop()
         .catalogSearchable(text: $query, prompt: L10n.text("Song, album or playlist"))
-        .onChange(of: query) { _, text in
+        .onChange(of: query) { text in
             if text.trimmingCharacters(in: .whitespacesAndNewlines) != autoPlayQuery { autoPlayQuery = nil }
             #if os(tvOS)
             // As in Global Search: typing only edits the query, and results change when it is
@@ -72,7 +72,7 @@ struct MusicView: View {
         #if DEBUG && os(tvOS)
         // `-qaNowPlayingTab 1` (with `-qaMusicPlay 1 -qaMusicStayOnPage 1`) moves to the sidebar's
         // Now Playing once the song is loaded, for screenshots.
-        .onChange(of: store.music.track != nil) { _, loaded in
+        .onChange(of: store.music.track != nil) { loaded in
             if loaded, UserDefaults.standard.bool(forKey: "qaNowPlayingTab") { store.section = .nowPlaying }
         }
         #endif
@@ -180,7 +180,7 @@ struct MusicView: View {
                            details: failureDetails(search), retry: { search.search(query, immediately: true) }, busy: search.busy)
                 .padding(.vertical, 24).tvFocusSection()
         } else if search.empty {
-            ContentUnavailableView(L10n.text("No Matching Songs"), systemImage: "music.note",
+            EmptyState(L10n.text("No Matching Songs"), systemImage: "music.note",
                                    description: Text(L10n.text("Try the song's full name, or add the artist.")))
                 .frame(maxWidth: .infinity).padding(.vertical, 60)
         } else {

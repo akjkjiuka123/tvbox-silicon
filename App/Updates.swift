@@ -640,10 +640,10 @@ private struct UpdatePresentation: ViewModifier {
         let item = Binding(get: { shown ? updates.sheet : nil }, set: { updates.sheet = $0 })
         #if os(macOS)
         let presented = content.sheet(item: item) { ReleaseNotesView(sheet: $0).environment(updates) }
-            .onChange(of: active && pending && updates.presenter == nil, initial: true) { _, claim in
+            .onChange(of: active && pending && updates.presenter == nil) { claim in
                 if claim { updates.presenter = id }
             }
-            .onChange(of: pending) { _, pending in if !pending { updates.presenter = nil } }
+            .onChange(of: pending) { pending in if !pending { updates.presenter = nil } }
         #else
         let presented = content.fullScreenCover(item: item) { ReleaseNotesView(sheet: $0).environment(updates) }
         #endif

@@ -22,7 +22,7 @@ struct MusicPlayerScreen: View {
             .joined(separator: "|")
         MusicNativePlayer(store: store, showsLyrics: $showsLyrics, revision: revision)
             .ignoresSafeArea()
-            .onChange(of: music.track == nil) { _, gone in if gone { dismiss() } }
+            .onChange(of: music.track == nil) { gone in if gone { dismiss() } }
     }
 }
 

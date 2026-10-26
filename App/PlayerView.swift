@@ -81,15 +81,15 @@ struct PlaybackView: View {
         .onContinuousHover { _ in poke() }
         #if os(iOS)
         // The controls stay up while paused and start their countdown again on play.
-        .onChange(of: session.paused) { _, paused in if paused { hideTask?.cancel() } else if showsChrome { scheduleHide() } }
+        .onChange(of: session.paused) { paused in if paused { hideTask?.cancel() } else if showsChrome { scheduleHide() } }
         #else
         .simultaneousGesture(TapGesture().onEnded { poke() })
         #endif
         #endif
         .onAppear { startCatalogPlayback(session, channel: channel, store: store); poke() }
-        .onChange(of: channel) { _, channel in startCatalogPlayback(session, channel: channel, store: store); poke() }
-        .onChange(of: showsDanmaku) { _, value in session.catalogDanmaku.enabled = value }
-        .onChange(of: session.catalogDanmaku.enabled) { _, value in showsDanmaku = value }
+        .onChange(of: channel) { channel in startCatalogPlayback(session, channel: channel, store: store); poke() }
+        .onChange(of: showsDanmaku) { value in session.catalogDanmaku.enabled = value }
+        .onChange(of: session.catalogDanmaku.enabled) { value in showsDanmaku = value }
         .onDisappear {
             hideTask?.cancel(); store.cancelEpisodeSelection(); session.stop()
             #if os(iOS)
@@ -99,7 +99,7 @@ struct PlaybackView: View {
         #if os(iOS)
         // Opening iPhone Duo moves the app to the inner display, which ignores orientations: drop a
         // landscape lock so the outer display isn't left in landscape when it closes again.
-        .onChange(of: horizontalSizeClass == .regular && verticalSizeClass == .regular) { _, large in
+        .onChange(of: horizontalSizeClass == .regular && verticalSizeClass == .regular) { large in
             if large { PlayerOrientation.release() }
         }
         #endif
@@ -837,13 +837,13 @@ private struct DesktopPlaybackView: View {
         }
         .preferredColorScheme(.dark)
         .ignoresSafeArea()
-        .onChange(of: showsDanmaku) { _, value in session.catalogDanmaku.enabled = value }
-        .onChange(of: session.catalogDanmaku.enabled) { _, value in showsDanmaku = value }
-        .onChange(of: floats) { _, value in window.level = value ? .floating : .normal }
-        .onChange(of: showsChrome) { _, value in setTrafficLights(visible: value) }
+        .onChange(of: showsDanmaku) { value in session.catalogDanmaku.enabled = value }
+        .onChange(of: session.catalogDanmaku.enabled) { value in showsDanmaku = value }
+        .onChange(of: floats) { value in window.level = value ? .floating : .normal }
+        .onChange(of: showsChrome) { value in setTrafficLights(visible: value) }
         .onAppear { floats = window.level == .floating; idle.attach(window); tvBrowser.start() }
         // Played here again (Space, say): the other device no longer has it to itself.
-        .onChange(of: session.paused) { _, paused in if !paused { playingOn = nil } }
+        .onChange(of: session.paused) { paused in if !paused { playingOn = nil } }
         .sheet(isPresented: $showsDanmakuList) {
             DanmakuListView(player: session.player, comments: session.danmaku) { showsDanmakuList = false }
                 .danmakuListPresentation()

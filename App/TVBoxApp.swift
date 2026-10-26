@@ -29,7 +29,8 @@ import Perception
     }
     var body: some Scene {
         WindowGroup {
-            RootView().environment(store).environment(updates).environment(announcements)
+            // The chrome is a choice: Apple's sidebar-and-glass UI, or the TVBox skin (App/TVBoxSkin.swift).
+            SkinSwitch().environment(store).environment(updates).environment(announcements)
                 #if !os(tvOS)
                 // tvOS draws plain buttons and section links in the tint, so it keeps the neutral default.
                 .tint(Brand.accent)
@@ -57,7 +58,7 @@ import Perception
                 }
                 #if os(tvOS) || os(macOS)
                 .task { BilibiliCastController.shared.start(store) }
-                .onChange(of: store.extrasUnlocked) { _, unlocked in if unlocked { BilibiliCastController.shared.start(store) } }
+                .onChange(of: store.extrasUnlocked) { unlocked in if unlocked { BilibiliCastController.shared.start(store) } }
                 #endif
                 #if os(tvOS) || os(macOS)
                 .task { PlayOnController.shared.start(store) }
@@ -67,8 +68,8 @@ import Perception
                 .sheet(item: $douyinHandoff) { DouyinHandoffView(link: $0) }
                 #endif
                 // A launch that ends while active, without passing through here, crashed or was ended.
-                .onChange(of: scenePhase, initial: true) { _, phase in ErrorReports.shared.onScreen(phase == .active) }
-                .onChange(of: scenePhase) { _, phase in
+                .onChange(of: scenePhase) { phase in ErrorReports.shared.onScreen(phase == .active) }
+                .onChange(of: scenePhase) { phase in
                     if phase == .background {
                         Task { _ = await Diagnostics.shared.snapshot(); ErrorReports.shared.save() }
                     }

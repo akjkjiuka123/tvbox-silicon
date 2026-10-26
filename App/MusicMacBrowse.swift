@@ -218,7 +218,7 @@ private struct MusicPlayingBadge: View {
             RoundedRectangle(cornerRadius: 5, style: .continuous).fill(.black.opacity(0.42))
             Image(systemName: current ? "waveform" : "play.fill")
                 .font(.system(size: 13, weight: .bold)).foregroundStyle(.white)
-                .symbolEffect(.variableColor.iterative, isActive: current)
+                
         }
         .accessibilityHidden(true)
     }

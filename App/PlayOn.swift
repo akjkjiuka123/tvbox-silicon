@@ -233,7 +233,7 @@ struct PlayOnButton: View {
         #if DEBUG
         // `-qaPlayOn <name or *>`: sends to that device once it shows up, once per launch, after
         // `-qaPlayOnDelay <seconds>` of playback.
-        .onChange(of: browser.receivers, initial: true) { _, receivers in
+        .onChange(of: browser.receivers) { receivers in
             guard let wanted = UserDefaults.standard.string(forKey: "qaPlayOn"), !Self.qaSent,
                   let receiver = receivers.first(where: { $0.name == wanted || wanted == "*" }) else { return }
             Self.qaSent = true

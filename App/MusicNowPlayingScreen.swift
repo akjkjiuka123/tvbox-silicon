@@ -58,7 +58,7 @@ struct MusicNowPlayingScreen: View {
             guard let url = music.track?.artwork, let color = await PosterPalette.average(url) else { return }
             withAnimation(.easeInOut(duration: 0.6)) { tint = color }
         }
-        .onChange(of: music.track == nil) { _, gone in if gone { dismiss() } }
+        .onChange(of: music.track == nil) { gone in if gone { dismiss() } }
         #if DEBUG
         .onAppear {
             switch UserDefaults.standard.string(forKey: "qaNowPlaying") {
@@ -138,7 +138,7 @@ struct MusicNowPlayingScreen: View {
                     ProgressView().controlSize(.large).frame(width: 72, height: 72)
                 } else {
                     control(music.isPlaying ? "pause.fill" : "play.fill", size: 44, label: music.isPlaying ? "Pause" : "Play") { music.toggle() }
-                        .contentTransition(.symbolEffect(.replace))
+                        .contentTransition(.opacity)
                 }
             }
             Spacer()

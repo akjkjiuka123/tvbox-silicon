@@ -19,7 +19,7 @@ struct FavoriteHeartButton: View {
                 .foregroundStyle(on ? Brand.rose : (onArtwork ? Color.white : Color.secondary))
                 .frame(width: onArtwork ? 28 : 44, height: onArtwork ? 28 : 44)
                 .background { if onArtwork { Circle().fill(.black.opacity(0.55)) } }
-                .contentTransition(.symbolEffect(.replace))
+                .contentTransition(.opacity)
         }
         .buttonStyle(.plain)
         .opacity(shown ? 1 : 0)
