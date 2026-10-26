@@ -1,4 +1,5 @@
 import Foundation
+import Darwin
 #if os(iOS) || os(tvOS)
 import os
 import Perception
