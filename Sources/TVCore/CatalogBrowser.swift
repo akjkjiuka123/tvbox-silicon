@@ -1,5 +1,5 @@
-import Foundation
-import Observation
+﻿import Foundation
+import Perception
 
 /// Owns the requested catalog location so retries and overlapping requests stay consistent.
 @MainActor @Observable public final class CatalogBrowser {
