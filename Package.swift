@@ -13,6 +13,5 @@ let package = Package(
         // Scripts/build-apple-ffmpeg.sh makes the library Vendor/FFmpeg links to.
         .binaryTarget(name: "FFmpeg", path: "Vendor/FFmpeg/FFmpeg.xcframework"),
         .target(name: "TVMedia", dependencies: ["FFmpeg"], publicHeadersPath: "include", cSettings: [.define("NDEBUG")], linkerSettings: [.linkedLibrary("z"), .linkedFramework("AudioToolbox"), .linkedFramework("VideoToolbox"), .linkedFramework("CoreMedia"), .linkedFramework("CoreVideo"), .linkedFramework("CoreFoundation")]),
-        .testTarget(name: "TVCoreTests", dependencies: ["TVCore"], resources: [.copy("Fixtures")])],
-    swiftLanguageModes: [.v5]
-)
+        .testTarget(name: "TVCoreTests", dependencies: ["TVCore"], resources: [.copy("Fixtures")])])
+
