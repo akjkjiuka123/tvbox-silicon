@@ -57,7 +57,8 @@ class Handler(BaseHTTPRequestHandler):
         # Also one whose details fail, and one whose video has no episodes, for Back once the page has given up.
         if path == '/stall-config.json': return self.send({'sites': [{'key':'qa-stall','name':'详情卡住 / Stalled','type':4,'api':base+'/stall'},
             {'key':'qa-broken','name':'详情失败 / Broken','type':4,'api':base+'/stall?broken=1'},
-            {'key':'qa-no-episodes','name':'没有剧集 / No episodes','type':4,'api':base+'/stall?episodes=0'}], 'lives': []})
+            {'key':'qa-no-episodes','name':'没有剧集 / No episodes','type':4,'api':base+'/stall?episodes=0'},
+            {'key':'qa-stream-stall','name':'播放卡住 / Stalled stream','type':4,'api':base+'/api?stream=stall'}], 'lives': []})
         if path == '/stall':
             if 'ids' in q and q.get('broken') == '1': return self.send('Service unavailable',503,'text/plain')
             if 'ids' in q and q.get('episodes') == '0': return self.send({'list': [{'vod_id':q['ids'],'vod_name':'测试影片 '+q['ids']}]})
@@ -112,7 +113,8 @@ class Handler(BaseHTTPRequestHandler):
         if path in ['/api','/slow','/empty','/index']:
             if path=='/slow':time.sleep(2)
             categories=[{'type_id':'movies','type_name':'电影'},{'type_id':'series','type_name':'电视剧'},{'type_id':'empty','type_name':'空分类'}]
-            if 'play' in q:return self.send({'parse':0,'url':base+'/clip.mp4'})
+            # qa-stream-stall: episodes whose stream never answers, so the player opens with episode buttons and no picture.
+            if 'play' in q:return self.send({'parse':0,'url':base+('/stall.m3u8' if q.get('stream')=='stall' else '/clip.mp4')})
             if q.get('ids')=='drive':
                 return self.send({'list':[{'vod_id':'drive','vod_name':'玩具总动员 5','vod_pic':base+'/poster.png','vod_remarks':'4K HDR',
                     'vod_content':'这是一段用于检查详情页布局的简介。 '*24,

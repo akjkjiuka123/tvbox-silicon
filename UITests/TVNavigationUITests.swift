@@ -80,6 +80,29 @@ final class TVNavigationUITests: XCTestCase {
         XCTAssertFalse(app.staticTexts["Can't play this right now"].exists, "The stream failed before Back was pressed")
     }
 
+    /// Back still closes a loading episode once the transport bar has taken focus: it shows the episode
+    /// buttons, focus moves onto one, and AVKit then kept the press to itself until the picture started.
+    func testBackWhileAnEpisodeLoadsClosesThePlayerFromTheTransportBar() throws {
+        let app = XCUIApplication()
+        app.launchArguments = ["-qaSection", "sites", "-qaPage", "play-source:qa-stream-stall", "-qaIsolatedData", "1",
+                               "-qaSubscription", "http://127.0.0.1:8776/stall-config.json",
+                               "-AppleLanguages", "(en)", "-AppleLocale", "en_US"]
+        app.launch()
+        let waiting = app.descendants(matching: .any)["player.waiting"]
+        XCTAssertTrue(waiting.waitForExistence(timeout: 60), "The player did not open")
+        sleep(3)
+        let remote = XCUIRemote.shared
+        remote.press(.select)
+        sleep(2)
+        remote.press(.down)
+        sleep(2)
+        remote.press(.menu)
+        sleep(3)
+        XCTAssertEqual(app.state, .runningForeground, "Back left the app")
+        XCTAssertFalse(waiting.exists, "Back did not close the loading player")
+        XCTAssertFalse(app.staticTexts["Can't play this right now"].exists, "The stream failed before Back was pressed")
+    }
+
     /// A source page searches from the remote: the search keyboard has no return key, so a Search
     /// button below it runs the query that was typed, and typing alone does not search.
     func testSourcePageSearchesWithTheSearchButton() throws {
