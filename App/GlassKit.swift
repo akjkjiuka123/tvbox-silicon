@@ -62,6 +62,12 @@ extension View {
         if #available(macOS 26, iOS 26, tvOS 26, *) {
             glassEffect(style.glass, in: shape)
         } else if style.isVisible {
+            background {
+                shape.fill(.ultraThinMaterial).overlay { if let tint = style.tint { shape.fill(tint) } }
+            }
+        } else {
+            self
+        }
         #else
         if style.isVisible {
             background {
