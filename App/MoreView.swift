@@ -99,7 +99,7 @@ struct TabBarPreview: View {
         }
         .padding(.horizontal, 6).padding(.vertical, 8)
         .glassSurface(.regular, in: Capsule())
-        .animation(.smooth(duration: 0.3), value: bar)
+        .animation(.easeOut(duration: 0.22), value: bar)
         .accessibilityElement(children: .combine)
     }
 }

@@ -81,7 +81,7 @@ struct SitesView: View {
     private func groupHeader(_ group: SourceGroup) -> some View {
         let open = !collapsed.contains(group.id)
         let header = Button {
-            withAnimation(.snappy(duration: 0.3)) {
+            withAnimation(.easeOut(duration: 0.2)) {
                 if open { collapsed.insert(group.id) } else { collapsed.remove(group.id) }
             }
         } label: {
@@ -914,8 +914,8 @@ struct VideoDetailView: View {
             DownloadPicker(video: video, site: client.site, flag: activeFlag,
                            episodes: (detail?.episodes ?? []).filter { $0.flag == activeFlag }) { count in
                 guard count > 0 else { return }
-                withAnimation(.smooth(duration: 0.2)) { queuedNotice = count }
-                Task { try? await Task.sleep(for: .seconds(6)); withAnimation(.smooth(duration: 0.2)) { queuedNotice = nil } }
+                withAnimation(.easeOut(duration: 0.22)) { queuedNotice = count }
+                Task { try? await Task.sleep(for: .seconds(6)); withAnimation(.easeOut(duration: 0.22)) { queuedNotice = nil } }
             }
         }
         .confirmationDialog(L10n.text("Choose quality"), isPresented: $choosingQuality, titleVisibility: .visible) {
@@ -980,13 +980,13 @@ struct VideoDetailView: View {
                         .settingsButton(prominent: issue.drive == nil)
                         #if os(tvOS)
                         // A focusable action instead of the small corner close button.
-                        Button(L10n.text("Dismiss")) { withAnimation(.smooth(duration: 0.2)) { playbackIssue = nil } }.settingsButton()
+                        Button(L10n.text("Dismiss")) { withAnimation(.easeOut(duration: 0.22)) { playbackIssue = nil } }.settingsButton()
                         #endif
                     }
                 }
                 Spacer(minLength: 0)
                 #if !os(tvOS)
-                Button { withAnimation(.smooth(duration: 0.2)) { playbackIssue = nil } } label: {
+                Button { withAnimation(.easeOut(duration: 0.22)) { playbackIssue = nil } } label: {
                     Image(systemName: "xmark").font(.system(size: 10, weight: .bold)).foregroundStyle(.secondary)
                         .frame(width: 22, height: 22)
                         .background(Color.primary.opacity(0.07), in: Circle())
@@ -1394,13 +1394,13 @@ struct VideoDetailView: View {
         // Cloud-drive plugins wait for an in-app login that cannot appear on this platform,
         // which surfaces only as a 60-second timeout. Ask for the account up front instead.
         if !skipAccountCheck, let drive = CloudDrive.missingLogin(forFlag: episode.flag) {
-            withAnimation(.smooth(duration: 0.25)) {
+            withAnimation(.easeOut(duration: 0.22)) {
                 playbackIssue = PlaybackIssue(episode: episode, message: drive.loginHint, drive: drive, blockedBeforeRequest: true)
             }
             return
         }
         busy = true; loadingEpisode = episode.id
-        withAnimation(.smooth(duration: 0.2)) { playbackIssue = nil }
+        withAnimation(.easeOut(duration: 0.22)) { playbackIssue = nil }
         defer { busy = false; if !choosingQuality { loadingEpisode = nil } }
         do {
             let plan = try await client.preparePlayback(episode)
@@ -1436,7 +1436,7 @@ struct VideoDetailView: View {
         if !(error is CloudDriveLoginRequired) {
             Diagnostics.shared.failure("catalog", "play \(client.reportContext) flag=\(episode.flag)", error)
         }
-        withAnimation(.smooth(duration: 0.25)) {
+        withAnimation(.easeOut(duration: 0.22)) {
             // Plugins report a missing or expired drive login in their own words ("夸克授权失败，请扫码登录");
             // say what happened and offer the sign-in instead of echoing them.
             if let login = error as? CloudDriveLoginRequired, let drive = CloudDrive(rawValue: login.rawValue) {
@@ -1563,7 +1563,7 @@ private struct EpisodeRow: View {
         #else
         button.buttonStyle(.plain)
             .onHover { hovering = $0 }
-            .animation(.smooth(duration: 0.15), value: hovering)
+            .animation(.easeOut(duration: 0.22), value: hovering)
         #endif
     }
 }

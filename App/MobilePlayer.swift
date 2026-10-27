@@ -166,7 +166,7 @@ struct MobilePlayerView: View {
             hideChrome()
             session.skip(seconds)
             nowPlaying.update(title: channel.name, session: session)
-            withAnimation(.snappy(duration: 0.25)) { skipped = (seconds > 0, total) }
+            withAnimation(.easeOut(duration: 0.2)) { skipped = (seconds > 0, total) }
             skippedTask?.cancel()
             skippedTask = Task {
                 try? await Task.sleep(for: .seconds(PictureTaps.streak + 0.1))

@@ -294,7 +294,7 @@ struct GlobalSearchView: View {
         if model.busy {
             Button { model.stop() } label: { searchActionLabel(L10n.text("Stop"), symbol: "stop.fill") }.searchAction()
             let title = L10n.text(showsActivity ? "Hide Details" : "Show Details")
-            Button { withAnimation(.smooth(duration: 0.25)) { showsActivity.toggle() } } label: {
+            Button { withAnimation(.easeOut(duration: 0.22)) { showsActivity.toggle() } } label: {
                 Image(systemName: "chevron.down").font(.footnote.weight(.semibold))
                     .rotationEffect(.degrees(showsActivity ? 180 : 0))
             }
@@ -547,7 +547,7 @@ private struct SearchActivityList: View {
             }
             .font(.subheadline)
             .accessibilityElement(children: .combine)
-            .animation(.smooth(duration: 0.25), value: active.map(\.id))
+            .animation(.easeOut(duration: 0.22), value: active.map(\.id))
         }
     }
     /// While searching, the plugin's "loading" stage is the search itself.
@@ -1012,7 +1012,7 @@ struct ScrollStrip<Content: View>: View {
             .onEnded { value in
                 let origin = tracking.dragOrigin ?? tracking.metrics.offset
                 tracking.dragOrigin = nil
-                withAnimation(.smooth(duration: 0.45)) {
+                withAnimation(.easeOut(duration: 0.22)) {
                     position.scrollTo(x: tracking.clamp(origin - value.predictedEndTranslation.width))
                 }
                 let drag = tracking.drag
@@ -1028,7 +1028,7 @@ struct ScrollStrip<Content: View>: View {
         let label = L10n.text(forward ? rightLabel : leftLabel)
         return Button {
             let step = max(1, tracking.metrics.viewport * 0.8)
-            withAnimation(.smooth(duration: 0.3)) {
+            withAnimation(.easeOut(duration: 0.22)) {
                 position.scrollTo(x: tracking.clamp(tracking.metrics.offset + (forward ? step : -step)))
             }
         } label: {
@@ -1077,8 +1077,8 @@ private struct SourceChip: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .animation(.smooth(duration: 0.15), value: hovering)
-        .animation(.smooth(duration: 0.2), value: selected)
+        .animation(.easeOut(duration: 0.22), value: hovering)
+        .animation(.easeOut(duration: 0.22), value: selected)
         .accessibilityLabel(label.title)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
         .help(name)

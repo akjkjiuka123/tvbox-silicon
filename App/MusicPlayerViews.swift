@@ -361,7 +361,7 @@ struct MusicLyricLines: View {
         .task { try? await Task.sleep(for: .milliseconds(60)); scrolled = current }
         .onChange(of: current) { index in
             guard let index else { return }
-            withAnimation(.smooth(duration: 0.45)) { scrolled = index }
+            withAnimation(.easeOut(duration: 0.22)) { scrolled = index }
         }
     }
 }

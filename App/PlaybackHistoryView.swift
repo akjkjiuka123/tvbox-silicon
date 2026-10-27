@@ -167,7 +167,7 @@ struct HistoryCard: View {
         }
         #if !os(tvOS)
         .onHover { hovering = $0 }
-        .animation(.smooth(duration: 0.15), value: hovering)
+        .animation(.easeOut(duration: 0.22), value: hovering)
         #endif
     }
 

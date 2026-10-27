@@ -429,7 +429,7 @@ private struct SidebarRow: View {
         }
         .buttonStyle(.plain)
         .onHover { hovering = $0 }
-        .animation(.smooth(duration: 0.15), value: hovering)
+        .animation(.easeOut(duration: 0.22), value: hovering)
         .keyboardShortcut(shortcut.map { KeyboardShortcut(KeyEquivalent($0), modifiers: .command) })
         .accessibilityAddTraits(selected ? [.isSelected] : [])
     }

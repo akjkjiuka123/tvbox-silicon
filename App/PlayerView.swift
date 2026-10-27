@@ -219,7 +219,7 @@ struct PlaybackView: View {
         #endif
         hideTask = Task {
             try? await Task.sleep(for: .seconds(delay))
-            if !Task.isCancelled { withAnimation(.smooth(duration: 0.3)) { showsChrome = false } }
+            if !Task.isCancelled { withAnimation(.easeOut(duration: 0.22)) { showsChrome = false } }
         }
     }
 
@@ -232,7 +232,7 @@ struct PlaybackView: View {
         #endif
         guard showsChrome else { return poke() }
         hideTask?.cancel()
-        withAnimation(.smooth(duration: 0.25)) { showsChrome = false }
+        withAnimation(.easeOut(duration: 0.22)) { showsChrome = false }
     }
 
     /// The seek bar is held: the controls stay until it is let go, then count down again.
@@ -767,12 +767,12 @@ private struct NativePlayerView: UIViewControllerRepresentable {
     }
 
     func poke() {
-        if !visible { withAnimation(.smooth(duration: 0.25)) { visible = true } }
+        if !visible { withAnimation(.easeOut(duration: 0.22)) { visible = true } }
         task?.cancel()
         task = Task { [weak self] in
             try? await Task.sleep(for: .seconds(2.5))
             guard !Task.isCancelled, let self else { return }
-            withAnimation(.smooth(duration: 0.4)) { self.visible = false }
+            withAnimation(.easeOut(duration: 0.22)) { self.visible = false }
             NSCursor.setHiddenUntilMouseMoves(true)
         }
     }

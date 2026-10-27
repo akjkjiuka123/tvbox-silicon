@@ -326,15 +326,15 @@ extension View {
 
 /// Pointer-aware press and hover feedback for content cards.
 struct LiftButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View { LiftContent(configuration: configuration) }
+    func makeBody(configuration: Configuration) -> some View { LiftBody(configuration: configuration) }
     struct LiftBody: View {
         let configuration: ButtonStyleConfiguration
         @State private var hovering = false
         var body: some View {
             configuration.label
                 .opacity(configuration.isPressed ? 0.72 : (hovering ? 0.88 : 1))
-                .animation(.smooth(duration: 0.22), value: hovering)
-                .animation(.smooth(duration: 0.15), value: configuration.isPressed)
+                .animation(.easeOut(duration: 0.22), value: hovering)
+                .animation(.easeOut(duration: 0.22), value: configuration.isPressed)
                 #if !os(tvOS)
                 .onHover { hovering = $0 }
                 #endif
@@ -431,7 +431,7 @@ private struct TVChipStyle: ButtonStyle {
                 .scaleEffect(configuration.isPressed ? 0.97 : focused ? 1.06 : 1)
                 .shadow(color: .black.opacity(focused ? 0.35 : 0), radius: 16, y: 10)
                 .animation(.easeOut(duration: 0.18), value: focused)
-                .animation(.smooth(duration: 0.2), value: selected)
+                .animation(.easeOut(duration: 0.22), value: selected)
         }
         private var glass: GlassStyle {
             if focused { return .regular.tint(.white.opacity(0.9)).interactive() }
@@ -951,8 +951,8 @@ struct LoadingCard: View {
         .frame(maxWidth: 620, alignment: .leading)
         .glassSurface(.regular, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
         .accessibilityElement(children: .combine)
-        .animation(.smooth(duration: 0.25), value: state.title)
-        .animation(.smooth(duration: 0.25), value: explains)
+        .animation(.easeOut(duration: 0.22), value: state.title)
+        .animation(.easeOut(duration: 0.22), value: explains)
     }
 }
 

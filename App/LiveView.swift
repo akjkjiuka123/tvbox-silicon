@@ -570,7 +570,7 @@ private struct FavoriteFilmCard: View {
         }
         #if os(macOS)
         .onHover { hovering = $0 }
-        .animation(.smooth(duration: 0.15), value: hovering)
+        .animation(.easeOut(duration: 0.22), value: hovering)
         #endif
     }
 }
@@ -608,7 +608,7 @@ private struct FavoriteEpisodeCard: View {
         }
         #if os(macOS)
         .onHover { hovering = $0 }
-        .animation(.smooth(duration: 0.15), value: hovering)
+        .animation(.easeOut(duration: 0.22), value: hovering)
         #endif
     }
 }

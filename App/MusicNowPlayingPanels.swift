@@ -51,7 +51,7 @@ struct MusicNowPlayingLyrics: View {
             .task { try? await Task.sleep(for: .milliseconds(60)); scrolled = music.currentLyric }
             .onChange(of: music.currentLyric) { index in
                 guard let index else { return }
-                withAnimation(.smooth(duration: 0.5)) { scrolled = index }
+                withAnimation(.easeOut(duration: 0.22)) { scrolled = index }
             }
         } else if music.lyricsLoading || music.busy {
             ProgressView().frame(maxWidth: .infinity, maxHeight: .infinity)
