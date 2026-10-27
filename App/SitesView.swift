@@ -66,7 +66,7 @@ struct SitesView: View {
         .onChange(of: store.section) { new in
             if new != .sites { prepared = false }
         }
-        .onChange(of: query) { old, new in
+        .onChange(of: query) { new in
             if old.isEmpty && !new.isEmpty {
                 foldBeforeSearch = collapsed
                 collapsed = []

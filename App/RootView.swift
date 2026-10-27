@@ -100,7 +100,7 @@ struct RootView: View {
                 // section change collapsed the sidebar while the new page was still a placeholder.
                 NavigationStack(path: $detailPath) { content(store.section).musicBar().routeDestinations() }
             }
-            .onChange(of: store.section) { detailPath = NavigationPath() }
+            .onChange(of: store.section) { { _ in detailPath = NavigationPath() }
             .overlay {
                 if nowPlayingShown { MusicMacNowPlaying().ignoresSafeArea().transition(.move(edge: .bottom)) }
             }
@@ -166,7 +166,7 @@ struct RootView: View {
             .musicSidebarHeader()
             // Now Playing is not a page: choosing it opens the full-screen player over the section
             // the viewer was in. The sidebar selects on a click, not on focus, so passing it opens nothing.
-            .onChange(of: store.section) { previous, section in
+            .onChange(of: store.section) { section in
                 guard section == .nowPlaying else { return }
                 store.section = previous == .nowPlaying ? .music : previous
                 store.music.presentsPlayer = true

@@ -114,11 +114,11 @@ struct MobilePlayerView: View {
         }
         // Played here again (the Lock Screen, say): the other device no longer has it to itself.
         .onChange(of: session.paused) { paused in if !paused { playingOn = nil } }
-        .onChange(of: nowPlayingState) { nowPlaying.update(title: channel.name, session: session) }
+        .onChange(of: nowPlayingState) { { _ in nowPlaying.update(title: channel.name, session: session) }
         .onChange(of: nowPlayingArtwork) { artwork in nowPlaying.show(artwork, session: session) }
         // Pausing ends the faster speed in the session; another episode or quality plays at the chosen one.
         .onChange(of: session.boost == nil) { ended in if ended { boost = nil } }
-        .onChange(of: clock.item) { endBoost() }
+        .onChange(of: clock.item) { { _ in endBoost() }
         .task(id: clock.item.map(ObjectIdentifier.init)) { await tracks.load(clock.item) }
         .sheet(isPresented: $showsDanmakuList) {
             DanmakuListView(player: session.player, comments: session.danmaku) { showsDanmakuList = false }
