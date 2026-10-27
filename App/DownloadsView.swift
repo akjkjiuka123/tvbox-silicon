@@ -32,7 +32,7 @@ struct DownloadsView: View {
         .screenBackdrop()
         .tabTitle(L10n.text("Downloads"))
         .task { await library.measure() }
-        .onChange(of: library.items.filter { $0.status == .completed }.count) { { _ in Task { await library.measure() } }
+        .onChange(of: library.items.filter { $0.status == .completed }.count) { _ in Task { await library.measure() } }
         #if os(macOS)
         // Files may have been deleted or moved in Finder while the app was in the background.
         .onReceive(NotificationCenter.default.publisher(for: NSApplication.didBecomeActiveNotification)) { _ in

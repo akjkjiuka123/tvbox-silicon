@@ -355,7 +355,10 @@ struct MusicLyricLines: View {
             .scrollTargetLayout()
             .padding(.horizontal, Layout.gutter * 1.5).padding(.vertical, 40)
         }
+        // `scrollPosition(id:)` is iOS 17; before that the list simply keeps its place.
+        if #available(iOS 17, tvOS 17, macOS 14, *) {
         .scrollPosition(id: $scrolled, anchor: .center)
+        }
         // Once the lines are laid out: set as the view appeared, the position was dropped, and
         // reopening the player left the lyrics at the top until the next line.
         .task { try? await Task.sleep(for: .milliseconds(60)); scrolled = current }

@@ -467,7 +467,16 @@ struct SearchQueryButton: View {
 /// Neutral filters reserve high contrast for the current selection.
 /// Set by `ScrollStrip` while the user drags it, so the chip under the pointer ignores the mouse-up.
 @MainActor final class StripDrag { var active = false }
-extension EnvironmentValues { @Entry var stripDrag: StripDrag? = nil }
+private struct StripDragKey: EnvironmentKey {
+    static let defaultValue: StripDrag? = nil
+}
+
+extension EnvironmentValues {
+    var stripDrag: StripDrag? {
+        get { self[StripDragKey.self] }
+        set { self[StripDragKey.self] = newValue }
+    }
+}
 
 /// A horizontal chip row: a `ScrollStrip` (drag and arrows on Mac), or a plain focus-driven
 /// scroll view on tvOS.
@@ -1024,7 +1033,7 @@ struct ErrorStateCard: View {
         .frame(maxWidth: recoveryWidth)
         .contentPanel(cornerRadius: 28)
         .frame(maxWidth: .infinity)
-        .onChange(of: details) { { _ in showsDetails = false }
+        .onChange(of: details) { _ in showsDetails = false }
     }
 
     private var recoveryWidth: CGFloat {

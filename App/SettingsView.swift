@@ -294,7 +294,11 @@ extension View {
                 .background { Backdrop() }
                 #endif
             // Only when there is room to spare: a zero margin would replace the system's own insets.
-            if extra > 0 { form.contentMargins(.horizontal, extra, for: .scrollContent) } else { form }
+            if extra > 0, #available(iOS 17, macOS 14, tvOS 17, *) {
+                form.contentMargins(.horizontal, extra, for: .scrollContent)
+            } else {
+                form
+            }
         }
         .screenTitle(title, width: Layout.settingsWidth)
     }

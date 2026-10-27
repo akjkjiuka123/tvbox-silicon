@@ -100,7 +100,7 @@ struct RootView: View {
                 // section change collapsed the sidebar while the new page was still a placeholder.
                 NavigationStack(path: $detailPath) { content(store.section).musicBar().routeDestinations() }
             }
-            .onChange(of: store.section) { { _ in detailPath = NavigationPath() }
+            .onChange(of: store.section) { _ in detailPath = NavigationPath() }
             .overlay {
                 if nowPlayingShown { MusicMacNowPlaying().ignoresSafeArea().transition(.move(edge: .bottom)) }
             }
