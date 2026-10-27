@@ -77,7 +77,11 @@ jobs:
       - name: Java host
         run: |
           set -euxo pipefail
-          Scripts/build-java-host.sh
+          if [ -f build/JavaHost/host.jar ]; then
+            echo "cached host.jar, skip build"
+          else
+            Scripts/build-java-host.sh
+          fi
 
       - name: Mac-only host dirs
         run: |
