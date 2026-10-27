@@ -352,7 +352,7 @@ struct MusicLyricLines: View {
                 }
                 Text(L10n.text("Lyrics from %@", lyrics.platform.name)).font(.caption).foregroundStyle(.tertiary).padding(.top, 12)
             }
-            .scrollTargetLayout()
+            .scrollTargetLayoutIfAvailable()
             .padding(.horizontal, Layout.gutter * 1.5).padding(.vertical, 40)
         }
         // `scrollPosition(id:)` is iOS 17; before that the list simply keeps its place.

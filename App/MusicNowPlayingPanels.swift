@@ -39,7 +39,7 @@ struct MusicNowPlayingLyrics: View {
                     }
                     Text(L10n.text("Lyrics from %@", lyrics.platform.name)).font(.caption).foregroundStyle(.secondary).padding(.top, 8)
                 }
-                .scrollTargetLayout()
+                .scrollTargetLayoutIfAvailable()
                 .padding(.vertical, 28)
             }
             // The lines fade in and out at the panel's edges instead of being cut.
