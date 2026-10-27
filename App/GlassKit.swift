@@ -5,6 +5,16 @@ import TVCore
 import Perception
 
 extension View {
+    /// `scrollTargetLayout()` is iOS 17; before that the grid simply scrolls without snapping.
+    @ViewBuilder func scrollTargetLayoutIfAvailable() -> some View {
+        if #available(iOS 17, tvOS 17, macOS 14, *) {
+            self.scrollTargetLayout()
+        } else {
+            self
+        }
+    }
+
+
     @ViewBuilder func catalogSearchable(text: Binding<String>, prompt: String) -> some View {
         #if os(tvOS)
         // The system search, as in the TV app and Global Search: a large search line over the keyboard row.

@@ -469,13 +469,19 @@ private struct DanmakuRowStyle: ButtonStyle {
 
 extension View {
     /// The danmaku list as a sheet over the player: dark, half height first, pulled up for more.
-    func danmakuListPresentation() -> some View {
+    @ViewBuilder func danmakuListPresentation() -> some View {
         #if os(iOS)
-        self.presentationDetents([.medium, .large])
-            .presentationDragIndicator(.visible)
-            .presentationBackground(.ultraThinMaterial)
-            .presentationCornerRadius(28)
-            .preferredColorScheme(.dark)
+        if #available(iOS 16.4, *) {
+            self.presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .presentationBackground(.ultraThinMaterial)
+                .presentationCornerRadius(28)
+                .preferredColorScheme(.dark)
+        } else {
+            self.presentationDetents([.medium, .large])
+                .presentationDragIndicator(.visible)
+                .preferredColorScheme(.dark)
+        }
         #else
         self.frame(width: 520, height: 640)
             .background(Color(white: 0.09))

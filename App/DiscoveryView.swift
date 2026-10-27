@@ -152,7 +152,7 @@ struct GlobalSearchView: View {
                         } else {
                             LazyVGrid(columns: Layout.posterColumns, spacing: Layout.gridRowSpacing) {
                                 resultLinks(config)
-                            }.scrollTargetLayout()
+                            }.scrollTargetLayoutIfAvailable()
                             // Scrolling the end into view asks for the next page; while it stays in view each new page asks again.
                             if model.canLoadMore(model.selectedSource) || model.loadingMore {
                                 ProgressView().frame(maxWidth: .infinity).padding(.vertical, 24)
@@ -869,7 +869,7 @@ struct SourceStrip: View {
                 }
             }
             .padding(.vertical, 4)
-            .scrollTargetLayout()
+            .scrollTargetLayoutIfAvailable()
         }
     }
 }
@@ -991,11 +991,13 @@ struct ScrollStrip<Content: View>: View {
     @ViewBuilder private var measuredContent: some View {
         if #available(iOS 18, *) {
             content
-        } else {
+        } else if #available(iOS 17, tvOS 17, macOS 14, *) {
             content.onGeometryChange(for: Metrics.self) { geometry in
                 let visible = geometry.bounds(of: .scrollView(axis: .horizontal)) ?? .zero
                 return Metrics(offset: visible.minX, viewport: visible.width, maximum: max(0, geometry.size.width - visible.width))
             } action: { update($0) }
+        } else {
+            content
         }
     }
 
