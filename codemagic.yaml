@@ -62,6 +62,11 @@ workflows:
           else
             Scripts/package-apple-runtime.sh ios
           fi
+      - name: Sync Java host into the runtime
+        script: |
+          set -euxo pipefail
+          Scripts/sync-apple-javahost.sh ios
+
       - name: FFmpeg xcframework guard
         script: |
           set -uo pipefail
