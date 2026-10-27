@@ -5,6 +5,8 @@ import Perception
 struct SitesView: View {
     @Environment(Store.self) private var store
     @State private var query = ""
+    /// iOS 16 的 onChange 只给新值，旧值自己记一份。
+    @State private var previousQuery = ""
     /// Groups the viewer folded. Every group starts open, subscriptions and hidden sources included,
     /// so nothing on the page needs finding. Reset with the page, not with a pushed source: the state
     /// lives here and `prepared` keeps the reset to once per visit.
@@ -67,6 +69,8 @@ struct SitesView: View {
             if new != .sites { prepared = false }
         }
         .onChange(of: query) { new in
+            let old = previousQuery
+            previousQuery = new
             if old.isEmpty && !new.isEmpty {
                 foldBeforeSearch = collapsed
                 collapsed = []
