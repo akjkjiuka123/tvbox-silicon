@@ -44,6 +44,23 @@ jobs:
           xcodegen --version; mvn -v | head -2
           echo "JAVA_HOME=$(/usr/libexec/java_home)" >> "$GITHUB_ENV"
 
+      - name: Restore prebuilt deps (FFmpeg + JVM runtime)
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -uo pipefail
+          if [ -f build/FFmpeg/FFmpeg.xcframework/Info.plist ]; then
+            echo "deps already present (cache hit)"; exit 0
+          fi
+          TAG=deps-ios16
+          if gh release download "$TAG" --pattern deps-ios16.tgz --output /tmp/deps.tgz --clobber 2>/dev/null; then
+            tar -xzf /tmp/deps.tgz
+            echo "restored deps from release:"
+            du -sh build/FFmpeg build/AppleRuntime build/JavaHost 2>/dev/null || true
+          else
+            echo "no prebuilt deps release yet; will build from source"
+          fi
+
       - name: FFmpeg
         run: |
           set -euxo pipefail
