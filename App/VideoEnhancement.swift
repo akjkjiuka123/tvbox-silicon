@@ -28,7 +28,9 @@ enum VideoEnhancement {
         #if targetEnvironment(simulator)
         return false
         #else
+        #if compiler(>=6.2)
         if #available(macOS 26, iOS 26, tvOS 26, *) { return VTLowLatencySuperResolutionScalerConfiguration.isSupported }
+        #endif
         return false
         #endif
     }()

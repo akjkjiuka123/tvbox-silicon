@@ -95,9 +95,11 @@ enum MusicAccessory {
     }
 }
 
+#if compiler(>=6.2)
 @available(iOS 26.1, *)
 private struct MusicAccessoryContent: View {
     @Environment(\.tabViewBottomAccessoryPlacement) private var placement
     var body: some View { MusicMiniPlayer(inline: placement == .inline) }
 }
+#endif
 #endif

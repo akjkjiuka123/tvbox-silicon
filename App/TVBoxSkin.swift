@@ -545,7 +545,7 @@ struct TVBoxCatalog: View {
         requestTask = Task { await browser.load(.home, client: client) }
     }
 
-    private func open(_ category: Category) {
+    private func open(_ category: TVCore.Category) {
         filterValues = [:]
         requestTask?.cancel()
         requestTask = Task { await browser.load(.list(category: category.id, query: "", page: 1), client: client) }
@@ -760,7 +760,7 @@ struct TVBoxRailStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         Body(configuration: configuration, selected: selected, compact: compact)
     }
-    private struct Body: View {
+    struct Body: View {
         let configuration: ButtonStyleConfiguration
         let selected: Bool
         let compact: Bool
@@ -790,7 +790,7 @@ struct TVBoxCategoryStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         Body(configuration: configuration, selected: selected)
     }
-    private struct Body: View {
+    struct Body: View {
         let configuration: ButtonStyleConfiguration
         let selected: Bool
         @Environment(\.isFocused) private var focused
@@ -817,7 +817,7 @@ struct TVBoxChipStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         Body(configuration: configuration, selected: selected)
     }
-    private struct Body: View {
+    struct Body: View {
         let configuration: ButtonStyleConfiguration
         let selected: Bool
         @Environment(\.isFocused) private var focused
@@ -850,7 +850,7 @@ struct TVBoxTileStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
         Body(configuration: configuration, corner: corner)
     }
-    private struct Body: View {
+    struct Body: View {
         let configuration: ButtonStyleConfiguration
         let corner: CGFloat
         @Environment(\.isFocused) private var focused
