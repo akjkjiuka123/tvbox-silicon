@@ -8,7 +8,7 @@ extension View {
     /// `presentationBackground` is iOS 16.4; before that the sheet keeps the system background.
     @ViewBuilder func presentationBackdropIfAvailable<C: View>(@ViewBuilder _ content: @escaping () -> C) -> some View {
         if #available(iOS 16.4, tvOS 16.4, macOS 13.3, *) {
-            self.presentationBackground(content)
+            self.presentationBackground(alignment: .center, content: content)
         } else {
             self
         }
