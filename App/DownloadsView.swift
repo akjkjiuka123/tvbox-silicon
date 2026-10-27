@@ -15,6 +15,7 @@ struct DownloadsView: View {
     enum Kind: Hashable { case videos, music }
 
     var body: some View {
+        withPerceptionTracking {
         let pending = library.items.filter(\.isPending)
         let shows = DownloadShow.group(library.items.filter { $0.status == .completed })
         Group {
@@ -54,7 +55,8 @@ struct DownloadsView: View {
                 deleting = nil
             }
         }
-    }
+        }
+     }
 
     /// Songs are saved apart, in Music; this page leads there too.
     private var hasMusic: Bool { !MusicDownloadLibrary.shared.items.isEmpty }
@@ -214,6 +216,7 @@ private struct EmptyDownloads: View {
     let available: Int64?
     let browse: () -> Void
     var body: some View {
+        withPerceptionTracking {
         EmptyPage(symbol: "arrow.down", title: L10n.text("No Downloads"),
                   message: L10n.text("Choose Download on a video's page to save episodes for watching offline."),
                   action: L10n.text("Browse Sources"), actionSymbol: AppSection.sites.icon, perform: browse) {
@@ -221,7 +224,8 @@ private struct EmptyDownloads: View {
                 Label(L10n.text("%@ available on this device", DownloadFormat.size(available)), systemImage: "internaldrive")
             }
         }
-    }
+        }
+     }
 }
 
 /// Space used by downloads against the rest of the device, as one bar.
@@ -230,6 +234,7 @@ private struct StorageCard: View {
     /// Downloaded songs, kept apart from the episodes.
     var songs: Int64 = 0
     var body: some View {
+        withPerceptionTracking {
         let downloads = usage.downloads + songs
         let capacity = usage.capacity ?? 0
         let free = usage.available ?? 0
@@ -280,7 +285,8 @@ private struct StorageCard: View {
         // Focusable so the remote can scroll back up to it.
         .focusable()
         #endif
-    }
+        }
+     }
     private func legend(_ color: Color, _ title: String, _ bytes: Int64) -> some View {
         HStack(spacing: 6) {
             Circle().fill(color).frame(width: 8, height: 8)
@@ -297,6 +303,7 @@ private struct QueueRow: View {
     let position: Int?
     private var library: DownloadLibrary { .shared }
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 14) {
             Color.clear.aspectRatio(2.0 / 3.0, contentMode: .fit).frame(width: DownloadMetrics.thumb)
                 .overlay { PosterImage(url: item.poster, headers: item.posterHeaders) }
@@ -337,7 +344,8 @@ private struct QueueRow: View {
             }
             Button(L10n.text("Cancel Download"), systemImage: "xmark", role: .destructive) { library.remove([item.id]) }
         }
-    }
+        }
+     }
 
     private func status(compact: Bool) -> String {
         let percent = Int((item.fraction * 100).rounded(.down))
@@ -378,6 +386,7 @@ private struct ShowPanel: View {
     let delete: () -> Void
     private var library: DownloadLibrary { .shared }
     var body: some View {
+        withPerceptionTracking {
         HStack(alignment: .top, spacing: 16) {
             Color.clear.aspectRatio(2.0 / 3.0, contentMode: .fit).frame(width: DownloadMetrics.showPoster)
                 .overlay { PosterImage(url: show.poster, headers: show.posterHeaders) }
@@ -402,7 +411,8 @@ private struct ShowPanel: View {
         .padding(DownloadMetrics.thumb > 60 ? 22 : 14)
         .frame(maxWidth: .infinity, alignment: .leading)
         .background(Color.primary.opacity(0.05), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
-    }
+        }
+     }
 
     private func episode(_ item: DownloadItem) -> some View {
         Button { play(item) } label: {
@@ -438,12 +448,14 @@ private struct ShowPanel: View {
 /// A downloaded episode's mark on a short episode chip.
 struct DownloadedBadge: View {
     var body: some View {
+        withPerceptionTracking {
         Image(systemName: "arrow.down.circle.fill")
             .font(.system(size: DownloadMetrics.thumb > 60 ? 22 : 12, weight: .semibold))
             .foregroundStyle(Brand.onAccent, Brand.accent)
             .offset(x: 4, y: -4)
             .accessibilityLabel(L10n.text("Downloaded"))
-    }
+        }
+     }
 }
 
 /// A download's state beside an episode name: downloaded, progress, waiting or failed.
@@ -454,6 +466,7 @@ struct DownloadState: View {
     init(status: DownloadItem.Status, fraction: Double) { self.status = status; self.fraction = fraction }
     static var size: CGFloat { DownloadMetrics.thumb > 60 ? 24 : 13 }
     var body: some View {
+        withPerceptionTracking {
         let size = Self.size
         Group {
             switch status {
@@ -475,7 +488,8 @@ struct DownloadState: View {
         }
         .font(.system(size: size))
         .animation(.smooth, value: fraction)
-    }
+        }
+     }
 }
 
 /// Picks episodes of the current line to download.
@@ -491,6 +505,7 @@ struct DownloadPicker: View {
     private func source(_ episode: Episode) -> DownloadSource { DownloadSource(site: site, videoID: video.id, episode: episode) }
     private var available: [Episode] { episodes.filter { library.item(for: source($0)).map { $0.status == .failed } ?? true } }
     var body: some View {
+        withPerceptionTracking {
         VStack(alignment: .leading, spacing: 18) {
             HStack(alignment: .top, spacing: 14) {
                 Color.clear.aspectRatio(2.0 / 3.0, contentMode: .fit).frame(width: DownloadMetrics.thumb * 1.2)
@@ -555,7 +570,8 @@ struct DownloadPicker: View {
         .background { Backdrop() }
         #endif
         .task { await library.measure() }
-    }
+        }
+     }
 
     private static var columns: [GridItem] {
         #if os(tvOS)

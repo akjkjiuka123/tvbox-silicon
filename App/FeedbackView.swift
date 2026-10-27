@@ -38,6 +38,7 @@ struct FeedbackView: View {
     #endif
 
     var body: some View {
+        withPerceptionTracking {
         content
             .onAppear {
                 guard !contextLoaded else { return }
@@ -55,7 +56,8 @@ struct FeedbackView: View {
                 if UserDefaults.standard.bool(forKey: "qaFeedbackSend") { send() }
             }
             #endif
-    }
+        }
+     }
 
     @ViewBuilder private var content: some View {
         #if os(tvOS)
@@ -143,6 +145,7 @@ private struct FeedbackPage: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         ScrollView {
             VStack(spacing: compact ? 22 : 28) {
                 header
@@ -162,7 +165,8 @@ private struct FeedbackPage: View {
         .background { Backdrop() }
         #endif
         .screenTitle(L10n.text("Send Feedback"), width: Layout.settingsWidth)
-    }
+        }
+     }
 
     private var header: some View {
         let tile = RoundedRectangle(cornerRadius: compact ? 16 : 18, style: .continuous)
@@ -373,6 +377,7 @@ private struct FeedbackKindCard: View {
     private let shape = RoundedRectangle(cornerRadius: 12, style: .continuous)
 
     var body: some View {
+        withPerceptionTracking {
         Button(action: action) {
             VStack(alignment: .leading, spacing: compact ? 8 : 10) {
                 HStack(alignment: .top) {
@@ -404,7 +409,8 @@ private struct FeedbackKindCard: View {
         .animation(.easeOut(duration: 0.15), value: selected)
         .animation(.easeOut(duration: 0.12), value: hovering)
         .accessibilityAddTraits(selected ? .isSelected : [])
-    }
+        }
+     }
 }
 
 private extension Feedback.Kind {
@@ -445,6 +451,7 @@ private extension Feedback.Kind {
 struct TelegramGroupView: View {
     @Environment(\.dismiss) private var dismiss
     var body: some View {
+        withPerceptionTracking {
         TVSettingsSubpage(symbol: "paperplane", title: L10n.text("Telegram Group"), subtitle: L10n.text("Chat with the developer and other users")) {
             VStack(spacing: 24) {
                 if let image = QRCode.image(Support.telegram.absoluteString) {
@@ -458,6 +465,7 @@ struct TelegramGroupView: View {
             }
             .frame(maxWidth: .infinity)
         }
-    }
+        }
+     }
 }
 #endif

@@ -12,6 +12,7 @@ struct CatalogPlaybackActions: View {
     @State private var showsDanmaku = false
 
     var body: some View {
+        withPerceptionTracking {
         if channel.historyContext != nil {
             Menu {
                 if let catalog = store.catalog(for: channel) {
@@ -67,6 +68,7 @@ struct CatalogPlaybackActions: View {
                 CatalogDanmakuSettingsView(model: session.catalogDanmaku, channelName: channel.name)
             }
         }
-    }
+        }
+     }
 }
 #endif

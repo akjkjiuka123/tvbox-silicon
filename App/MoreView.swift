@@ -71,6 +71,7 @@ struct SectionGlyph: View {
     let section: AppSection
     var size: CGFloat = 36
     var body: some View {
+        withPerceptionTracking {
         let tint = section.glyphTint
         Image(systemName: section.icon)
             .font(.system(size: size * 0.46, weight: .semibold))
@@ -79,13 +80,15 @@ struct SectionGlyph: View {
             .background(LinearGradient(colors: [tint.blend(with: .white, by: 0.12), tint.blend(with: .black, by: 0.2)], startPoint: .top, endPoint: .bottom),
                         in: RoundedRectangle(cornerRadius: size * 0.3, style: .continuous))
             .accessibilityHidden(true)
-    }
+        }
+     }
 }
 
 /// A miniature of the tab bar, so the order being edited is visible at a glance.
 struct TabBarPreview: View {
     let bar: [AppSection]
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 0) {
             ForEach(bar + [.more]) { item in
                 VStack(spacing: 3) {
@@ -101,7 +104,8 @@ struct TabBarPreview: View {
         .glassSurface(.regular, in: Capsule())
         .animation(.easeOut(duration: 0.22), value: bar)
         .accessibilityElement(children: .combine)
-    }
+        }
+     }
 }
 
 /// The phone's More tab: the sections that are not in the tab bar as tiles, and the tab bar editor.
@@ -116,6 +120,7 @@ struct MoreView: View {
     private var slots: Int { PhoneTabs.slots(horizontal: horizontalSizeClass, vertical: verticalSizeClass) }
 
     var body: some View {
+        withPerceptionTracking {
         let tabs = PhoneTabs(stored: storedTabs).arranged(slots: slots, hiding: store.hiddenSections)
         ScrollView {
             VStack(alignment: .leading, spacing: 28) {
@@ -146,7 +151,8 @@ struct MoreView: View {
         // `-qaEditTabs 1` opens the editor for screenshots.
         .onAppear { if UserDefaults.standard.bool(forKey: "qaEditTabs") { editing = true } }
         #endif
-    }
+        }
+     }
 
     private func badge(_ section: AppSection) -> Bool {
         switch section {
@@ -208,6 +214,7 @@ private struct MoreTile: View {
         (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String).map { L10n.text("Version %@", $0) }
     }
     var body: some View {
+        withPerceptionTracking {
         NavigationLink(value: section) {
             VStack(alignment: .leading, spacing: 14) {
                 HStack(alignment: .top, spacing: 8) {
@@ -242,7 +249,8 @@ private struct MoreTile: View {
             .contentShape(.rect(cornerRadius: 22))
         }
         .buttonStyle(LiftButtonStyle())
-    }
+        }
+     }
 }
 
 /// One draggable list: the tab bar's sections, an "In More" divider, then More's. Dragging a section
@@ -275,6 +283,7 @@ private struct TabBarEditor: View {
     private var standard: PhoneTabs { PhoneTabs.standard.arranged(slots: slots) }
 
     var body: some View {
+        withPerceptionTracking {
         NavigationStack {
             List {
                 Section {
@@ -327,7 +336,8 @@ private struct TabBarEditor: View {
                 }
             }
         }
-    }
+        }
+     }
 
     private func heading(_ title: String, symbol: String) -> some View {
         Label(title, systemImage: symbol)

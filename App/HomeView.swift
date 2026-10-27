@@ -19,6 +19,7 @@ struct HomeView: View {
     @State private var settled = false
 
     var body: some View {
+        withPerceptionTracking {
         // The column width, not the placeholders' own width. A row of fixed cards is wider than the
         // detail column and NavigationSplitView then gives it that width, crushing the sidebar.
         GeometryReader { proxy in
@@ -55,7 +56,8 @@ struct HomeView: View {
         #if os(iOS)
         .navigationBarTitleDisplayMode(.inline)
         #endif
-    }
+        }
+     }
 
     /// A section that will be on the page once it is built. Empty data is skipped so a placeholder does not appear and then vanish.
     private func showsPlaceholder(_ config: Subscription) -> Bool {
@@ -296,6 +298,7 @@ private struct HomeFavoriteCard: View {
     private static let posterWidth = thumb * 2 / 3
 
     var body: some View {
+        withPerceptionTracking {
         switch item {
         case .live(let channel):
             ChannelCard(channel: channel)
@@ -308,7 +311,8 @@ private struct HomeFavoriteCard: View {
         case .cloud(let file):
             cloudCard(file)
         }
-    }
+        }
+     }
 
     private func videoCard(_ video: FavoriteVideo) -> some View {
         HStack(spacing: 10) {
@@ -396,11 +400,13 @@ private struct HomeFavoriteCard: View {
 struct AppMark: View {
     var size: CGFloat
     var body: some View {
+        withPerceptionTracking {
         Image("YingxiaLogo").resizable().interpolation(.high).scaledToFill()
             .frame(width: size, height: size)
             .clipShape(RoundedRectangle(cornerRadius: size * 0.225, style: .continuous))
             .shadow(color: Color(red: 0.1, green: 0.55, blue: 1).opacity(0.35), radius: size * 0.22, y: size * 0.06)
-    }
+        }
+     }
 }
 
 /// Decorative poster tiles: staggered columns in the icon's blues, fading into the canvas.
@@ -408,6 +414,7 @@ private struct PosterWall: View {
     private static let hues: [Color] = [Brand.cyan, Brand.indigo, Brand.teal, Brand.cyan.opacity(0.6)]
     private static let symbols = ["film", "sparkles.tv", "theatermasks", "music.note.tv", "popcorn", "star"]
     var body: some View {
+        withPerceptionTracking {
         GeometryReader { proxy in
             let spacing = proxy.size.width * 0.045
             let width = (proxy.size.width - spacing * 2) / 3
@@ -425,7 +432,8 @@ private struct PosterWall: View {
             // An ellipse that reaches clear at the frame's edges, so no tile meets a hard clip.
             .mask { EllipticalGradient(stops: [.init(color: .black, location: 0), .init(color: .black.opacity(0.75), location: 0.45), .init(color: .clear, location: 1)], endRadiusFraction: 0.5) }
         }
-    }
+        }
+     }
 
     private func tile(_ index: Int, width: CGFloat) -> some View {
         let hue = Self.hues[index % Self.hues.count]
@@ -494,13 +502,15 @@ enum HomeSection: String, CaseIterable, Identifiable {
 /// Settings → Watch Now: which sections the page shows.
 struct WatchNowSettingsView: View {
     var body: some View {
+        withPerceptionTracking {
         SettingsPage(title: L10n.text("Watch Now"), symbol: AppSection.home.icon) {
             SettingsGroup(title: L10n.text("Show on Watch Now"),
                           footer: L10n.text("A section you switch off only leaves Watch Now: Playback History, Favorites, Sources and Live TV still have everything.")) {
                 ForEach(HomeSection.allCases) { HomeSectionToggle(section: $0) }
             }
         }
-    }
+        }
+     }
 }
 
 /// One section's switch, stored under the section's own key.
@@ -512,6 +522,7 @@ private struct HomeSectionToggle: View {
         _shown = AppStorage(wrappedValue: true, section.key)
     }
     var body: some View {
+        withPerceptionTracking {
         Group {
             #if os(tvOS)
             TVSettingsToggle(title: section.title, isOn: $shown)
@@ -521,5 +532,6 @@ private struct HomeSectionToggle: View {
             #endif
         }
         .accessibilityIdentifier("settings.home." + section.rawValue)
-    }
+        }
+     }
 }

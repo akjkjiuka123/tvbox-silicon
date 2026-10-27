@@ -88,6 +88,7 @@ struct RootView: View {
         return busy
     }
     var body: some View {
+        withPerceptionTracking {
         @TVBindable var store = store
         Group {
             #if os(macOS)
@@ -147,7 +148,8 @@ struct RootView: View {
         .alert(L10n.text("Unable to Complete"), isPresented: Binding(get: { store.error != nil }, set: { if !$0 { store.error = nil } })) {
             Button(L10n.text("OK"), role: .cancel) { store.error = nil }
         } message: { Text(store.error ?? "") }
-    }
+        }
+     }
 
     #if !os(macOS)
     #if os(iOS)
@@ -311,6 +313,7 @@ struct RootView: View {
 private struct TVMoreView: View {
     let sections: [AppSection]
     var body: some View {
+        withPerceptionTracking {
         List(sections) { section in
             NavigationLink(value: section) { Label(section.title, systemImage: section.icon) }
         }
@@ -319,7 +322,8 @@ private struct TVMoreView: View {
         .frame(maxWidth: .infinity)
         .background { Backdrop() }
         .navigationTitle(AppSection.more.title)
-    }
+        }
+     }
 }
 #endif
 
@@ -369,6 +373,7 @@ private struct MacSidebar: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         let ordered = groups.flatMap(\.items)
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
@@ -393,7 +398,8 @@ private struct MacSidebar: View {
         }
         .scrollIndicators(.never)
         .safeAreaInset(edge: .bottom, spacing: 0) { SidebarStatus() }
-    }
+        }
+     }
 }
 
 private struct SidebarRow: View {
@@ -406,6 +412,7 @@ private struct SidebarRow: View {
     @State private var hovering = false
 
     var body: some View {
+        withPerceptionTracking {
         Button(action: action) {
             HStack(spacing: 10) {
                 Image(systemName: section.icon)
@@ -432,7 +439,8 @@ private struct SidebarRow: View {
         .animation(.easeOut(duration: 0.22), value: hovering)
         .keyboardShortcut(shortcut.map { KeyboardShortcut(KeyEquivalent($0), modifiers: .command) })
         .accessibilityAddTraits(selected ? [.isSelected] : [])
-    }
+        }
+     }
 }
 #endif
 
@@ -446,6 +454,7 @@ struct SidebarStatus: View {
         return build.isEmpty || build == short ? text : "\(text) (\(build))"
     }
     var body: some View {
+        withPerceptionTracking {
         if let version {
             Text(version)
                 .font(.caption).monospacedDigit().foregroundStyle(.tertiary).lineLimit(1)
@@ -454,7 +463,8 @@ struct SidebarStatus: View {
                 .overlay(alignment: .top) { Divider().padding(.horizontal, 12) }
                 .selectable()
         }
-    }
+        }
+     }
 }
 
 /// A pushed page carried as a navigation-path value. View-destination `NavigationLink`s are not
@@ -475,7 +485,10 @@ struct RouteLink<Label: View>: View {
         route = Route { AnyView(destination()) }
         self.label = label()
     }
-    var body: some View { NavigationLink(value: route) { label } }
+    var body: some View {
+        withPerceptionTracking { NavigationLink(value: route) { label }
+        }
+     }
 }
 
 extension View {

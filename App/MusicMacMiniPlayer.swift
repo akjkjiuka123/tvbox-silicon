@@ -15,6 +15,7 @@ struct MusicMacMiniPlayer: View {
     @State private var hovering = false
 
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         HStack(spacing: 12) {
             cover(music)
@@ -53,7 +54,8 @@ struct MusicMacMiniPlayer: View {
         .onChange(of: music.track == nil) { gone in
             if gone && MusicMiniWindow.openedForMinimize { dismissWindow(id: Self.windowID) }
         }
-    }
+        }
+     }
 
     /// The cover; a click brings the main window back on Now Playing.
     private func cover(_ music: MusicPlaybackSession) -> some View {
@@ -116,6 +118,7 @@ struct MusicMiniPlayerTrigger: View {
     #endif
 
     var body: some View {
+        withPerceptionTracking {
         MainWindowObserver { window, minimized in
             #if DEBUG
             qaWindow = window
@@ -144,7 +147,8 @@ struct MusicMiniPlayerTrigger: View {
             }
         }
         #endif
-    }
+        }
+     }
 }
 
 /// Reports the window it is in, and each time that window is minimized (true) or restored (false).

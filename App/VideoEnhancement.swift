@@ -286,12 +286,14 @@ struct EnhancedVideoSurface: View {
     let enhancer: VideoEnhancer
     var fills = false
     var body: some View {
+        withPerceptionTracking {
         if VideoEnhancement.canUpscale || VideoEnhancement.canSmooth {
             // The whole player area, like AVKit's own picture: inside the safe area (under the Mac's title bar)
             // the fitted picture came out smaller than AVKit's, which then showed around its edges.
             Host(enhancer: enhancer, fills: fills).ignoresSafeArea().allowsHitTesting(false).accessibilityHidden(true)
         }
-    }
+        }
+     }
 
     #if os(macOS)
     private struct Host: NSViewRepresentable {

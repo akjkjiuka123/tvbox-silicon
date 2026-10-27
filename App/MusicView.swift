@@ -22,6 +22,7 @@ struct MusicView: View {
     #endif
 
     var body: some View {
+        withPerceptionTracking {
         let search = store.musicSearch
         ScrollView(.vertical, showsIndicators: true) {
             LazyVStack(alignment: .leading, spacing: MusicLayout.rowSpacing) {
@@ -119,7 +120,8 @@ struct MusicView: View {
             if UserDefaults.standard.bool(forKey: "qaMusicSettings") { showsSettings = true }
             #endif
         }
-    }
+        }
+     }
 
     /// Apple TV leads with All, its results in rows; a phone or iPad has only the kinds.
     private static var chips: [MusicSearchKind] {
@@ -221,6 +223,7 @@ private struct MusicHome: View {
     let openSettings: () -> Void
 
     var body: some View {
+        withPerceptionTracking {
         let library = store.music.library
         let resumable = store.music.track == nil ? library.resumePoint : nil
         if let point = resumable, let track = point.queue.current {
@@ -249,7 +252,8 @@ private struct MusicHome: View {
                       action: L10n.text("Music Settings"), actionSymbol: "slider.horizontal.3", perform: openSettings)
                 .frame(minHeight: 420)
         }
-    }
+        }
+     }
 }
 
 private struct MusicContinueCard: View {
@@ -258,6 +262,7 @@ private struct MusicContinueCard: View {
     let track: MusicTrack
 
     var body: some View {
+        withPerceptionTracking {
         Button { store.music.resume() } label: {
             HStack(spacing: MusicLayout.gap) {
                 MusicArtwork(url: track.artwork, size: MusicLayout.art * 1.4)
@@ -276,7 +281,8 @@ private struct MusicContinueCard: View {
             .contentShape(Rectangle())
         }
         .cardButton()
-    }
+        }
+     }
 }
 
 struct MusicTrackRow: View {
@@ -289,6 +295,7 @@ struct MusicTrackRow: View {
     let action: () -> Void
 
     var body: some View {
+        withPerceptionTracking {
         let current = store.music.track?.id == track.id
         Button(action: action) {
             HStack(spacing: MusicLayout.gap) {
@@ -340,13 +347,15 @@ struct MusicTrackRow: View {
             MusicDownloadMenuItems(tracks: [track])
         }
         .accessibilityLabel(Text([track.title, track.artistLine].joined(separator: ", ")))
-    }
+        }
+     }
 }
 
 private struct MusicCollectionRow: View {
     let collection: MusicCollection
 
     var body: some View {
+        withPerceptionTracking {
         RouteLink {
             MusicCollectionView(collection: collection)
         } label: {
@@ -363,7 +372,8 @@ private struct MusicCollectionRow: View {
             .contentShape(Rectangle())
         }
         .glassRow()
-    }
+        }
+     }
 }
 
 /// An album or playlist: its tracks, Play and Shuffle. Playing a track queues the whole list from it.
@@ -380,6 +390,7 @@ struct MusicCollectionView: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: MusicLayout.rowSpacing) {
                 #if os(tvOS)
@@ -433,7 +444,8 @@ struct MusicCollectionView: View {
             }
             #endif
         }
-    }
+        }
+     }
 
     private var header: some View {
         VStack(alignment: .leading, spacing: 18) {

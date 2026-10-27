@@ -7,6 +7,7 @@ struct LiveView: View {
     @State private var query = ""
     private var trimmed: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
     var body: some View {
+        withPerceptionTracking {
         Group {
             if let config = store.subscription, !config.lives.isEmpty {
                 ScrollView {
@@ -31,7 +32,8 @@ struct LiveView: View {
         }
         .screenBackdrop()
         .tabTitle(L10n.text("Live TV"))
-    }
+        }
+     }
 }
 
 /// Live sources as the Live tab and Home show them: the built-in platforms as a row of brand cards
@@ -41,6 +43,7 @@ struct LiveSourceGrid: View {
     /// Section titles; Home's Live TV section has its own header and leaves them out.
     var titled = true
     var body: some View {
+        withPerceptionTracking {
         let platforms = sources.compactMap(\.platform)
         let playlists = sources.filter { !$0.isBuiltIn }
         VStack(alignment: .leading, spacing: titled ? Layout.sectionSpacing : Layout.cardSpacing) {
@@ -65,7 +68,8 @@ struct LiveSourceGrid: View {
                 }.tvFocusSection()
             }
         }
-    }
+        }
+     }
 }
 
 /// A live playlist as a launcher tile, like a source card: a monogram icon, its name, and the note
@@ -81,6 +85,7 @@ struct LiveSourceCard: View {
     private let icon: CGFloat = 48, padding: CGFloat = 12, radius: CGFloat = 16
     #endif
     var body: some View {
+        withPerceptionTracking {
         let name = Self.split(source.name)
         let label = SourceLabel(name.title)
         let detail = (label.parts.dropFirst() + [name.note].compactMap { $0 }).joined(separator: " · ")
@@ -102,7 +107,8 @@ struct LiveSourceCard: View {
         .padding(padding).frame(maxWidth: .infinity, alignment: .leading)
         .background { TileSurface(focused: focused, radius: radius) }
         .accessibilityElement(children: .combine)
-    }
+        }
+     }
 
     /// "范明明（需开启V6网络）" → ("范明明", "需开启V6网络").
     static func split(_ name: String) -> (title: String, note: String?) {
@@ -129,6 +135,7 @@ struct ChannelListView: View {
         channels.filter { (group == nil || $0.group == group) && (query.isEmpty || $0.name.localizedCaseInsensitiveContains(query)) }
     }
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         TVChannelGuide(source: source, channels: channels, query: $query, group: $group,
                        loading: waiting, refreshing: loading, error: error,
@@ -174,7 +181,8 @@ struct ChannelListView: View {
         .toolbar { Button { Task { await load() } } label: { Image(systemName: "arrow.clockwise") }.disabled(loading).accessibilityLabel(L10n.text("Refresh")) }
         .task(id: source.id) { if !loaded { await load() } }
         #endif
-    }
+        }
+     }
     private var filterBar: some View {
         VStack(alignment: .leading, spacing: 10) {
             ChipRow {
@@ -226,6 +234,7 @@ private struct TVChannelGuide: View {
     private var highlighted: Channel? { filtered.first { $0.id == focusedChannel } ?? filtered.first }
 
     var body: some View {
+        withPerceptionTracking {
         VStack(alignment: .leading, spacing: 26) {
             HStack(spacing: 18) {
                 Text(source.name).font(.system(size: 28, weight: .semibold)).lineLimit(1)
@@ -326,7 +335,8 @@ private struct TVChannelGuide: View {
                 .screenBackdrop()
             }.onExitCommand { showingSearch = false }
         }
-    }
+        }
+     }
 
     private func category(_ title: String, value: String?) -> some View {
         Button { group = value; focusedChannel = nil } label: { Text(title) }
@@ -361,6 +371,7 @@ private struct TVGuideLogo: View {
     let channel: Channel
     let size: CGFloat
     var body: some View {
+        withPerceptionTracking {
         ZStack {
             Text(String(channel.name.prefix(1))).font(.system(size: size * 0.55, weight: .bold))
                 .foregroundStyle(Color.white)
@@ -374,7 +385,8 @@ private struct TVGuideLogo: View {
         }.frame(width: size, height: size)
             .background(TVStyle.raised, in: RoundedRectangle(cornerRadius: 8))
             .clipShape(RoundedRectangle(cornerRadius: 8))
-    }
+        }
+     }
 }
 
 private struct TVGuideRowStyle: ButtonStyle {
@@ -383,12 +395,14 @@ private struct TVGuideRowStyle: ButtonStyle {
         let configuration: ButtonStyleConfiguration
         @Environment(\.isFocused) private var focused
         var body: some View {
+            withPerceptionTracking {
             configuration.label
                 .foregroundStyle(focused ? Color.black : Color.white)
                 .background(focused ? Color.white : TVStyle.surface, in: RoundedRectangle(cornerRadius: 8))
                 .scaleEffect(configuration.isPressed ? 0.99 : 1)
                 .animation(.easeOut(duration: 0.12), value: focused)
-        }
+            }
+         }
     }
 }
 
@@ -400,13 +414,15 @@ private struct TVGuideCategoryStyle: ButtonStyle {
         let selected: Bool
         @Environment(\.isFocused) private var focused
         var body: some View {
+            withPerceptionTracking {
             configuration.label.font(.system(size: 23, weight: .semibold))
                 .padding(.horizontal, 24).padding(.vertical, 13)
                 .foregroundStyle(selected ? Brand.onAccent : Color.white)
                 .background(selected ? Brand.accent : TVStyle.raised, in: Capsule())
                 .overlay { Capsule().strokeBorder(focused ? Color.white : .clear, lineWidth: 3).padding(-5) }
                 .scaleEffect(configuration.isPressed ? 0.97 : 1)
-        }
+            }
+         }
     }
 }
 #endif
@@ -414,6 +430,7 @@ private struct TVGuideCategoryStyle: ButtonStyle {
 struct FavoritesView: View {
     @Environment(Store.self) private var store
     var body: some View {
+        withPerceptionTracking {
         Group {
             if store.favorites.items.isEmpty {
                 EmptyPage(symbol: AppSection.favorites.icon, title: L10n.text("No Favorites Yet"),
@@ -437,7 +454,8 @@ struct FavoritesView: View {
         }
         .screenBackdrop()
         .tabTitle(L10n.text("Favorites"))
-    }
+        }
+     }
 
     private var liveSection: some View {
         VStack(alignment: .leading, spacing: Layout.headerSpacing) {
@@ -518,6 +536,7 @@ struct FavoriteVideoOpener<Label: View>: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         if let listing = video.listingVideo(), let client = store.catalogClient(for: video) {
             RouteLink { VideoDetailView(video: listing, client: client) } label: { label }
                 .buttonStyle(IgnoreStripDragCardStyle(drag: drag))
@@ -527,7 +546,8 @@ struct FavoriteVideoOpener<Label: View>: View {
             } label: { label }
             .cardButton()
         }
-    }
+        }
+     }
 }
 
 /// NavigationLink activates on mouse-up; ignore that click while the home strip is dragging.
@@ -556,6 +576,7 @@ private struct FavoriteFilmCard: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         ZStack(alignment: .topLeading) {
             FavoriteVideoOpener(video: video) {
                 if let listing = video.listingVideo() {
@@ -572,7 +593,8 @@ private struct FavoriteFilmCard: View {
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.22), value: hovering)
         #endif
-    }
+        }
+     }
 }
 
 /// A saved episode. Playing it does not remove the film favorite, and the heart removes only this episode.
@@ -589,6 +611,7 @@ private struct FavoriteEpisodeCard: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         ZStack(alignment: .topLeading) {
             Button { store.play(episode) } label: {
                 VStack(alignment: .leading, spacing: 4) {
@@ -610,7 +633,8 @@ private struct FavoriteEpisodeCard: View {
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.22), value: hovering)
         #endif
-    }
+        }
+     }
 }
 
 /// A saved cloud file, using the same panel as a channel card and the file row's label.
@@ -619,6 +643,7 @@ private struct FavoriteCloudRow: View {
     let file: FavoriteCloudFile
 
     var body: some View {
+        withPerceptionTracking {
         let cloud = CloudFile(id: file.fileID, name: file.fileName, isFolder: false, size: file.size)
         let driveName = CloudFiles.drive(key: file.driveKey)?.name ?? file.driveKey
         HStack(spacing: 10) {
@@ -632,7 +657,8 @@ private struct FavoriteCloudRow: View {
         .padding(12)
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentPanel()
-    }
+        }
+     }
 }
 
 struct ChannelLogo: View {
@@ -647,6 +673,7 @@ struct ChannelLogo: View {
         Self.palette[channel.name.unicodeScalars.reduce(0) { $0 &+ Int($1.value) } % Self.palette.count]
     }
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         let size: CGFloat = 72
         #endif
@@ -665,7 +692,8 @@ struct ChannelLogo: View {
         }
         .frame(width: size, height: size)
         .clipShape(RoundedRectangle(cornerRadius: size * 0.28, style: .continuous))
-    }
+        }
+     }
 }
 
 struct ChannelCard: View {
@@ -673,6 +701,7 @@ struct ChannelCard: View {
     @Environment(\.stripDrag) private var drag
     let channel: Channel
     var body: some View {
+        withPerceptionTracking {
         let favorite = store.isFavorite(channel)
         HStack(spacing: 10) {
             Button { if drag?.active != true { store.playing = channel } } label: {
@@ -695,5 +724,6 @@ struct ChannelCard: View {
         }
         .padding(12).frame(maxWidth: .infinity, alignment: .leading)
         .contentPanel()
-    }
+        }
+     }
 }

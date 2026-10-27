@@ -16,6 +16,7 @@ struct PlaybackHistoryView: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         Group {
             if history.entries.isEmpty {
                 EmptyPage(symbol: AppSection.history.icon, title: L10n.text("No Playback History Yet"),
@@ -38,7 +39,8 @@ struct PlaybackHistoryView: View {
         } message: {
             Text(L10n.text("Removing a title also clears its cached content and skip times."))
         }
-    }
+        }
+     }
 
     private var content: some View {
         ScrollView {
@@ -145,6 +147,7 @@ struct HistoryCard: View {
         #endif
     }
     var body: some View {
+        withPerceptionTracking {
         // The heart is a sibling of the poster button, so a click does not resume or change the selection.
         ZStack(alignment: .topLeading) {
             posterButton
@@ -169,7 +172,8 @@ struct HistoryCard: View {
         .onHover { hovering = $0 }
         .animation(.easeOut(duration: 0.22), value: hovering)
         #endif
-    }
+        }
+     }
 
     /// Red remove control. A pointer shows it; the context menu stays for touch and the remote.
     private var historyRemove: some View {

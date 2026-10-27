@@ -15,6 +15,7 @@ struct DanmakuOverlay: View {
     @Environment(\.displayScale) private var scale
 
     var body: some View {
+        withPerceptionTracking {
         TimelineView(.animation) { timeline in
             Canvas { context, size in
                 // Reading the timeline's date makes every tick a new drawing; the clock itself is the player's.
@@ -31,7 +32,8 @@ struct DanmakuOverlay: View {
         .allowsHitTesting(false)
         .accessibilityHidden(true)
         .task(id: "\(revision):\(comments.count)") { engine.load(comments) }
-    }
+        }
+     }
 }
 
 /// Whether comments are shown, from Settings and the player's own toggle.
@@ -192,6 +194,7 @@ struct DanmakuListView: View {
 
     #if os(tvOS)
     var body: some View {
+        withPerceptionTracking {
         ScrollViewReader { proxy in
             // Not a List: tvOS puts a square focus background behind list cells.
             ScrollView {
@@ -209,7 +212,8 @@ struct DanmakuListView: View {
                 if now.isFinite, let target = comments.firstIndex(where: { $0.time >= now - 1 }) { proxy.scrollTo(target, anchor: .top) }
             }
         }
-    }
+        }
+     }
 
     private func tvRow(_ comment: Danmaku) -> some View {
         HStack(alignment: .firstTextBaseline, spacing: 14) {
@@ -222,6 +226,7 @@ struct DanmakuListView: View {
     }
     #else
     var body: some View {
+        withPerceptionTracking {
         VStack(alignment: .leading, spacing: 0) {
             header.padding(.horizontal, 20).padding(.top, 22)
             DanmakuDensity(bins: density, progress: duration > 0 ? now / duration : 0) { fraction in
@@ -242,7 +247,8 @@ struct DanmakuListView: View {
                 try? await Task.sleep(for: .milliseconds(500))
             }
         }
-    }
+        }
+     }
 
     private var header: some View {
         HStack(alignment: .center, spacing: 12) {
@@ -417,6 +423,7 @@ private struct DanmakuDensity: View {
     let progress: Double
     let seek: (Double) -> Void
     var body: some View {
+        withPerceptionTracking {
         GeometryReader { geometry in
             let width = geometry.size.width, height = geometry.size.height
             HStack(alignment: .bottom, spacing: 2) {
@@ -440,13 +447,15 @@ private struct DanmakuDensity: View {
         .accessibilityElement()
         .accessibilityLabel(L10n.text("Danmaku"))
         .accessibilityValue("\(Int(progress * 100))%")
-    }
+        }
+     }
 }
 
 /// The playhead among the comments: everything above it has been on screen.
 private struct DanmakuNowLine: View {
     let time: Double
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 10) {
             Text(DanmakuListView.clock(time))
                 .font(.caption.monospacedDigit().weight(.bold))
@@ -456,7 +465,8 @@ private struct DanmakuNowLine: View {
             Capsule().fill(Brand.cyan).frame(height: 2)
         }
         .padding(.horizontal, 12).padding(.vertical, 6)
-    }
+        }
+     }
 }
 
 private struct DanmakuRowStyle: ButtonStyle {

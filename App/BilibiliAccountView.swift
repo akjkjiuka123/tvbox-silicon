@@ -13,6 +13,7 @@ struct BilibiliAccountView: View {
     #endif
 
     var body: some View {
+        withPerceptionTracking {
         SettingsPage(title: L10n.text("Bilibili Account"), symbol: "play.tv") {
             if account.signedIn {
                 SettingsGroup(footer: L10n.text("Bilibili plays the qualities your account allows. Sign-in details stay on this device.")) {
@@ -43,7 +44,8 @@ struct BilibiliAccountView: View {
             }
         }
         #endif
-    }
+        }
+     }
 
     /// Shows the current name and membership, and notices a login that expired on the server.
     private func refresh() async {
@@ -65,6 +67,7 @@ struct BilibiliCodeSignIn: View {
     @State private var attempt = 0
 
     var body: some View {
+        withPerceptionTracking {
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .center, spacing: spacing) { code; details }
             VStack(alignment: .leading, spacing: spacing) { code; details }
@@ -75,7 +78,8 @@ struct BilibiliCodeSignIn: View {
         .padding(.vertical, 10)
         #endif
         .task(id: attempt) { await run() }
-    }
+        }
+     }
 
     private var details: some View {
         VStack(alignment: .leading, spacing: 20) {
@@ -176,6 +180,7 @@ extension BilibiliAccount {
 /// Atop the Bilibili source while signed out: signing in adds the account's lists to the source.
 struct BilibiliSignInBanner: View {
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 16) {
             BilibiliMark(size: 44)
             VStack(alignment: .leading, spacing: 4) {
@@ -188,5 +193,6 @@ struct BilibiliSignInBanner: View {
         }
         .padding(16)
         .contentPanel()
-    }
+        }
+     }
 }

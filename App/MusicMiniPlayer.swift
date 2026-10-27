@@ -9,12 +9,14 @@ struct MusicArtwork: View {
     var size: CGFloat?
     var symbol = "music.note"
     var body: some View {
+        withPerceptionTracking {
         Color.clear
             .aspectRatio(1, contentMode: .fit)
             .overlay { PosterImage(url: url, symbol: symbol) }
             .frame(width: size, height: size)
             .clipShape(RoundedRectangle(cornerRadius: size.map { max(4, $0 * 0.12) } ?? 12, style: .continuous))
-    }
+        }
+     }
 }
 
 #if os(iOS)
@@ -26,6 +28,7 @@ struct MusicMiniPlayer: View {
     var inline = false
 
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         HStack(spacing: inline ? 10 : 12) {
             MusicArtwork(url: music.track?.artwork, size: inline ? 28 : 34)
@@ -63,7 +66,8 @@ struct MusicMiniPlayer: View {
         // `-qaNowPlaying artwork|lyrics|queue` opens Now Playing on that panel, for screenshots.
         .task { if UserDefaults.standard.string(forKey: "qaNowPlaying") != nil { music.presentsPlayer = true } }
         #endif
-    }
+        }
+     }
 
     private func button(_ symbol: String, label: String, action: @escaping () -> Void) -> some View {
         Button(action: action) {
@@ -103,7 +107,10 @@ enum MusicAccessory {
 @available(iOS 26.1, *)
 private struct MusicAccessoryContent: View {
     @Environment(\.tabViewBottomAccessoryPlacement) private var placement
-    var body: some View { MusicMiniPlayer(inline: placement == .inline) }
+    var body: some View {
+        withPerceptionTracking { MusicMiniPlayer(inline: placement == .inline)
+        }
+     }
 }
 #endif
 #endif

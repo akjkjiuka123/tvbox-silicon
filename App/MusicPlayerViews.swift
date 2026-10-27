@@ -45,6 +45,7 @@ private struct MusicPlayerInset: ViewModifier {
 struct MusicActivityMark: View {
     @Environment(Store.self) private var store
     var body: some View {
+        withPerceptionTracking {
         Group {
             if store.music.busy { ProgressView().controlSize(.small) }
             else if store.music.phase == .playing { Image(systemName: "waveform").foregroundStyle(Brand.accent) }
@@ -52,7 +53,8 @@ struct MusicActivityMark: View {
             else { Image(systemName: "speaker.wave.2.fill").foregroundStyle(.secondary) }
         }
         .frame(width: 24, height: 24)
-    }
+        }
+     }
 }
 
 enum MusicTime {
@@ -77,6 +79,7 @@ struct MusicNowPlaying: View {
     #endif
 
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         VStack(alignment: .leading, spacing: 10) {
             HStack(spacing: 14) {
@@ -130,7 +133,8 @@ struct MusicNowPlaying: View {
             if lyrics != nil, UserDefaults.standard.bool(forKey: "qaMusicLyrics") { showsLyrics = true }
         }
         #endif
-    }
+        }
+     }
 
     private func queueLine(_ queue: MusicQueue) -> String? {
         queue.tracks.count > 1 ? "\(queue.index + 1)/\(queue.tracks.count)" : nil
@@ -281,6 +285,7 @@ struct MusicLyricsView: View {
     #endif
 
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         MusicSheet(title: music.track?.title ?? L10n.text("Lyrics"), symbol: "quote.bubble") {
             VStack(spacing: 0) {
@@ -301,7 +306,8 @@ struct MusicLyricsView: View {
                 }
             }
         }
-    }
+        }
+     }
 
     private func lines(_ lyrics: MusicLyrics, current: Int?) -> some View {
         MusicLyricLines(lyrics: lyrics, current: current, size: size, translationSize: translationSize)
@@ -319,6 +325,7 @@ struct MusicLyricLines: View {
     @State private var scrolled: Int?
 
     var body: some View {
+        withPerceptionTracking {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: size * 0.8) {
                 ForEach(Array(lyrics.lines.enumerated()), id: \.offset) { index, line in
@@ -363,7 +370,8 @@ struct MusicLyricLines: View {
             guard let index else { return }
             withAnimation(.easeOut(duration: 0.22)) { scrolled = index }
         }
-    }
+        }
+     }
 }
 
 /// Every channel tried for the song, what each served, and a way to switch.
@@ -372,6 +380,7 @@ struct MusicChannelsView: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         MusicSheet(title: L10n.text("Channels"), symbol: "antenna.radiowaves.left.and.right") {
             List {
@@ -404,7 +413,8 @@ struct MusicChannelsView: View {
                 }
             }
         }
-    }
+        }
+     }
 
     struct Row {
         var candidate: MusicCandidate
@@ -455,6 +465,7 @@ struct MusicSettingsView: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         @TVBindable var music = store.music
         #if os(tvOS)
         // A page like Settings' own, over the whole screen: a tvOS sheet is a small card that cut the
@@ -511,7 +522,8 @@ struct MusicSettingsView: View {
             #endif
         }
         #endif
-    }
+        }
+     }
 
     private func enabled(_ provider: MusicProviderID, music: MusicPlaybackSession) -> Binding<Bool> {
         Binding(get: { !music.preferences.disabled.contains(provider) }, set: { on in
@@ -529,6 +541,7 @@ private struct MusicSheet<Content: View>: View {
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
+        withPerceptionTracking {
         #if os(macOS)
         VStack(spacing: 0) {
             HStack(spacing: 12) {
@@ -552,13 +565,15 @@ private struct MusicSheet<Content: View>: View {
                 #endif
         }
         #endif
-    }
+        }
+     }
 }
 
 /// Moves the lyrics earlier or later against the audio, in half seconds, remembered per song.
 struct MusicLyricsTiming: View {
     @Environment(Store.self) private var store
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         HStack(spacing: 12) {
             Button { music.adjustLyrics(by: -0.5) } label: { Label(L10n.text("Lyrics Later"), systemImage: "minus") }
@@ -574,7 +589,8 @@ struct MusicLyricsTiming: View {
         }
         .labelStyle(.titleAndIcon)
         .frame(maxWidth: .infinity)
-    }
+        }
+     }
 }
 
 #if !os(tvOS)
@@ -585,6 +601,7 @@ struct MusicScrubber: View {
     @State private var dragging: Double?
 
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         let total = music.duration ?? 0
         let position = dragging.map { $0 * total } ?? min(music.seekingTo ?? music.position, total)
@@ -621,6 +638,7 @@ struct MusicScrubber: View {
         .accessibilityAdjustableAction { direction in
             music.skip(by: direction == .increment ? 10 : -10)
         }
-    }
+        }
+     }
 }
 #endif

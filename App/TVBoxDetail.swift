@@ -49,6 +49,7 @@ struct TVBoxVideoDetail: View {
     private var episodes: [Episode] { shown.episodes.filter { $0.flag == activeFlag } }
 
     var body: some View {
+        withPerceptionTracking {
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
                 hero
@@ -107,7 +108,8 @@ struct TVBoxVideoDetail: View {
                 }
             }
         }
-    }
+        }
+     }
 
     // MARK: Hero
 
@@ -491,6 +493,7 @@ struct TVBoxEpisodeStyle: ButtonStyle {
         #endif
         @Environment(\.isEnabled) private var enabled
         var body: some View {
+            withPerceptionTracking {
             configuration.label
                 .font(.system(size: 13, weight: .medium))
                 .foregroundStyle(focused ? Color.black : Color.white.opacity(0.9))
@@ -505,7 +508,8 @@ struct TVBoxEpisodeStyle: ButtonStyle {
                 .contentShape(RoundedRectangle(cornerRadius: 6, style: .continuous))
                 .opacity(enabled ? 1 : 0.45)
                 .animation(.easeOut(duration: 0.14), value: focused)
-        }
+            }
+         }
         private var fill: Color {
             if focused { return .white }
             return loaded ? TVBoxTheme.accent : TVBoxTheme.panel

@@ -15,6 +15,7 @@ struct CloudFilesView: View {
     private var servers: [AListServer] { drives.compactMap { if case .alist(let server) = $0 { server } else { nil } } }
 
     var body: some View {
+        withPerceptionTracking {
         FilesList {
             FilesSection(title: L10n.text("Cloud Drives"),
                          footer: signedIn.count < 2 ? L10n.text("Sign in to Quark or UC under Cloud Drive Accounts to browse their files here.") : nil) {
@@ -69,7 +70,8 @@ struct CloudFilesView: View {
                 reload()
             }
         }
-    }
+        }
+     }
 
     private func reload() { drives = CloudFiles.drives() }
 }
@@ -90,6 +92,7 @@ struct CloudFolderView: View {
     @State private var password = ""
 
     var body: some View {
+        withPerceptionTracking {
         Group {
             if let files, !files.isEmpty {
                 FilesList {
@@ -134,7 +137,8 @@ struct CloudFolderView: View {
             Button(L10n.text("Cancel"), role: .cancel) {}
             Button(L10n.text("Open")) { Task { await load(password: password) } }
         } message: { Text(L10n.text("Enter the password for %@.", name)) }
-    }
+        }
+     }
 
     @ViewBuilder private func row(_ file: CloudFile, in files: [CloudFile]) -> some View {
         let label = FileRowLabel(symbol: file.symbol, tint: file.tint, title: file.name, subtitle: subtitle(file), chevron: file.isFolder)
@@ -209,6 +213,7 @@ struct AListServerForm: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         ScrollView {
             VStack(alignment: .leading, spacing: 24) {
@@ -251,7 +256,8 @@ struct AListServerForm: View {
         .frame(width: 520, height: 420)
         #endif
         #endif
-    }
+        }
+     }
 
     private var title: String { isNew ? L10n.text("Add AList Server") : L10n.text("Edit Server") }
     private var canSave: Bool { !checking && !address.trimmingCharacters(in: .whitespaces).isEmpty }
@@ -309,10 +315,12 @@ private struct FolderLink<Label: View>: View {
     let name: String
     @ViewBuilder var label: Label
     var body: some View {
+        withPerceptionTracking {
         RouteLink { CloudFolderView(drive: drive, folder: folder, name: name) } label: { label }
             .glassRow()
             .accessibilityIdentifier("files.open." + name)
-    }
+        }
+     }
 }
 
 /// The page's rows: the system's grouped list on iPhone, iPad and Mac, and on Apple TV a column
@@ -320,6 +328,7 @@ private struct FolderLink<Label: View>: View {
 private struct FilesList<Content: View>: View {
     @ViewBuilder var content: Content
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 4) { content }
@@ -333,7 +342,8 @@ private struct FilesList<Content: View>: View {
         #else
         List { content }.listStyle(.inset(alternatesRowBackgrounds: false))
         #endif
-    }
+        }
+     }
 }
 
 private struct FilesSection<Content: View>: View {
@@ -341,6 +351,7 @@ private struct FilesSection<Content: View>: View {
     let footer: String?
     @ViewBuilder var content: Content
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         VStack(alignment: .leading, spacing: 4) {
             if let title { Text(title).font(.system(size: 30, weight: .semibold)).foregroundStyle(.secondary).padding(.leading, 28).padding(.top, 24) }
@@ -356,7 +367,8 @@ private struct FilesSection<Content: View>: View {
             if let footer { Text(footer) }
         }
         #endif
-    }
+        }
+     }
 }
 
 struct FileRowLabel: View {
@@ -373,6 +385,7 @@ struct FileRowLabel: View {
     private let tile: CGFloat = 32, glyph: CGFloat = 15, titleFont = Font.body, detailFont = Font.caption
     #endif
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 12) {
             Image(systemName: symbol)
                 .font(.system(size: glyph, weight: .semibold)).foregroundStyle(.white)
@@ -391,7 +404,8 @@ struct FileRowLabel: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contentShape(Rectangle())
-    }
+        }
+     }
 }
 
 /// An empty folder or one that didn't open, in the middle of the page.
@@ -401,6 +415,7 @@ private struct FilesMessage<Actions: View>: View {
     var message: String? = nil
     @ViewBuilder var actions: Actions
     var body: some View {
+        withPerceptionTracking {
         VStack(spacing: 14) {
             Image(systemName: symbol).font(.system(size: 44, weight: .semibold)).foregroundStyle(.secondary)
             Text(title).font(.title3.weight(.semibold))
@@ -409,7 +424,8 @@ private struct FilesMessage<Actions: View>: View {
         }
         .padding(Layout.gutter)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
+        }
+     }
 }
 
 extension FilesMessage where Actions == EmptyView {

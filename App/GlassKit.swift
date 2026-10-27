@@ -73,6 +73,7 @@ struct GlassGroup<Content: View>: View {
     var spacing: CGFloat?
     @ViewBuilder var content: Content
     var body: some View {
+        withPerceptionTracking {
         #if compiler(>=6.2)
         if #available(macOS 26, iOS 26, tvOS 26, *) {
             GlassEffectContainer(spacing: spacing) { content }
@@ -82,7 +83,8 @@ struct GlassGroup<Content: View>: View {
         #else
         content
         #endif
-    }
+        }
+     }
 }
 
 extension View {
@@ -266,16 +268,20 @@ enum Layout {
 struct Backdrop: View {
     @Environment(\.colorScheme) private var scheme
     var body: some View {
+        withPerceptionTracking {
         // Flat canvas (the icon's navy / cool white); artwork supplies the rest of the colour.
         (scheme == .dark ? Color(red: 0.020, green: 0.035, blue: 0.090) : Color(red: 0.955, green: 0.965, blue: 0.985)).ignoresSafeArea()
-    }
+        }
+     }
 }
 
 struct Surface: View {
     @Environment(\.colorScheme) private var scheme
     var body: some View {
+        withPerceptionTracking {
         (scheme == .dark ? Color(red: 0.075, green: 0.105, blue: 0.19) : Color(red: 0.915, green: 0.935, blue: 0.965))
-    }
+        }
+     }
 }
 
 extension View {
@@ -365,6 +371,7 @@ struct LiftButtonStyle: ButtonStyle {
         let configuration: ButtonStyleConfiguration
         @State private var hovering = false
         var body: some View {
+            withPerceptionTracking {
             configuration.label
                 .opacity(configuration.isPressed ? 0.72 : (hovering ? 0.88 : 1))
                 .animation(.easeOut(duration: 0.22), value: hovering)
@@ -375,7 +382,8 @@ struct LiftButtonStyle: ButtonStyle {
                 #if os(macOS)
                 .pointerStyle(.link)
                 #endif
-        }
+            }
+         }
     }
 }
 
@@ -384,6 +392,7 @@ struct IconTile: View {
     var tint: Color = Brand.cyan
     var size: CGFloat = 44
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         let size = max(size, 56)
         #endif
@@ -392,7 +401,8 @@ struct IconTile: View {
             .foregroundStyle(tint)
             .frame(width: size, height: size)
             .background(tint.opacity(0.16), in: RoundedRectangle(cornerRadius: size * 0.26, style: .continuous))
-    }
+        }
+     }
 }
 
 struct Pill: View {
@@ -400,6 +410,7 @@ struct Pill: View {
     var symbol: String?
     var tint: Color = .secondary
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 5) {
             if let symbol { Image(systemName: symbol) }
             Text(text).lineLimit(1)
@@ -407,7 +418,8 @@ struct Pill: View {
         .font(.caption.weight(.semibold)).foregroundStyle(tint)
         .padding(.horizontal, 10).padding(.vertical, 5)
         .glassSurface(.regular.tint(tint.opacity(0.15)), in: Capsule())
-    }
+        }
+     }
 }
 
 /// Multi-line notices are separate from short metadata badges.
@@ -416,6 +428,7 @@ struct StatusNotice: View {
     var symbol: String = "exclamationmark.triangle.fill"
     var tint: Color = Brand.amber
     var body: some View {
+        withPerceptionTracking {
         HStack(alignment: .top, spacing: 10) {
             Image(systemName: symbol).foregroundStyle(tint)
             Text(text).foregroundStyle(.primary).fixedSize(horizontal: false, vertical: true)
@@ -424,7 +437,8 @@ struct StatusNotice: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .padding(14)
         .glassSurface(.regular.tint(tint.opacity(0.12)), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-    }
+        }
+     }
 }
 
 #if !os(tvOS)
@@ -455,6 +469,7 @@ private struct TVChipStyle: ButtonStyle {
         @Environment(\.isFocused) private var focused
         @Environment(\.isEnabled) private var enabled
         var body: some View {
+            withPerceptionTracking {
             configuration.label
                 .font(.system(size: 26, weight: .semibold))
                 .foregroundStyle(focused ? Color.black : Color.white)
@@ -466,7 +481,8 @@ private struct TVChipStyle: ButtonStyle {
                 .shadow(color: .black.opacity(focused ? 0.35 : 0), radius: 16, y: 10)
                 .animation(.easeOut(duration: 0.18), value: focused)
                 .animation(.easeOut(duration: 0.22), value: selected)
-        }
+            }
+         }
         private var glass: GlassStyle {
             if focused { return .regular.tint(.white.opacity(0.9)).interactive() }
             if selected { return .regular.tint(.white.opacity(0.28)).interactive() }
@@ -486,10 +502,12 @@ struct SearchQueryButton: View {
     let query: String
     let action: () -> Void
     var body: some View {
+        withPerceptionTracking {
         Button(action: action) { Label(query, systemImage: "magnifyingglass").lineLimit(1) }
             .glassPill()
             .accessibilityLabel(L10n.text("Search %@", query))
-    }
+        }
+     }
 }
 #endif
 
@@ -512,6 +530,7 @@ extension EnvironmentValues {
 struct ChipRow<Content: View>: View {
     @ViewBuilder let content: Content
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         // Unclipped so a focused chip's lift and glow aren't cut at the row's ends.
         ScrollView(.horizontal, showsIndicators: false) { content.padding(.vertical, 8) }
@@ -520,7 +539,8 @@ struct ChipRow<Content: View>: View {
         // outside so the first chip still lines up with the page.
         ScrollStrip { content.padding(.horizontal, 6) }.padding(.horizontal, -6)
         #endif
-    }
+        }
+     }
 }
 
 struct Chip: View {
@@ -534,6 +554,7 @@ struct Chip: View {
     let action: () -> Void
     @Environment(\.stripDrag) private var drag
     var body: some View {
+        withPerceptionTracking {
         let button = Button { if drag?.active != true { action() } } label: {
             HStack(spacing: 5) {
                 if mark { BilibiliGlyph(size: 22).foregroundStyle(selected ? AnyShapeStyle(.primary) : AnyShapeStyle(BilibiliMark.blue)) }
@@ -546,7 +567,8 @@ struct Chip: View {
         #else
         button.buttonStyle(FilterChipStyle(selected: selected))
         #endif
-    }
+        }
+     }
 }
 
 /// A page with nothing in it yet: a symbol, what the page is for, and one way forward. The button is
@@ -565,6 +587,7 @@ struct EmptyPage<Footer: View>: View {
     private let icon: CGFloat = 84, titleSize: CGFloat = 24, text: CGFloat = 15, spacing: CGFloat = 18, width: CGFloat = 420
     #endif
     var body: some View {
+        withPerceptionTracking {
         VStack(spacing: spacing) {
             Image(systemName: symbol)
                 .font(.system(size: icon * 0.42, weight: .bold))
@@ -587,7 +610,8 @@ struct EmptyPage<Footer: View>: View {
         }
         .padding(Layout.gutter)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-    }
+        }
+     }
 }
 
 extension EmptyPage where Footer == EmptyView {
@@ -601,13 +625,15 @@ extension EmptyPage where Footer == EmptyView {
 struct CardTitle: View {
     let text: String
     var body: some View {
+        withPerceptionTracking {
         Text(text).lineLimit(2, reservesSpace: true).hidden()
             .overlay(alignment: .leading) {
                 Text(text).lineLimit(2).foregroundStyle(.primary)
             }
             .font(.headline).multilineTextAlignment(.leading)
             .accessibilityElement(children: .ignore).accessibilityLabel(text)
-    }
+        }
+     }
 }
 
 struct SectionHeader: View {
@@ -621,6 +647,7 @@ struct SectionHeader: View {
     let title: String
     var action: (() -> Void)?
     var body: some View {
+        withPerceptionTracking {
         if let action {
             Button(action: action) {
                 HStack(spacing: 6) {
@@ -638,7 +665,8 @@ struct SectionHeader: View {
         } else {
             Text(title).font(sectionFont)
         }
-    }
+        }
+     }
 }
 
 /// A cover's average colour, for backdrops tinted by the artwork, as the music player has. It
@@ -722,6 +750,7 @@ struct PosterImage: View {
     @State private var bitmap: PosterBitmap?
     private var resource: PosterResource? { url.map { PosterResource(url: $0, headers: headers) } }
     var body: some View {
+        withPerceptionTracking {
         ZStack {
             Color(white: 0.20)
             Image(systemName: symbol).font(.title2).foregroundColor(.white.opacity(0.55))
@@ -739,7 +768,8 @@ struct PosterImage: View {
                 aspect?.wrappedValue = CGFloat(image.image.width) / CGFloat(max(image.image.height, 1))
             }
         }
-    }
+        }
+     }
 }
 
 struct PosterCard: View {
@@ -755,6 +785,7 @@ struct PosterCard: View {
         headers = recommendation.poster?.headers ?? [:]; remarks = recommendation.remarks
     }
     var body: some View {
+        withPerceptionTracking {
         VStack(alignment: .leading, spacing: 10) {
             Color.clear.aspectRatio(2.0 / 3.0, contentMode: .fit)
                 .overlay { PosterImage(url: poster, headers: headers) }
@@ -770,7 +801,8 @@ struct PosterCard: View {
             Text(name).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
                 .lineLimit(1).truncationMode(.tail)
         }
-    }
+        }
+     }
 }
 
 extension View {
@@ -807,16 +839,19 @@ struct Shimmer: ViewModifier {
 struct SkeletonBlock: View {
     var cornerRadius: CGFloat = 12
     var body: some View {
+        withPerceptionTracking {
         RoundedRectangle(cornerRadius: cornerRadius, style: .continuous)
             .fill(Color.primary.opacity(0.09))
             .modifier(Shimmer())
             .clipShape(RoundedRectangle(cornerRadius: cornerRadius, style: .continuous))
-    }
+        }
+     }
 }
 
 struct PosterSkeletonGrid: View {
     var count = 12
     var body: some View {
+        withPerceptionTracking {
         LazyVGrid(columns: Layout.posterColumns, spacing: Layout.gridRowSpacing) {
             ForEach(0..<count, id: \.self) { _ in
                 VStack(alignment: .leading, spacing: 10) {
@@ -827,12 +862,14 @@ struct PosterSkeletonGrid: View {
             }
         }
         .accessibilityElement(children: .ignore).accessibilityLabel(L10n.text("Loading…"))
-    }
+        }
+     }
 }
 
 struct ChannelSkeletonGrid: View {
     var count = 12
     var body: some View {
+        withPerceptionTracking {
         LazyVGrid(columns: [GridItem(.adaptive(minimum: Layout.cardMin), spacing: 12)], spacing: 12) {
             ForEach(0..<count, id: \.self) { _ in
                 HStack(spacing: 14) {
@@ -847,11 +884,13 @@ struct ChannelSkeletonGrid: View {
             }
         }
         .accessibilityElement(children: .ignore).accessibilityLabel(L10n.text("Loading channels…"))
-    }
+        }
+     }
 }
 
 struct ChipSkeletonRow: View {
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 8) {
             ForEach([64, 88, 72, 100, 76, 84], id: \.self) { width in
                 SkeletonBlock(cornerRadius: 18).frame(width: CGFloat(width), height: 36)
@@ -859,7 +898,8 @@ struct ChipSkeletonRow: View {
             Spacer(minLength: 0)
         }
         .padding(.vertical, 4).accessibilityHidden(true)
-    }
+        }
+     }
 }
 
 extension View {
@@ -895,6 +935,7 @@ private struct LoadingFocus: ViewModifier {
 
 struct DetailSkeleton: View {
     var body: some View {
+        withPerceptionTracking {
         VStack(alignment: .leading, spacing: 26) {
             VStack(alignment: .leading, spacing: 10) {
                 SkeletonBlock(cornerRadius: 6).frame(height: 14)
@@ -909,7 +950,8 @@ struct DetailSkeleton: View {
             }
         }
         .accessibilityElement(children: .ignore).accessibilityLabel(L10n.text("Loading details…"))
-    }
+        }
+     }
 }
 
 /// What a loading card shows. `reason` explains a slow load and appears after `LoadingCard.patience`.
@@ -943,11 +985,13 @@ extension LoadingProgress {
 struct ElapsedTime: View {
     @State private var started = Date()
     var body: some View {
+        withPerceptionTracking {
         TimelineView(.periodic(from: .now, by: 1)) { timeline in
             Text(Duration.seconds(max(0, Int(timeline.date.timeIntervalSince(started)))).formatted(.time(pattern: .minuteSecond)))
                 .monospacedDigit().foregroundStyle(.secondary)
         }
-    }
+        }
+     }
 }
 
 /// Every wait shows how long it has run; past `patience` seconds it also says why it is still
@@ -960,13 +1004,15 @@ struct LoadingCard: View {
     @State private var started = Date()
 
     var body: some View {
+        withPerceptionTracking {
         TimelineView(.periodic(from: .now, by: 0.5)) { timeline in
             let elapsed = max(0, timeline.date.timeIntervalSince(started))
             if elapsed >= appearAfter {
                 card(progress(), elapsed: Int(elapsed))
             }
         }
-    }
+        }
+     }
 
     private func card(_ state: LoadingProgress, elapsed: Int) -> some View {
         let explains = Double(elapsed) >= Self.patience && state.reason != nil
@@ -1011,6 +1057,7 @@ struct ErrorStateCard: View {
     @State private var showsDetails = false
 
     var body: some View {
+        withPerceptionTracking {
         VStack(spacing: 24) {
             Image(systemName: "rectangle.slash")
                 .font(.system(size: 30, weight: .light))
@@ -1063,7 +1110,8 @@ struct ErrorStateCard: View {
         .contentPanel(cornerRadius: 28)
         .frame(maxWidth: .infinity)
         .onChange(of: details) { _ in showsDetails = false }
-    }
+        }
+     }
 
     private var recoveryWidth: CGFloat {
         #if os(tvOS)
@@ -1108,11 +1156,13 @@ private struct TVTileStyle: ButtonStyle {
         let configuration: ButtonStyleConfiguration
         @Environment(\.isFocused) private var focused
         var body: some View {
+            withPerceptionTracking {
             configuration.label
                 .scaleEffect(configuration.isPressed ? 0.98 : focused ? 1.05 : 1)
                 .shadow(color: .black.opacity(focused ? 0.5 : 0), radius: 24, y: 14)
                 .animation(.easeOut(duration: 0.18), value: focused)
-        }
+            }
+         }
     }
 }
 private struct TVCardStyle: ButtonStyle {
@@ -1124,6 +1174,7 @@ private struct TVCardStyle: ButtonStyle {
         /// without the card's layout size changing.
         private let inset: CGFloat = 14
         var body: some View {
+            withPerceptionTracking {
             let plate = RoundedRectangle(cornerRadius: 10 + inset, style: .continuous)
             configuration.label
                 .padding(inset)
@@ -1133,7 +1184,8 @@ private struct TVCardStyle: ButtonStyle {
                 .scaleEffect(configuration.isPressed ? 0.98 : focused ? 1.02 : 1)
                 .shadow(color: .black.opacity(focused ? 0.4 : 0), radius: 20, y: 12)
                 .animation(.easeOut(duration: 0.18), value: focused)
-        }
+            }
+         }
     }
 }
 #endif
@@ -1175,6 +1227,7 @@ private struct TVControlStyle: ButtonStyle {
         @Environment(\.isFocused) private var focused
         @Environment(\.isEnabled) private var enabled
         var body: some View {
+            withPerceptionTracking {
             configuration.label
                 .font(.system(size: 26, weight: .semibold))
                 .foregroundStyle(focused ? Color.black : Color.white)
@@ -1185,7 +1238,8 @@ private struct TVControlStyle: ButtonStyle {
                 .opacity(enabled ? 1 : 0.35)
                 .scaleEffect(configuration.isPressed ? 0.97 : focused ? 1.02 : 1)
                 .animation(.easeOut(duration: 0.18), value: focused)
-        }
+            }
+         }
     }
 }
 #endif
@@ -1201,13 +1255,15 @@ struct GlassRowStyle: ButtonStyle {
         @Environment(\.isFocused) private var focused
         @Environment(\.isEnabled) private var enabled
         var body: some View {
+            withPerceptionTracking {
             configuration.label
                 .padding(.horizontal, 28).padding(.vertical, 12)
                 .glassSurface(focused ? .regular.tint(.white.opacity(0.22)).interactive() : .identity, in: Capsule())
                 .opacity(enabled ? 1 : 0.5)
                 .scaleEffect(configuration.isPressed ? 0.99 : focused ? 1.02 : 1, anchor: .leading)
                 .animation(.easeOut(duration: 0.15), value: focused)
-        }
+            }
+         }
     }
 }
 #endif

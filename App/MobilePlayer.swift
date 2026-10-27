@@ -64,6 +64,7 @@ struct MobilePlayerView: View {
     @State private var brightnessBefore: CGFloat?
 
     var body: some View {
+        withPerceptionTracking {
         ZStack {
             PlayerLayerView(player: session.player, fills: fillsScreen, pip: pip).ignoresSafeArea()
             // The enhanced picture covers the layer's own, under everything else.
@@ -124,7 +125,8 @@ struct MobilePlayerView: View {
             DanmakuListView(player: session.player, comments: session.danmaku) { showsDanmakuList = false }
                 .danmakuListPresentation()
         }
-    }
+        }
+     }
 
     /// What the Lock Screen's Now Playing shows, besides the position the system runs on from the rate.
     private struct NowPlayingState: Equatable {
@@ -644,6 +646,7 @@ private struct SeekBar<Accessory: View>: View {
     @State private var width: CGFloat = 0
 
     var body: some View {
+        withPerceptionTracking {
         // Every display frame while it plays, as AVKit's bar does; paused, held or hidden, only when the clock changes.
         let follows = moving && clock.scrubbing == nil
         TimelineView(.animation(paused: !follows)) { _ in
@@ -655,7 +658,8 @@ private struct SeekBar<Accessory: View>: View {
             if drag == nil { accessory().frame(height: Self.timeRow).transition(.opacity) }
         }
         .animation(.easeOut(duration: 0.15), value: drag == nil)
-    }
+        }
+     }
 
     private func bar(_ position: Double) -> some View {
         let duration = clock.duration

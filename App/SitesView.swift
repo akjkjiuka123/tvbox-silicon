@@ -16,6 +16,7 @@ struct SitesView: View {
     @State private var foldBeforeSearch: Set<String>?
     @State private var arranging = false
     var body: some View {
+        withPerceptionTracking {
         Group {
             if let config = store.subscription {
                 let groups = store.sourceGroups(includeHidden: false).filtered(by: query)
@@ -79,7 +80,8 @@ struct SitesView: View {
                 foldBeforeSearch = nil
             }
         }
-    }
+        }
+     }
 
     @ViewBuilder
     private func groupHeader(_ group: SourceGroup) -> some View {
@@ -176,10 +178,12 @@ struct SourceHealthDot: View {
     private let size: CGFloat = 8
     #endif
     var body: some View {
+        withPerceptionTracking {
         if let tint = status.tint {
             Image(systemName: "circle.fill").font(.system(size: size)).foregroundStyle(tint).accessibilityLabel(status.summary)
         }
-    }
+        }
+     }
 }
 
 /// A source as an app-icon tile plus its name: the name's emoji becomes the icon, its taglines
@@ -200,6 +204,7 @@ struct SiteCard: View {
     private let focused = false
     #endif
     var body: some View {
+        withPerceptionTracking {
         let label = SourceLabel(site.name)
         let pinned = store.subscription.map { store.pinnedSources.contains(site, origin: $0.origin) } ?? false
         let runs = site.isBuiltIn || site.canBrowse(jarURL: store.subscription?.spiderURL)
@@ -238,7 +243,8 @@ struct SiteCard: View {
         .background { TileSurface(focused: focused, radius: radius) }
         .accessibilityElement(children: .combine)
         .opacity(dimmed ? 0.45 : 1)
-    }
+        }
+     }
 
     /// Which engine runs a source is an implementation detail; only built-in sources say so.
     private var engine: String? { site.isBuiltIn ? L10n.text("Built-in") : nil }
@@ -249,6 +255,7 @@ struct TileSurface: View {
     var focused: Bool
     var radius: CGFloat
     var body: some View {
+        withPerceptionTracking {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         #if os(tvOS)
         // Like the system's focused buttons: a quiet tile at rest, a bright plate under focus.
@@ -257,7 +264,8 @@ struct TileSurface: View {
         #else
         Color.clear.contentPanel(cornerRadius: radius)
         #endif
-    }
+        }
+     }
 }
 
 /// A source's icon: Bilibili's own mark, otherwise a `MonogramIcon`.
@@ -266,10 +274,12 @@ struct SourceIcon: View {
     let label: SourceLabel
     var size: CGFloat
     var body: some View {
+        withPerceptionTracking {
         if site.isBilibili { BilibiliMark(size: size) } else {
             MonogramIcon(seed: site.name, label: label, size: size, systemImage: site.key == Hongguo.siteKey ? "play.rectangle.fill" : nil)
         }
-    }
+        }
+     }
 }
 
 /// The emoji a name starts with (or its first character, or a symbol) on a tile whose colour is
@@ -285,6 +295,7 @@ struct MonogramIcon: View {
         Color(red: 0.62, green: 0.48, blue: 0.88), Color(red: 0.52, green: 0.72, blue: 0.38),
     ]
     var body: some View {
+        withPerceptionTracking {
         // A stable hash: `hashValue` changes every launch.
         let tint = Self.tints[seed.unicodeScalars.reduce(0) { ($0 &* 31 &+ Int($1.value)) & 0xFFFF } % Self.tints.count]
         let shape = RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
@@ -303,7 +314,8 @@ struct MonogramIcon: View {
         .background(LinearGradient(colors: [tint.opacity(0.85), tint.opacity(0.45)], startPoint: .topLeading, endPoint: .bottomTrailing), in: shape)
         .overlay { shape.strokeBorder(.white.opacity(0.12), lineWidth: 1) }
         .accessibilityHidden(true)
-    }
+        }
+     }
 }
 
 struct PinSourceButton: View {
@@ -311,11 +323,13 @@ struct PinSourceButton: View {
     let site: Site
     let origin: URL
     var body: some View {
+        withPerceptionTracking {
         let pinned = store.pinnedSources.contains(site, origin: origin)
         Button { store.pinnedSources.toggle(site, origin: origin) } label: {
             Label(L10n.text(pinned ? "Unpin source" : "Pin source"), systemImage: pinned ? "pin.slash" : "pin")
         }.accessibilityIdentifier("source.pin." + site.key)
-    }
+        }
+     }
 }
 
 struct HideSourceButton: View {
@@ -323,11 +337,13 @@ struct HideSourceButton: View {
     let site: Site
     let origin: URL
     var body: some View {
+        withPerceptionTracking {
         let hidden = store.hiddenSources.contains(site, origin: origin)
         Button { store.hiddenSources.toggle(site, origin: origin) } label: {
             Label(L10n.text(hidden ? "Unhide Source" : "Hide Source"), systemImage: hidden ? "eye" : "eye.slash")
         }.accessibilityIdentifier("source.hide." + site.key)
-    }
+        }
+     }
 }
 
 /// Context-menu moves within the viewer's own source order.
@@ -336,6 +352,7 @@ struct MoveSourceButtons: View {
     let site: Site
     let sites: [Site]
     var body: some View {
+        withPerceptionTracking {
         if let index = sites.firstIndex(where: { $0.id == site.id }) {
             if index > 0 {
                 Button { store.moveSource(site, to: 0) } label: { Label(L10n.text("Move to Top"), systemImage: "arrow.up.to.line") }
@@ -344,7 +361,8 @@ struct MoveSourceButtons: View {
                 Button { store.moveSource(site, to: sites.count) } label: { Label(L10n.text("Move to Bottom"), systemImage: "arrow.down.to.line") }
             }
         }
-    }
+        }
+     }
 }
 
 /// The Sources page's header: the switch for the viewer's own order (`SourceOrder`), the top of
@@ -361,6 +379,7 @@ struct SourceOrderCard: View {
                                             : "Yingxia searches quick, reliable sources first.")
     }
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         VStack(alignment: .leading, spacing: 8) {
             TVSettingsToggle(title: L10n.text("Custom Search Order"), detail: detail, isOn: enabled)
@@ -410,7 +429,8 @@ struct SourceOrderCard: View {
         .padding(16)
         .contentPanel(cornerRadius: 22)
         #endif
-    }
+        }
+     }
 }
 
 /// The first sources of an order, as numbered icons.
@@ -423,6 +443,7 @@ struct SourceOrderPreview: View {
     private let size: CGFloat = 30
     #endif
     var body: some View {
+        withPerceptionTracking {
         let shown = Array(sites.prefix(limit))
         HStack(spacing: size * 0.32) {
             ForEach(Array(shown.enumerated()), id: \.element.id) { index, site in
@@ -438,20 +459,23 @@ struct SourceOrderPreview: View {
         // Room for the badges that stick out.
         .padding(.top, size * 0.18).padding(.leading, size * 0.18)
         .accessibilityHidden(true)
-    }
+        }
+     }
 }
 
 struct SourceRankBadge: View {
     let rank: Int
     var size: CGFloat
     var body: some View {
+        withPerceptionTracking {
         Text(rank, format: .number).font(.system(size: size * 0.62, weight: .bold, design: .rounded)).monospacedDigit()
             .foregroundStyle(Brand.onAccent)
             .padding(.horizontal, size * 0.2)
             .frame(minWidth: size, minHeight: size)
             .background(Brand.accent, in: Capsule())
             .overlay { Capsule().strokeBorder(.black.opacity(0.25), lineWidth: 1) }
-    }
+        }
+     }
 }
 
 /// One source in the order editor: its place, icon, name and health.
@@ -467,6 +491,7 @@ private struct SourceOrderRow: View {
     private let title = Font.body.weight(.medium), caption = Font.caption
     #endif
     var body: some View {
+        withPerceptionTracking {
         let label = SourceLabel(site.name)
         let detail = (label.parts.dropFirst() + [site.isBuiltIn ? L10n.text("Built-in") : nil].compactMap { $0 }).joined(separator: " · ")
         HStack(spacing: 12) {
@@ -489,7 +514,8 @@ private struct SourceOrderRow: View {
         }
         .padding(.vertical, 3)
         .accessibilityElement(children: .combine)
-    }
+        }
+     }
 }
 
 /// The viewer's source order as a list to drag into place. tvOS has no dragging: there, choose a
@@ -516,6 +542,7 @@ struct SourceOrderEditor: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         NavigationStack {
             ScrollView {
@@ -600,7 +627,8 @@ struct SourceOrderEditor: View {
         .frame(width: 480, height: 600)
         #endif
         #endif
-    }
+        }
+     }
 
     #if os(tvOS)
     private func move(_ site: Site, to offset: Int) {
@@ -637,6 +665,7 @@ struct SiteView: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         Group {
             if !canLoad {
                 EmptyState {
@@ -739,7 +768,8 @@ struct SiteView: View {
                 else { query = initialQuery; await search(); await browser.loadCategories(client: client) }
             }
         }
-    }
+        }
+     }
     private var categoryBar: some View {
         ChipRow {
             GlassGroup(spacing: 8) {
@@ -842,6 +872,7 @@ struct VideoDetailView: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         Group {
             if splitLayout {
                 // Watch-page split: artwork, Play and synopsis on the left; the episode rail
@@ -929,7 +960,8 @@ struct VideoDetailView: View {
                 }
             }
         }
-    }
+        }
+     }
     /// The two-column watch page. On a Mac or iPad it only pays off with a long episode list and room for both
     /// columns; otherwise the rail sat mostly empty beside a squeezed hero, so the page stacks instead.
     private var splitLayout: Bool {
@@ -1537,6 +1569,7 @@ private struct EpisodeRow: View {
     }
     private var parts: (title: String, detail: String?) { Self.split(name) }
     var body: some View {
+        withPerceptionTracking {
         let parts = parts
         let button = Button(action: action) {
             HStack(spacing: 10) {
@@ -1569,7 +1602,8 @@ private struct EpisodeRow: View {
             .onHover { hovering = $0 }
             .animation(.easeOut(duration: 0.22), value: hovering)
         #endif
-    }
+        }
+     }
 }
 
 private struct DownloadLabelStyle: LabelStyle {

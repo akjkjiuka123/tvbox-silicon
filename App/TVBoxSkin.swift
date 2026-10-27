@@ -35,8 +35,10 @@ enum SkinMode: String, CaseIterable, Identifiable, Sendable {
 struct SkinSwitch: View {
     @AppStorage(SkinMode.storageKey) private var skin = SkinMode.native.rawValue
     var body: some View {
+        withPerceptionTracking {
         if skin == SkinMode.tvbox.rawValue { TVBoxRoot() } else { RootView() }
-    }
+        }
+     }
 }
 
 // MARK: - Theme
@@ -106,6 +108,7 @@ struct TVBoxRoot: View {
     private var items: [AppSection] { [.home, .sites, .live, .search, .favorites, .history, .settings] }
 
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 0) {
             rail
             NavigationStack {
@@ -131,7 +134,8 @@ struct TVBoxRoot: View {
         #if os(tvOS)
         .preferredColorScheme(.dark)
         #endif
-    }
+        }
+     }
 
     private var rail: some View {
         VStack(spacing: 4) {
@@ -210,6 +214,7 @@ struct TVBoxHome: View {
     @Binding var section: AppSection
 
     var body: some View {
+        withPerceptionTracking {
         ScrollView {
             VStack(alignment: .leading, spacing: 26) {
                 TVBoxPageHeader(title: "首页", subtitle: store.subscriptionName.isEmpty ? nil : store.subscriptionName)
@@ -244,7 +249,8 @@ struct TVBoxHome: View {
             .padding(.vertical, 28)
         }
         .background(TVBoxTheme.canvas)
-    }
+        }
+     }
 
     private func sourceTile(_ site: Site, config: Subscription) -> some View {
         let origin = site.origin(or: config.origin)
@@ -278,6 +284,7 @@ struct TVBoxBrowse: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         VStack(spacing: 0) {
             if let config = store.subscription, let site = selected {
                 sourceBar(sites: sites)
@@ -298,7 +305,8 @@ struct TVBoxBrowse: View {
                 .background(TVBoxTheme.canvas)
             }
         }
-    }
+        }
+     }
 
     private func sourceBar(sites: [Site]) -> some View {
         ScrollView(.horizontal, showsIndicators: false) {
@@ -351,6 +359,7 @@ struct TVBoxCatalog: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         Group {
             if compact {
                 VStack(spacing: 0) {
@@ -373,7 +382,8 @@ struct TVBoxCatalog: View {
         }
         .onChange(of: browser.category) { _ in filterValues = [:] }
         .onDisappear { requestTask?.cancel(); browser.cancel() }
-    }
+        }
+     }
 
     /// The categories as a horizontal bar, for a phone.
     private var compactCategoryBar: some View {
@@ -590,6 +600,7 @@ struct TVBoxSiteTile: View {
     private var status: SourceHealth.Status { store.health(of: site) }
 
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 10) {
             TVBoxMonogram(name: site.name, size: 40)
             VStack(alignment: .leading, spacing: 3) {
@@ -615,7 +626,8 @@ struct TVBoxSiteTile: View {
         .overlay {
             RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(TVBoxTheme.hairline)
         }
-    }
+        }
+     }
 }
 
 /// A cover in the grid: 2:3 artwork, the source's remarks as a corner tag, the title under it.
@@ -635,6 +647,7 @@ struct TVBoxPosterTile: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         VStack(alignment: .leading, spacing: 7) {
             Color.clear
                 .aspectRatio(2.0 / 3.0, contentMode: .fit)
@@ -663,7 +676,8 @@ struct TVBoxPosterTile: View {
                     .lineLimit(1)
             }
         }
-    }
+        }
+     }
 }
 
 /// The first character as an icon: a source name's leading emoji is already artwork.
@@ -675,6 +689,7 @@ struct TVBoxMonogram: View {
         return trimmed.isEmpty ? "?" : String(trimmed.prefix(1))
     }
     var body: some View {
+        withPerceptionTracking {
         Text(initial)
             .font(.system(size: size * 0.46, weight: .bold))
             .foregroundStyle(.white)
@@ -684,7 +699,8 @@ struct TVBoxMonogram: View {
                                startPoint: .topLeading, endPoint: .bottomTrailing),
                 in: RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)
             )
-    }
+        }
+     }
 }
 
 // MARK: - Headers and notices
@@ -693,6 +709,7 @@ struct TVBoxPageHeader: View {
     let title: String
     var subtitle: String? = nil
     var body: some View {
+        withPerceptionTracking {
         HStack(alignment: .firstTextBaseline, spacing: 12) {
             Text(title).font(.system(size: 26, weight: .bold)).foregroundStyle(.white)
             if let subtitle {
@@ -700,13 +717,15 @@ struct TVBoxPageHeader: View {
             }
             Spacer(minLength: 0)
         }
-    }
+        }
+     }
 }
 
 struct TVBoxSectionTitle: View {
     let text: String
     var count: Int? = nil
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 8) {
             RoundedRectangle(cornerRadius: 1.5, style: .continuous)
                 .fill(TVBoxTheme.accent)
@@ -717,7 +736,8 @@ struct TVBoxSectionTitle: View {
             }
             Spacer(minLength: 0)
         }
-    }
+        }
+     }
 }
 
 struct TVBoxNotice<Actions: View>: View {
@@ -727,6 +747,7 @@ struct TVBoxNotice<Actions: View>: View {
     @ViewBuilder var actions: Actions
 
     var body: some View {
+        withPerceptionTracking {
         VStack(alignment: .leading, spacing: 10) {
             Image(systemName: symbol)
                 .font(.system(size: 26, weight: .light))
@@ -741,7 +762,8 @@ struct TVBoxNotice<Actions: View>: View {
         .padding(20)
         .frame(maxWidth: 620, alignment: .leading)
         .background(TVBoxTheme.panel, in: RoundedRectangle(cornerRadius: 12, style: .continuous))
-    }
+        }
+     }
 }
 
 extension TVBoxNotice where Actions == EmptyView {
@@ -770,6 +792,7 @@ struct TVBoxRailStyle: ButtonStyle {
         private var focused: Bool { false }
         #endif
         var body: some View {
+            withPerceptionTracking {
             let radius: CGFloat = compact ? 8 : 10
             configuration.label
                 .foregroundStyle(focused ? Color.white : (selected ? Color.white : TVBoxTheme.secondary))
@@ -784,7 +807,8 @@ struct TVBoxRailStyle: ButtonStyle {
                 }
                 .contentShape(RoundedRectangle(cornerRadius: radius, style: .continuous))
                 .animation(.easeOut(duration: 0.14), value: focused)
-        }
+            }
+         }
     }
 }
 
@@ -803,6 +827,7 @@ struct TVBoxCategoryStyle: ButtonStyle {
         private var focused: Bool { false }
         #endif
         var body: some View {
+            withPerceptionTracking {
             configuration.label
                 .font(.system(size: 14, weight: selected ? .semibold : .regular))
                 .foregroundStyle(focused ? Color.black : (selected ? Color.white : TVBoxTheme.secondary))
@@ -815,7 +840,8 @@ struct TVBoxCategoryStyle: ButtonStyle {
                 }
                 .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .animation(.easeOut(duration: 0.14), value: focused)
-        }
+            }
+         }
     }
 }
 
@@ -835,6 +861,7 @@ struct TVBoxChipStyle: ButtonStyle {
         #endif
         @Environment(\.isEnabled) private var enabled
         var body: some View {
+            withPerceptionTracking {
             configuration.label
                 .font(.system(size: 14, weight: .medium))
                 .foregroundStyle(focused ? Color.black : (selected ? Color.white : Color.white.opacity(0.74)))
@@ -848,7 +875,8 @@ struct TVBoxChipStyle: ButtonStyle {
                 .contentShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
                 .opacity(enabled ? 1 : 0.4)
                 .animation(.easeOut(duration: 0.14), value: focused)
-        }
+            }
+         }
         private var fill: Color {
             if focused { return .white }
             return selected ? TVBoxTheme.accent : TVBoxTheme.panel
@@ -871,6 +899,7 @@ struct TVBoxTileStyle: ButtonStyle {
         private var focused: Bool { false }
         #endif
         var body: some View {
+            withPerceptionTracking {
             configuration.label
                 .overlay {
                     RoundedRectangle(cornerRadius: corner, style: .continuous)
@@ -879,6 +908,7 @@ struct TVBoxTileStyle: ButtonStyle {
                 .scaleEffect(configuration.isPressed ? 0.97 : (focused ? 1.05 : 1))
                 .shadow(color: .black.opacity(focused ? 0.55 : 0), radius: 22, y: 12)
                 .animation(.easeOut(duration: 0.16), value: focused)
-        }
+            }
+         }
     }
 }

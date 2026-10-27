@@ -11,6 +11,7 @@ struct FavoriteHeartButton: View {
     /// An empty artwork heart stays hidden until this is true. A saved heart ignores it.
     var revealed = true
     var body: some View {
+        withPerceptionTracking {
         let on = store.favorites.contains(item)
         let shown = on || !onArtwork || revealed
         Button { store.favorites.toggle(item) } label: {
@@ -26,7 +27,8 @@ struct FavoriteHeartButton: View {
         .allowsHitTesting(shown)
         .accessibilityHidden(!shown)
         .accessibilityLabel(on ? L10n.text("Remove %@ from favorites", name) : L10n.text("Add %@ to favorites", name))
-    }
+        }
+     }
 }
 
 struct FavoriteMenuButton: View {
@@ -34,11 +36,13 @@ struct FavoriteMenuButton: View {
     let item: FavoriteItem
     let name: String
     var body: some View {
+        withPerceptionTracking {
         let on = store.favorites.contains(item)
         // A menu row is short: the title is already on the card it was opened from.
         Button(L10n.text(on ? "Unlike" : "Like"), systemImage: on ? "heart.slash" : "heart") {
             store.favorites.toggle(item)
         }
         .accessibilityLabel(on ? L10n.text("Remove %@ from favorites", name) : L10n.text("Add %@ to favorites", name))
-    }
+        }
+     }
 }

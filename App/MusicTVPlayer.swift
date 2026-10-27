@@ -8,6 +8,7 @@ import Perception
 struct MusicNowPlayingButton: View {
     @Environment(Store.self) private var store
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         if let track = music.track {
             Button { music.presentsPlayer = true } label: {
@@ -24,7 +25,8 @@ struct MusicNowPlayingButton: View {
             .accessibilityLabel(Text(L10n.text("Now Playing") + ", " + track.title))
             .padding(.bottom, 16)
         }
-    }
+        }
+     }
 }
 
 /// The sidebar's Now Playing item: the song's title, and bars that move while it plays. The sidebar
@@ -33,10 +35,12 @@ struct MusicTabLabel: View {
     @Environment(Store.self) private var store
     @State private var bars = MusicTabBars()
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         Label { Text(music.track?.title ?? L10n.text("Now Playing")) } icon: { Image(uiImage: bars.image) }
             .onChange(of: music.phase == .playing) { playing in bars.animates = playing }
-    }
+        }
+     }
 }
 
 /// Three bars drawn at a few heights, cycled while the song plays; low and still while it is paused.
@@ -88,6 +92,7 @@ struct MusicSidebarNowPlaying: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         if let track = music.track {
             Button { music.presentsPlayer = true } label: { MusicSidebarCard(track: track) }
@@ -96,7 +101,8 @@ struct MusicSidebarNowPlaying: View {
                 // Close to the sections under it, as the profile card sits in Music.
                 .padding(.bottom, -36)
         }
-    }
+        }
+     }
 }
 
 /// The card itself. In focus only the cover is outlined and lifts, like a poster; the words stay put.
@@ -107,6 +113,7 @@ private struct MusicSidebarCard: View {
     private let art: CGFloat = 60
 
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 16) {
             MusicArtwork(url: track.artwork, size: art)
                 .overlay { activity(store.music) }
@@ -126,7 +133,8 @@ private struct MusicSidebarCard: View {
         // The cover lines up with the section icons, with room above for its outline.
         .padding(.leading, 22).padding(.trailing, 12).padding(.top, 14).padding(.bottom, 6)
         .animation(.easeOut(duration: 0.15), value: focused)
-    }
+        }
+     }
 
     /// Bars while sound plays, a spinner while a channel is found; the cover alone while paused.
     @ViewBuilder private func activity(_ music: MusicPlaybackSession) -> some View {

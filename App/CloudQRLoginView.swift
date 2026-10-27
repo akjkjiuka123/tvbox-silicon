@@ -37,6 +37,7 @@ struct CloudQRLoginView: View {
         #endif
     }
     var body: some View {
+        withPerceptionTracking {
         // Side by side on a TV, iPad or Mac; stacked on a phone.
         ViewThatFits(in: .horizontal) {
             HStack(alignment: .center, spacing: codeSpacing) { code; details }
@@ -50,7 +51,8 @@ struct CloudQRLoginView: View {
         .screenBackdrop()
         #endif
         .task(id: attempt) { await run() }
-    }
+        }
+     }
     private var details: some View {
         VStack(alignment: .leading, spacing: 28) {
             VStack(alignment: .leading, spacing: 10) {

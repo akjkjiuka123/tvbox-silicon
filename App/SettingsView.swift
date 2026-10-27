@@ -13,6 +13,7 @@ struct SettingsGroup<Content: View>: View {
     var footer: String? = nil
     @ViewBuilder var content: Content
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         TVSettingsSection(title: title, footer: footer) { content }
         #else
@@ -24,7 +25,8 @@ struct SettingsGroup<Content: View>: View {
             if let footer { Text(footer) }
         }
         #endif
-    }
+        }
+     }
 }
 
 /// Icon tile, title, optional subtitle and a trailing accessory. On Apple TV the row goes without
@@ -36,6 +38,7 @@ struct SettingsRow<Trailing: View>: View {
     var subtitle: String? = nil
     @ViewBuilder var trailing: Trailing
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         HStack(spacing: 18) {
             VStack(alignment: .leading, spacing: 4) {
@@ -53,7 +56,8 @@ struct SettingsRow<Trailing: View>: View {
         #else
         LabeledContent { trailing } label: { FormLabel(symbol: symbol, tint: tint, title: title, subtitle: subtitle) }
         #endif
-    }
+        }
+     }
 }
 
 extension SettingsRow where Trailing == EmptyView {
@@ -70,12 +74,14 @@ struct SettingsLinkRow<Destination: View>: View {
     var subtitle: String? = nil
     @ViewBuilder var destination: () -> Destination
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         TVSettingsLink(title: title, value: subtitle, destination: destination)
         #else
         RouteLink(destination: destination) { FormLabel(symbol: symbol, tint: tint, title: title, subtitle: subtitle) }
         #endif
-    }
+        }
+     }
 }
 
 /// A row that does something in place, such as clearing the cache: the whole row is the button.
@@ -84,12 +90,14 @@ struct SettingsActionRow: View {
     var destructive = false
     let action: () -> Void
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         TVSettingsAction(title: title, destructive: destructive, action: action)
         #else
         Button(title, role: destructive ? .destructive : nil, action: action).formRowButton()
         #endif
-    }
+        }
+     }
 }
 
 extension View {
@@ -125,12 +133,14 @@ struct SettingsPage<Content: View>: View {
     var subtitle: String? = nil
     @ViewBuilder var content: Content
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         TVSettingsSubpage(symbol: symbol, title: title, subtitle: subtitle) { content }
         #else
         Form { Group { content }.settingsRows() }.settingsForm(title)
         #endif
-    }
+        }
+     }
 }
 
 /// The panel around the diagnostic log list.
@@ -145,12 +155,14 @@ enum SettingsStyle {
 
 struct SettingsView: View {
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         TVSettingsView()
         #else
         FormSettingsView()
         #endif
-    }
+        }
+     }
 }
 
 extension Store {
@@ -181,6 +193,7 @@ struct SettingsIcon: View {
     let symbol: String
     var tint: Color = .gray
     var body: some View {
+        withPerceptionTracking {
         #if os(iOS)
         // Black (Douyin) would vanish in dark mode, so it follows the text colour.
         Image(systemName: symbol)
@@ -195,7 +208,8 @@ struct SettingsIcon: View {
             .background(tint.gradient, in: RoundedRectangle(cornerRadius: FormMetrics.icon * 0.26, style: .continuous))
             .accessibilityHidden(true)
         #endif
-    }
+        }
+     }
 }
 
 /// Icon tile, title and an optional second line.
@@ -205,13 +219,15 @@ struct FormLabel: View {
     let title: String
     var subtitle: String? = nil
     var body: some View {
+        withPerceptionTracking {
         Label {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
                 if let subtitle, !subtitle.isEmpty { Text(subtitle).font(.caption).foregroundColor(.secondary) }
             }
         } icon: { SettingsIcon(symbol: symbol, tint: tint) }
-    }
+        }
+     }
 }
 
 /// A row that opens a page, with its current value before the chevron.
@@ -223,6 +239,7 @@ struct FormLink<Destination: View>: View {
     var warning = false
     @ViewBuilder var destination: () -> Destination
     var body: some View {
+        withPerceptionTracking {
         RouteLink(destination: destination) {
             #if os(iOS)
             // One line, as in the Settings app: the title keeps its width and a long value is cut
@@ -238,7 +255,8 @@ struct FormLink<Destination: View>: View {
             } label: { FormLabel(symbol: symbol, tint: tint, title: title) }
             #endif
         }
-    }
+        }
+     }
     private func valueText(_ value: String) -> some View {
         Text(value).lineLimit(1).foregroundStyle(warning ? AnyShapeStyle(Brand.amber) : AnyShapeStyle(.secondary))
     }
@@ -253,6 +271,7 @@ struct SettingsWebRow: View {
     let url: URL
     @Environment(\.openURL) private var openURL
     var body: some View {
+        withPerceptionTracking {
         Button { openURL(url) } label: {
             HStack(spacing: 8) {
                 FormLabel(symbol: symbol, tint: tint, title: title, subtitle: subtitle).foregroundStyle(.primary)
@@ -267,7 +286,8 @@ struct SettingsWebRow: View {
         // A button in a list draws its title in the tint; this one reads like the rows around it.
         .tint(.primary)
         #endif
-    }
+        }
+     }
 }
 
 extension View {
@@ -348,6 +368,7 @@ struct FormSettingsView: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         @TVBindable var store = store
         ScrollViewReader { proxy in
         Form { Group {
@@ -675,7 +696,8 @@ struct FormSettingsView: View {
         #endif
         // Refreshed whenever Settings reappears, so a sign-in on the account page shows here.
         .onAppear { bilibiliSummary = BilibiliAccount.load().summary; douyinSummary = DouyinAccount.load().summary; cloudSummary = CloudProvider.summary() }
-    }
+        }
+     }
 
     @ViewBuilder private var heroSection: some View {
         #if os(iOS)
@@ -759,12 +781,14 @@ struct FormSettingsView: View {
 /// The hero card's fill: the row colour lit from above by the icon's cyan and indigo.
 private struct SettingsHeroGlow: View {
     var body: some View {
+        withPerceptionTracking {
         ZStack {
             SettingsStyle.rowFill
             RadialGradient(colors: [Brand.cyan.opacity(0.32), .clear], center: .top, startRadius: 0, endRadius: 230)
             RadialGradient(colors: [Brand.indigo.opacity(0.22), .clear], center: .bottomTrailing, startRadius: 0, endRadius: 260)
         }
-    }
+        }
+     }
 }
 
 /// Adding a subscription: the address, a shortcut to the default one, and Add in the toolbar.
@@ -776,6 +800,7 @@ private struct AddSubscriptionSheet: View {
     private var canAdd: Bool { !store.importing && !store.subscriptionAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
 
     var body: some View {
+        withPerceptionTracking {
         @TVBindable var store = store
         NavigationStack {
             Form { Group {
@@ -816,7 +841,8 @@ private struct AddSubscriptionSheet: View {
         }
         .presentationDetents([.medium, .large])
         .onAppear { store.error = nil; focused = true }
-    }
+        }
+     }
 
     private func add() {
         guard canAdd else { return }
@@ -835,6 +861,7 @@ private struct SubscriptionDetailView: View {
     let entry: SubscriptionEntry
     @State private var confirmsRemoval = false
     var body: some View {
+        withPerceptionTracking {
         let current = store.subscriptions.first { $0.address == entry.address } ?? entry
         let index = store.subscriptions.firstIndex { $0.address == entry.address } ?? 0
         let failure = store.subscriptionErrors[entry.address]
@@ -873,7 +900,8 @@ private struct SubscriptionDetailView: View {
         .confirmationDialog(L10n.text("Remove"), isPresented: $confirmsRemoval) {
             Button(L10n.text("Remove"), role: .destructive) { store.removeSubscription(current); dismiss() }
         }
-    }
+        }
+     }
 }
 
 /// Removing many subscriptions at once: tick them, or take all or the switched-off ones, then remove.
@@ -883,6 +911,7 @@ private struct RemoveSubscriptionsView: View {
     @State private var selection: Set<String> = []
     @State private var confirmsRemoval = false
     var body: some View {
+        withPerceptionTracking {
         let chosen = store.subscriptions.filter { selection.contains($0.address) }
         let all = chosen.count == store.subscriptions.count
         let off = store.subscriptions.filter { !$0.enabled }.map(\.address)
@@ -918,7 +947,8 @@ private struct RemoveSubscriptionsView: View {
         .confirmationDialog(L10n.text("Remove %lld Subscriptions", chosen.count), isPresented: $confirmsRemoval) {
             Button(L10n.text("Remove"), role: .destructive) { store.removeSubscriptions(Set(chosen.map(\.address))); dismiss() }
         }
-    }
+        }
+     }
 }
 
 /// Playing a media address directly.
@@ -927,6 +957,7 @@ private struct PlayURLView: View {
     @State private var address = ""
     private var empty: Bool { address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty }
     var body: some View {
+        withPerceptionTracking {
         Form { Group {
             Section {
                 TextField(L10n.text("HTTP / HTTPS media URL"), text: $address, prompt: Text(L10n.text("HTTP / HTTPS media URL")))
@@ -944,7 +975,8 @@ private struct PlayURLView: View {
             }
         }.settingsRows() }
         .settingsForm(L10n.text("Play a URL"))
-    }
+        }
+     }
     private func open() {
         guard !empty else { return }
         do { store.playing = Channel(name: L10n.text("URL Playback"), url: try WebAddress.resolve(address)) }
@@ -958,6 +990,7 @@ struct LicensesView: View {
         (Bundle.main.url(forResource: "ThirdPartyNotices", withExtension: "txt").flatMap { try? String(contentsOf: $0, encoding: .utf8) }) ?? "DexLoom · MIT License"
     }
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         // Each paragraph is a row the remote can land on, which is how the page scrolls.
         SettingsPage(title: L10n.text("Open Source Licenses"), symbol: "doc.plaintext", subtitle: "Yingxia \(Brand.copyright)") {
@@ -986,7 +1019,8 @@ struct LicensesView: View {
             }
         }
         #endif
-    }
+        }
+     }
     #if os(tvOS)
     /// A glass row's focus, in a rounded rectangle: a capsule around a tall paragraph looked odd.
     private struct ParagraphStyle: ButtonStyle {
@@ -995,11 +1029,13 @@ struct LicensesView: View {
             let configuration: ButtonStyleConfiguration
             @Environment(\.isFocused) private var focused
             var body: some View {
+                withPerceptionTracking {
                 configuration.label
                     .padding(.horizontal, 28).padding(.vertical, 14)
                     .glassSurface(focused ? .regular.tint(.white.opacity(0.12)) : .identity, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
                     .animation(.easeOut(duration: 0.15), value: focused)
-            }
+                }
+             }
         }
     }
     #endif
@@ -1022,6 +1058,7 @@ struct DiagnosticsView: View {
         }
     }
     var body: some View {
+        withPerceptionTracking {
         VStack(alignment: .leading, spacing: 18) {
             ViewThatFits(in: .horizontal) {
                 HStack(alignment: .top) { heading; Spacer(minLength: 24); actions }
@@ -1063,7 +1100,8 @@ struct DiagnosticsView: View {
                 if live { await refresh() }
             }
         }
-    }
+        }
+     }
     private var heading: some View {
         VStack(alignment: .leading, spacing: 6) {
             #if !os(tvOS)
@@ -1234,6 +1272,7 @@ private struct DiagnosticRow: View {
     let compact: Bool
     @State private var hovering = false
     var body: some View {
+        withPerceptionTracking {
         Group {
             #if os(tvOS)
             VStack(alignment: .leading, spacing: 12) {
@@ -1276,7 +1315,8 @@ private struct DiagnosticRow: View {
         #if !os(tvOS)
         .onHover { hovering = $0 }
         #endif
-    }
+        }
+     }
     private var timestamp: some View {
         Text(entry.date, format: .dateTime.hour(.twoDigits(amPM: .omitted)).minute(.twoDigits).second(.twoDigits))
             .font(.system(size: 11, design: .monospaced)).foregroundStyle(.secondary)
@@ -1303,6 +1343,7 @@ private struct DiagnosticDetail: View {
     let entry: LogEntry
     @Environment(\.dismiss) private var dismiss
     var body: some View {
+        withPerceptionTracking {
         VStack(alignment: .leading, spacing: 20) {
             HStack {
                 Pill(text: entry.level.title, tint: entry.level.tint)
@@ -1323,7 +1364,8 @@ private struct DiagnosticDetail: View {
         .frame(width: 1100, height: 700)
         #endif
         .screenBackdrop()
-    }
+        }
+     }
 }
 
 #if os(tvOS)
@@ -1348,6 +1390,7 @@ struct TVSettingsView: View {
     @AppStorage(SkinMode.storageKey) private var skin = SkinMode.native.rawValue
 
     var body: some View {
+        withPerceptionTracking {
         TVSettingsLayout {
             TVSettingsHero()
         } list: {
@@ -1412,7 +1455,8 @@ struct TVSettingsView: View {
         .tabTitle(L10n.text("Settings"))
         // Refreshed whenever Settings reappears, so a sign-in on the account page shows here.
         .onAppear { bilibiliSummary = BilibiliAccount.load().summary; douyinSummary = DouyinAccount.load().summary; cloudSummary = CloudProvider.summary() }
-    }
+        }
+     }
 
     private var playbackFooter: String {
         let phones = L10n.text("With Yingxia open here, your other devices on the same network can send it what they play: tap Play On in their player.")
@@ -1463,6 +1507,7 @@ struct TVSettingsLayout<Hero: View, List: View>: View {
     @ViewBuilder var hero: Hero
     @ViewBuilder var list: List
     var body: some View {
+        withPerceptionTracking {
         HStack(alignment: .center, spacing: 72) {
             hero.frame(width: 560).frame(maxHeight: .infinity)
             ScrollView {
@@ -1476,7 +1521,8 @@ struct TVSettingsLayout<Hero: View, List: View>: View {
         }
         .padding(.horizontal, Layout.gutter)
         .screenBackdrop()
-    }
+        }
+     }
 }
 
 /// The app as the left column of Settings: its icon, name, version and credit.
@@ -1485,6 +1531,7 @@ private struct TVSettingsHero: View {
         (Bundle.main.infoDictionary?["CFBundleShortVersionString"] as? String).flatMap { $0.isEmpty ? nil : L10n.text("Version %@", $0) }
     }
     var body: some View {
+        withPerceptionTracking {
         VStack(spacing: 34) {
             AppMark(size: 300)
             VStack(spacing: 10) {
@@ -1494,7 +1541,8 @@ private struct TVSettingsHero: View {
             }
         }
         .accessibilityElement(children: .combine)
-    }
+        }
+     }
 }
 
 /// A titled run of rows with an optional note under it.
@@ -1503,6 +1551,7 @@ struct TVSettingsSection<Content: View>: View {
     var footer: String? = nil
     @ViewBuilder var content: Content
     var body: some View {
+        withPerceptionTracking {
         VStack(alignment: .leading, spacing: 4) {
             if let title {
                 Text(title).font(.system(size: 25, weight: .semibold)).foregroundStyle(.secondary)
@@ -1515,7 +1564,8 @@ struct TVSettingsSection<Content: View>: View {
                     .padding(.horizontal, 28).padding(.top, 8)
             }
         }
-    }
+        }
+     }
 }
 
 /// The title on the leading edge; the current value, an accessory and a chevron on the trailing one.
@@ -1529,6 +1579,7 @@ struct TVSettingsRowLabel<Accessory: View>: View {
     var chevron = false
     @ViewBuilder var accessory: Accessory
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 18) {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title).font(.system(size: 29, weight: .medium)).lineLimit(1)
@@ -1548,7 +1599,8 @@ struct TVSettingsRowLabel<Accessory: View>: View {
         }
         .frame(maxWidth: .infinity, minHeight: 52, alignment: .leading)
         .contentShape(Rectangle())
-    }
+        }
+     }
 }
 
 extension TVSettingsRowLabel where Accessory == EmptyView {
@@ -1564,9 +1616,11 @@ struct TVSettingsLink<Destination: View>: View {
     var warning = false
     @ViewBuilder var destination: () -> Destination
     var body: some View {
+        withPerceptionTracking {
         RouteLink(destination: destination) { TVSettingsRowLabel(title: title, value: value, warning: warning, chevron: true) }
             .glassRow()
-    }
+        }
+     }
 }
 
 /// A switch as a row: selecting it flips the value shown at the trailing edge.
@@ -1575,10 +1629,12 @@ struct TVSettingsToggle: View {
     var detail: String? = nil
     @Binding var isOn: Bool
     var body: some View {
+        withPerceptionTracking {
         Button { isOn.toggle() } label: { TVSettingsRowLabel(title: title, detail: detail, value: L10n.text(isOn ? "On" : "Off")) }
             .glassRow()
             .accessibilityValue(L10n.text(isOn ? "On" : "Off"))
-    }
+        }
+     }
 }
 
 /// A row that does something in place.
@@ -1589,11 +1645,13 @@ struct TVSettingsAction: View {
     var destructive = false
     let action: () -> Void
     var body: some View {
+        withPerceptionTracking {
         Button(action: action) {
             TVSettingsRowLabel(title: title, value: value, busy: busy).foregroundStyle(destructive ? Brand.rose : Color.primary)
         }
         .glassRow()
-    }
+        }
+     }
 }
 
 /// Text entry as a row: the title and the current text, like any other row. A focused tvOS text
@@ -1607,6 +1665,7 @@ struct TVSettingsField: View {
     @State private var editing = false
     @State private var draft = ""
     var body: some View {
+        withPerceptionTracking {
         Button { draft = text; editing = true } label: {
             TVSettingsRowLabel(title: title, value: text.isEmpty ? L10n.text("Not set") : text)
         }
@@ -1618,7 +1677,8 @@ struct TVSettingsField: View {
             Button(L10n.text("Done")) { text = draft.trimmingCharacters(in: .whitespacesAndNewlines) }
             Button(L10n.text("Cancel"), role: .cancel) {}
         }
-    }
+        }
+     }
 }
 
 /// A page under Settings: a large symbol and title on the left, its rows on the right.
@@ -1628,6 +1688,7 @@ struct TVSettingsSubpage<Content: View>: View {
     var subtitle: String? = nil
     @ViewBuilder var content: Content
     var body: some View {
+        withPerceptionTracking {
         TVSettingsLayout {
             VStack(spacing: 30) {
                 Image(systemName: symbol).font(.system(size: 120, weight: .regular)).foregroundStyle(.secondary)
@@ -1642,7 +1703,8 @@ struct TVSettingsSubpage<Content: View>: View {
             .accessibilityElement(children: .combine)
         } list: { content }
         .screenTitle("")
-    }
+        }
+     }
 }
 
 /// One subscription: switch it on or off, move it (earlier subscriptions win duplicate sources), or remove it.
@@ -1652,6 +1714,7 @@ private struct TVSubscriptionPage: View {
     let entry: SubscriptionEntry
     @State private var confirmsRemoval = false
     var body: some View {
+        withPerceptionTracking {
         let current = store.subscriptions.first { $0.address == entry.address } ?? entry
         let index = store.subscriptions.firstIndex { $0.address == entry.address } ?? 0
         let failure = store.subscriptionErrors[entry.address]
@@ -1678,7 +1741,8 @@ private struct TVSubscriptionPage: View {
         .confirmationDialog(L10n.text("Remove"), isPresented: $confirmsRemoval) {
             Button(L10n.text("Remove"), role: .destructive) { store.removeSubscription(current); dismiss() }
         }
-    }
+        }
+     }
 }
 
 /// Removing many subscriptions at once: tick them, or take all or the switched-off ones, then remove.
@@ -1688,6 +1752,7 @@ private struct TVRemoveSubscriptionsPage: View {
     @State private var selection: Set<String> = []
     @State private var confirmsRemoval = false
     var body: some View {
+        withPerceptionTracking {
         let chosen = store.subscriptions.filter { selection.contains($0.address) }
         let all = chosen.count == store.subscriptions.count
         let off = store.subscriptions.filter { !$0.enabled }.map(\.address)
@@ -1718,7 +1783,8 @@ private struct TVRemoveSubscriptionsPage: View {
         .confirmationDialog(L10n.text("Remove %lld Subscriptions", chosen.count), isPresented: $confirmsRemoval) {
             Button(L10n.text("Remove"), role: .destructive) { store.removeSubscriptions(Set(chosen.map(\.address))); dismiss() }
         }
-    }
+        }
+     }
 }
 
 /// Adding a subscription: the address, then add it or fill in the default one.
@@ -1726,6 +1792,7 @@ private struct TVAddSubscriptionPage: View {
     @Environment(Store.self) private var store
     @Environment(\.dismiss) private var dismiss
     var body: some View {
+        withPerceptionTracking {
         @TVBindable var store = store
         let empty = store.subscriptionAddress.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
         TVSettingsSubpage(symbol: "plus.rectangle.on.rectangle", title: L10n.text("Add Subscription")) {
@@ -1743,7 +1810,8 @@ private struct TVAddSubscriptionPage: View {
                 TVSettingsAction(title: L10n.text("Use a Demo URL")) { store.subscriptionAddress = Store.defaultURL }
             }
         }
-    }
+        }
+     }
 }
 
 /// Playing a media address directly.
@@ -1751,6 +1819,7 @@ private struct TVPlayURLPage: View {
     @Environment(Store.self) private var store
     @State private var address = ""
     var body: some View {
+        withPerceptionTracking {
         TVSettingsSubpage(symbol: "play.rectangle", title: L10n.text("Play a URL")) {
             TVSettingsSection(title: L10n.text("Playback")) {
                 TVSettingsField(title: L10n.text("HTTP / HTTPS media URL"), text: $address)
@@ -1761,6 +1830,7 @@ private struct TVPlayURLPage: View {
                 .disabled(address.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
             }
         }
-    }
+        }
+     }
 }
 #endif

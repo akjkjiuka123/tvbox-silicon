@@ -146,6 +146,7 @@ struct MessagesView: View {
     @State private var fresh: Set<String> = []
 
     var body: some View {
+        withPerceptionTracking {
         let messages = announcements.all
         Group {
             if messages.isEmpty {
@@ -168,7 +169,8 @@ struct MessagesView: View {
         .screenTitle(L10n.text("Messages"))
         // Read at once, so a waiting message doesn't pop up over the page, and again after the check.
         .task { read(); await announcements.check(); read() }
-    }
+        }
+     }
 
     private func read() {
         fresh.formUnion(announcements.unread.map(\.id))

@@ -7,6 +7,7 @@ struct CacheSettingsView: View {
     @State private var confirmsClear = false
     @State private var clearing = false
     var body: some View {
+        withPerceptionTracking {
         SettingsPage(title: L10n.text("Local Cache"), symbol: "internaldrive") {
             SettingsGroup(title: L10n.text("Cached Content"), footer: L10n.text("Artwork is kept for 30 days, danmaku for 7 days and episode lists for 6 hours, up to 256 MB. History titles are prioritized. Only the latest 20 successful work address mappings are retained.")) {
                 SettingsRow(symbol: "internaldrive", tint: Brand.cyan, title: ByteCountFormatter.string(fromByteCount: Int64(summary.bytes), countStyle: .file))
@@ -31,5 +32,6 @@ struct CacheSettingsView: View {
             }.accessibilityIdentifier("cache.confirmClear")
             Button(L10n.text("Cancel"), role: .cancel) {}
         }
-    }
+        }
+     }
 }

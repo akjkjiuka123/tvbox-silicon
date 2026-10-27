@@ -15,6 +15,7 @@ struct MusicPlayerScreen: View {
     @State private var showsLyrics = true
 
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         // Read here so the transport bar is rebuilt whenever what it lists changes.
         let revision = [String(music.queue?.index ?? -1), String(music.queue?.tracks.count ?? 0), String(music.attempts.count),
@@ -23,7 +24,8 @@ struct MusicPlayerScreen: View {
         MusicNativePlayer(store: store, showsLyrics: $showsLyrics, revision: revision)
             .ignoresSafeArea()
             .onChange(of: music.track == nil) { gone in if gone { dismiss() } }
-    }
+        }
+     }
 }
 
 /// AVKit lays its bottom controls into the TV's overscan margin when told there is no safe area;
@@ -124,6 +126,7 @@ private struct MusicTVContent: View {
     let showsLyrics: Bool
 
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         ZStack {
             MusicTVBackdrop(artwork: music.track?.artwork)
@@ -149,7 +152,8 @@ private struct MusicTVContent: View {
             }
         }
         .animation(.easeInOut(duration: 0.35), value: showsLyrics)
-    }
+        }
+     }
 }
 
 /// The cover with the song under it. It sinks a little while paused, as in Music.
@@ -159,6 +163,7 @@ private struct MusicTVSong: View {
     let alignment: HorizontalAlignment
 
     var body: some View {
+        withPerceptionTracking {
         VStack(alignment: alignment, spacing: 0) {
             PosterImage(url: music.track?.artwork, symbol: "music.note")
                 .frame(width: art, height: art)
@@ -180,13 +185,15 @@ private struct MusicTVSong: View {
             .padding(.top, 26)
         }
         .foregroundStyle(.white)
-    }
+        }
+     }
 }
 
 /// The cover's colours across the screen: the cover blurred far past recognition, still vivid.
 private struct MusicTVBackdrop: View {
     let artwork: URL?
     var body: some View {
+        withPerceptionTracking {
         ZStack {
             Color.black
             PosterImage(url: artwork, symbol: "music.note")
@@ -196,6 +203,7 @@ private struct MusicTVBackdrop: View {
             LinearGradient(colors: [.black.opacity(0.05), .black.opacity(0.35)], startPoint: .top, endPoint: .bottom)
         }
         .ignoresSafeArea()
-    }
+        }
+     }
 }
 #endif

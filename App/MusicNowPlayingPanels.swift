@@ -18,6 +18,7 @@ struct MusicNowPlayingLyrics: View {
     #endif
 
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         if let lyrics = music.lyrics {
             ScrollView(showsIndicators: false) {
@@ -59,7 +60,8 @@ struct MusicNowPlayingLyrics: View {
             EmptyState(L10n.text("No Lyrics"), systemImage: "quote.bubble",
                                    description: Text(L10n.text("None of the catalogs has lyrics for this song.")))
         }
-    }
+        }
+     }
 }
 
 /// The songs after this one in what is playing; tapping one plays it.
@@ -67,6 +69,7 @@ struct MusicUpNext: View {
     @Environment(Store.self) private var store
 
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         let queue = music.queue
         let upcoming = queue.map { queue in Array(queue.tracks.enumerated()).filter { $0.offset > queue.index } } ?? []
@@ -99,6 +102,7 @@ struct MusicUpNext: View {
                 .padding(.vertical, 12)
             }
         }
-    }
+        }
+     }
 }
 #endif

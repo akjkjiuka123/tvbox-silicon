@@ -18,6 +18,7 @@ struct MusicNowPlayingScreen: View {
     @Namespace private var cover
 
     var body: some View {
+        withPerceptionTracking {
         let music = store.music
         VStack(spacing: 0) {
             if let panel {
@@ -69,7 +70,8 @@ struct MusicNowPlayingScreen: View {
         }
         #endif
         .sheet(isPresented: $showsChannels) { MusicChannelsView() }
-    }
+        }
+     }
 
     private var backdrop: some View {
         LinearGradient(colors: [tint.blend(with: .black, by: 0.2), tint.blend(with: .black, by: 0.62)], startPoint: .top, endPoint: .bottom)
@@ -195,6 +197,7 @@ struct MusicVolumeSlider: View {
     @State private var system = SystemSlider()
 
     var body: some View {
+        withPerceptionTracking {
         HStack(spacing: 12) {
             Image(systemName: "speaker.fill")
             GeometryReader { proxy in
@@ -231,7 +234,8 @@ struct MusicVolumeSlider: View {
             level = min(1, max(0, level + (direction == .increment ? 0.0625 : -0.0625)))
             system.set(level)
         }
-    }
+        }
+     }
 
     /// The system slider inside the hidden volume view, once it exists.
     @MainActor final class SystemSlider {

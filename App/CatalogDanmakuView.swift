@@ -172,6 +172,7 @@ struct CatalogDanmakuSettingsView: View {
     @State private var showsImporter = false
 
     var body: some View {
+        withPerceptionTracking {
         @TVBindable var model = model
         NavigationStack {
             Form {
@@ -262,7 +263,8 @@ struct CatalogDanmakuSettingsView: View {
             do { try model.importFile(result.get()); dismiss() }
             catch { self.error = error.localizedDescription }
         }
-    }
+        }
+     }
 
     private var status: String {
         switch model.automaticState {

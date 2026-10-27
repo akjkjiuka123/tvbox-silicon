@@ -217,6 +217,7 @@ struct ReleaseNotesView: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         ZStack(alignment: .top) {
             Color.black.ignoresSafeArea()
             ReleaseBackdrop(animated: !reduceMotion)
@@ -229,7 +230,8 @@ struct ReleaseNotesView: View {
         #if os(macOS)
         .frame(width: 780).fixedSize(horizontal: false, vertical: true)
         #endif
-    }
+        }
+     }
 
     @ViewBuilder private var layout: some View {
         #if os(iOS)
@@ -449,6 +451,7 @@ private struct ReleaseArt: View {
         [Color(red: 1.0, green: 0.45, blue: 0.62), Color(red: 0.45, green: 0.12, blue: 0.42)],
     ]
     var body: some View {
+        withPerceptionTracking {
         let colors = Self.palettes[index % Self.palettes.count]
         GeometryReader { geometry in
             ZStack {
@@ -464,7 +467,8 @@ private struct ReleaseArt: View {
         .clipShape(RoundedRectangle(cornerRadius: Self.radius, style: .continuous))
         .overlay { RoundedRectangle(cornerRadius: Self.radius, style: .continuous).strokeBorder(.white.opacity(0.12)) }
         .accessibilityHidden(true)
-    }
+        }
+     }
     static var radius: CGFloat {
         #if os(tvOS)
         16
@@ -481,6 +485,7 @@ private struct ReleaseBackdrop: View {
     private static let top = [Color(red: 0.16, green: 0.62, blue: 0.98), Color(red: 0.10, green: 0.30, blue: 0.86), Color(red: 0.20, green: 0.12, blue: 0.56)]
     private static let middle = [Color(red: 0.04, green: 0.22, blue: 0.46), Color(red: 0.06, green: 0.12, blue: 0.38), Color(red: 0.06, green: 0.05, blue: 0.22)]
     var body: some View {
+        withPerceptionTracking {
         TimelineView(.animation(minimumInterval: 1 / 30, paused: !animated)) { context in
             let drift = Float(sin(context.date.timeIntervalSinceReferenceDate * 0.3)) * 0.12
             if #available(iOS 18, tvOS 18, *) {
@@ -500,7 +505,8 @@ private struct ReleaseBackdrop: View {
         }
         .overlay { LinearGradient(colors: [.black.opacity(0.1), .black.opacity(0.35), .black], startPoint: .top, endPoint: .bottom) }
         .accessibilityHidden(true)
-    }
+        }
+     }
 }
 
 #if !os(tvOS)
@@ -536,6 +542,7 @@ private struct MacInstallActions: View {
     @Environment(\.openURL) private var openURL
 
     var body: some View {
+        withPerceptionTracking {
         switch installer.phase {
         case .idle, .ready:
             HStack(spacing: 12) {
@@ -578,7 +585,8 @@ private struct MacInstallActions: View {
             }
             .frame(minHeight: PillButtonStyle.height)
         }
-    }
+        }
+     }
 
     private var notNow: some View {
         Button { installer.clearFailure(); dismiss() } label: { Text(L10n.text("Not Now")) }
@@ -606,11 +614,13 @@ private struct MacInstallActions: View {
 /// The small "New" capsule on the Settings entry while an update waits.
 struct NewBadge: View {
     var body: some View {
+        withPerceptionTracking {
         Text(L10n.text("New"))
             .font(.caption2.weight(.bold)).foregroundStyle(Brand.onAccent)
             .padding(.horizontal, 7).padding(.vertical, 2)
             .background(Brand.accent, in: Capsule())
-    }
+        }
+     }
 }
 
 extension View {

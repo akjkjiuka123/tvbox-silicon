@@ -15,6 +15,7 @@ struct CloudDriveView: View {
     @State private var saving = false
     @State private var showsManual = false
     var body: some View {
+        withPerceptionTracking {
         SettingsPage(title: L10n.text("Cloud Drive Accounts"), symbol: "externaldrive") {
             SettingsGroup(footer: store.extrasUnlocked ? L10n.text("Sign in to Quark and UC on their official page, and to Baidu and Aliyun by scanning a code with their phone app. Yingxia stores the login on this Mac and supplies it to the plugins you run.")
                             : L10n.text("Sign in to Quark and UC on their official page. Yingxia stores the login on this Mac.")) {
@@ -70,7 +71,8 @@ struct CloudDriveView: View {
                 save()
             }
         }
-    }
+        }
+     }
     private func save() {
         saving = true; notice = nil; error = nil
         Task {
@@ -101,6 +103,7 @@ struct CloudLoginView: View {
     /// Quark's approved sign-in ticket. FTY's player needs the mobile ticket derived from it.
     @State private var ticket: String?
     var body: some View {
+        withPerceptionTracking {
         VStack(spacing: 0) {
             HStack(spacing: 12) {
                 Image(systemName: provider.symbol)
@@ -136,7 +139,8 @@ struct CloudLoginView: View {
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
         }
         .frame(width: 900, height: 680)
-    }
+        }
+     }
 
     /// Saves once the page has a drive cookie. Quark also waits briefly for the sign-in ticket the page
     /// sends in the background. Without it the cookie still saves; only FTY asks to sign in again.
@@ -253,6 +257,7 @@ struct CloudDriveView: View {
     @State private var login: CloudProvider?
     @State private var error: String?
     var body: some View {
+        withPerceptionTracking {
         SettingsPage(title: L10n.text("Cloud Drive Accounts"), symbol: "externaldrive") {
             SettingsGroup(footer: footer) {
                 ForEach(CloudProvider.shown(store)) { provider in
@@ -281,7 +286,8 @@ struct CloudDriveView: View {
             CloudQRLoginView(drive: provider.qrDrive) { reload() }
         }
         #endif
-    }
+        }
+     }
     private var footer: String {
         #if os(iOS)
         store.extrasUnlocked ? L10n.text("Sign in on the drive's own page, or scan a code with the drive's app on another phone. Yingxia keeps the sign-in on this device and supplies it to the plugins you run.")

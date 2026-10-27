@@ -21,6 +21,7 @@ struct LivePlatformView: View {
     private var trimmed: String { query.trimmingCharacters(in: .whitespacesAndNewlines) }
 
     var body: some View {
+        withPerceptionTracking {
         ScrollView {
             LazyVStack(alignment: .leading, spacing: 22) {
                 if trimmed.isEmpty { browse } else { LiveRoomSearch(platform: platform, query: trimmed) }
@@ -38,7 +39,8 @@ struct LivePlatformView: View {
             if areas.isEmpty { reload() }
         }
         .onDisappear { loader?.cancel(); loader = nil }
-    }
+        }
+     }
 
     @ViewBuilder private var browse: some View {
         if platform == .douyin && !searchable { DouyinSignInBanner() }
@@ -129,6 +131,7 @@ private struct LiveRoomSearch: View {
     @State private var error: String?
 
     var body: some View {
+        withPerceptionTracking {
         Group {
             if let error {
                 EmptyState(L10n.text("Search Failed"), systemImage: "exclamationmark.magnifyingglass", description: Text(error))
@@ -154,20 +157,23 @@ private struct LiveRoomSearch: View {
             }
             if !Task.isCancelled { searching = false }
         }
-    }
+        }
+     }
 }
 
 struct LiveRoomGrid: View {
     let rooms: [LiveRoom]
     var appeared: (LiveRoom) -> Void = { _ in }
     var body: some View {
+        withPerceptionTracking {
         // Search results can list a room twice.
         var seen = Set<String>()
         let unique = rooms.filter { seen.insert($0.id).inserted }
         LazyVGrid(columns: [GridItem(.adaptive(minimum: Layout.tileMin), spacing: Layout.cardSpacing)], spacing: Layout.gridRowSpacing) {
             ForEach(unique) { room in LiveRoomCard(room: room).onAppear { appeared(room) } }
         }
-    }
+        }
+     }
 }
 
 /// The Live tab's search: rooms from each built-in platform that can search, then the matching
@@ -189,6 +195,7 @@ struct LiveSearchResults: View {
     private var finished: Bool { !loadingPlaylists && platforms.allSatisfy { found[$0] != nil || failures[$0] != nil } }
 
     var body: some View {
+        withPerceptionTracking {
         LazyVStack(alignment: .leading, spacing: Layout.sectionSpacing) {
             ForEach(platforms) { platform in
                 if found[platform]?.isEmpty != true || failures[platform] != nil { section(platform) }
@@ -235,7 +242,8 @@ struct LiveSearchResults: View {
             }
             loadingPlaylists = false
         }
-    }
+        }
+     }
 
     private func section(_ platform: LivePlatform) -> some View {
         VStack(alignment: .leading, spacing: Layout.headerSpacing) {
@@ -266,6 +274,7 @@ struct LiveRoomCard: View {
     let room: LiveRoom
 
     var body: some View {
+        withPerceptionTracking {
         let favorite = store.isFavorite(room.channel)
         Button { store.playing = room.channel } label: {
             VStack(alignment: .leading, spacing: 8) {
@@ -307,7 +316,8 @@ struct LiveRoomCard: View {
                    systemImage: favorite ? "heart.slash" : "heart") { store.toggleFavorite(room.channel) }
         }
         .accessibilityLabel("\(room.host), \(room.title)")
-    }
+        }
+     }
 }
 
 extension LivePlatform {
@@ -370,6 +380,7 @@ struct LivePlatformCard: View {
     #endif
 
     var body: some View {
+        withPerceptionTracking {
         let shape = RoundedRectangle(cornerRadius: radius, style: .continuous)
         Color.clear.aspectRatio(16.0 / 9.0, contentMode: .fit)
             .background { backdrop }
@@ -383,7 +394,8 @@ struct LivePlatformCard: View {
             .onAppear { LivePreviews.shared.load(platform) }
             .accessibilityElement(children: .ignore)
             .accessibilityLabel(platform.name)
-    }
+        }
+     }
 
     @ViewBuilder private var backdrop: some View {
         ZStack {
@@ -446,6 +458,7 @@ struct LivePlatformMark: View {
     var size: CGFloat = 44
 
     var body: some View {
+        withPerceptionTracking {
         #if os(tvOS)
         let size = size >= 44 ? max(size, 56) : size
         #endif
@@ -456,7 +469,8 @@ struct LivePlatformMark: View {
         // Douyin's glyph with its cyan and red offsets, on black.
         case .douyin: tile("抖", platform.tint, size: size, split: true)
         }
-    }
+        }
+     }
 
     private func tile(_ glyph: String, _ color: Color, size: CGFloat, split: Bool = false) -> some View {
         let shape = RoundedRectangle(cornerRadius: size * 0.26, style: .continuous)

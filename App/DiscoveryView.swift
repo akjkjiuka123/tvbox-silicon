@@ -58,6 +58,7 @@ struct GlobalSearchView: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         @TVBindable var model = model
         #if os(tvOS)
         searchResults
@@ -113,7 +114,8 @@ struct GlobalSearchView: View {
             }
             #endif
         #endif
-    }
+        }
+     }
 
     /// The search field is the system's, so the bar below it waits for a search.
     private var showsHeader: Bool { !model.keyword.isEmpty }
@@ -509,6 +511,7 @@ private struct SearchActivityList: View {
     /// The on-device plugin worker runs at most this many searches at once.
     private let limit = 5
     var body: some View {
+        withPerceptionTracking {
         TimelineView(.periodic(from: .now, by: 0.5)) { timeline in
             let active = Array(PluginPreparation.active(origin: origin).prefix(limit))
             VStack(alignment: .leading, spacing: 10) {
@@ -549,7 +552,8 @@ private struct SearchActivityList: View {
             .accessibilityElement(children: .combine)
             .animation(.easeOut(duration: 0.22), value: active.map(\.id))
         }
-    }
+        }
+     }
     /// While searching, the plugin's "loading" stage is the search itself.
     private func status(_ snapshot: PluginPreparation.Snapshot) -> String {
         let title = snapshot.stage == .loading ? L10n.text("Searching…") : snapshot.stage.title
@@ -705,6 +709,7 @@ struct RecommendationsView: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         VStack(alignment: .leading, spacing: 16) {
             #if os(tvOS)
             recommendationControls.tvFocusSection()
@@ -788,7 +793,8 @@ struct RecommendationsView: View {
                                client: CatalogClient(site: loadedSite, origin: config.origin, jarURL: config.spiderURL))
         }
         .onDisappear { browser.cancel() }
-    }
+        }
+     }
 
     private func categoryChips(_ loadedSite: Site) -> some View {
         ChipRow {
@@ -861,6 +867,7 @@ struct SourceStrip: View {
     let select: (String) -> Void
 
     var body: some View {
+        withPerceptionTracking {
         ScrollStrip(scrollTo: selection, leftLabel: "Scroll sources left", rightLabel: "Scroll sources right") {
             HStack(spacing: 6) {
                 ForEach(items) { item in
@@ -871,7 +878,8 @@ struct SourceStrip: View {
             .padding(.vertical, 4)
             .scrollTargetLayoutIfAvailable()
         }
-    }
+        }
+     }
 }
 
 /// Outside ScrollStrip so measuring it in a sendable closure does not capture the generic content type.
@@ -916,6 +924,7 @@ struct ScrollStrip<Content: View>: View {
     }
 
     var body: some View {
+        withPerceptionTracking {
         ScrollViewReader { proxy in
             HStack(spacing: 8) {
                 measured(
@@ -965,7 +974,8 @@ struct ScrollStrip<Content: View>: View {
                 #endif
             }
         }
-    }
+        }
+     }
 
     private func update(_ metrics: Metrics) {
         tracking.metrics = metrics
@@ -1061,6 +1071,7 @@ private struct SourceChip: View {
     @Environment(\.stripDrag) private var drag
 
     var body: some View {
+        withPerceptionTracking {
         let label = SourceLabel(name)
         // The chip under the pointer receives the mouse-up that ends a drag.
         Button { if drag?.active != true { action() } } label: {
@@ -1084,7 +1095,8 @@ private struct SourceChip: View {
         .accessibilityLabel(label.title)
         .accessibilityAddTraits(selected ? [.isSelected] : [])
         .help(name)
-    }
+        }
+     }
 
     private var fill: Color {
         if selected { return Brand.accent }

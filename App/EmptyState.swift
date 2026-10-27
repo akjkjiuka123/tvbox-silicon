@@ -1,4 +1,5 @@
 import SwiftUI
+import Perception
 import TVCore
 
 /// iOS 16 replacement for `EmptyState` (iOS 17+).
@@ -69,5 +70,8 @@ struct EmptyState: View {
         )
     }
 
-    var body: some View { content }
+    var body: some View {
+        withPerceptionTracking { content
+        }
+     }
 }

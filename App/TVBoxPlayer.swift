@@ -36,6 +36,7 @@ struct TVBoxPlayer: View {
     private var currentEpisodeName: String? { channel.historyContext?.episodeName }
 
     var body: some View {
+        withPerceptionTracking {
         ZStack(alignment: .trailing) {
             PlaybackView(channel: channel)
             if showsEpisodes {
@@ -48,7 +49,8 @@ struct TVBoxPlayer: View {
         .overlay(alignment: .topTrailing) {
             if !episodes.isEmpty && !showsEpisodes { openButton }
         }
-    }
+        }
+     }
 
     /// The drawer's handle. The system player keeps its own bar on the left, so this sits opposite it.
     private var openButton: some View {

@@ -44,6 +44,7 @@ struct PlaybackWaitView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
 
     var body: some View {
+        withPerceptionTracking {
         GeometryReader { proxy in
             let picture = Self.picture(in: proxy.size)
             let layout = Self.layout(size: proxy.size, picture: picture)
@@ -67,7 +68,8 @@ struct PlaybackWaitView: View {
             withAnimation(.easeOut(duration: 0.6)) { poster = image }
             drifting = true
         }
-    }
+        }
+     }
 
     /// Where the video will appear: 16:9, fitted and centred, as the players lay it out.
     static func picture(in size: CGSize) -> CGRect {
@@ -265,6 +267,7 @@ struct PlaybackWaitView: View {
 private struct LightSweep: View {
     private static let light = Color(red: 1, green: 0.93, blue: 0.83)
     var body: some View {
+        withPerceptionTracking {
         GeometryReader { proxy in
             // 30 frames a second is plenty for a slow band of light, and half the work of the display rate.
             TimelineView(.animation(minimumInterval: 1.0 / 30)) { timeline in
@@ -281,5 +284,6 @@ private struct LightSweep: View {
             }
         }
         .allowsHitTesting(false)
-    }
+        }
+     }
 }

@@ -139,6 +139,7 @@ import Perception
 /// What another device sent and from where, at the top of the window until the player opens.
 struct PlayOnIncoming: View {
     var body: some View {
+        withPerceptionTracking {
         if let incoming = PlayOnController.shared.incoming {
             HStack(spacing: Self.spacing) {
                 ProgressView()
@@ -158,7 +159,8 @@ struct PlayOnIncoming: View {
             .allowsHitTesting(false)
             .transition(.move(edge: .top).combined(with: .opacity))
         }
-    }
+        }
+     }
     #if os(tvOS)
     private static let spacing: CGFloat = 18
     #else
@@ -185,6 +187,7 @@ struct PlayOnButton: View {
     #endif
 
     var body: some View {
+        withPerceptionTracking {
         Menu {
             Section(L10n.text("Play On")) {
                 ForEach(browser.receivers) { receiver in
@@ -251,7 +254,8 @@ struct PlayOnButton: View {
         }
         #endif
         #endif
-    }
+        }
+     }
     #if DEBUG
     @MainActor private static var qaSent = false
     #endif
@@ -310,6 +314,7 @@ struct PlayOnPlaceholder: View {
     let receiver: String
     let playHere: () -> Void
     var body: some View {
+        withPerceptionTracking {
         VStack(spacing: 14) {
             Image(systemName: "play.tv").font(.system(size: 48, weight: .light))
             Text(L10n.text("Playing on %@", receiver)).font(.callout)
@@ -320,6 +325,7 @@ struct PlayOnPlaceholder: View {
         .foregroundStyle(.white.opacity(0.8))
         .multilineTextAlignment(.center)
         .padding(32)
-    }
+        }
+     }
 }
 #endif
