@@ -10,6 +10,17 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Cache iOS build deps (FFmpeg + Apple runtime + Java host)
+        uses: actions/cache@v4
+        with:
+          path: |
+            build/FFmpeg
+            build/AppleRuntime
+            build/JavaHost
+          key: ios-deps-${{ hashFiles('Scripts/*.sh', 'Package.swift', 'project.yml') }}
+          restore-keys: |
+            ios-deps-
+
       - name: Select Xcode
         run: |
           set -x
