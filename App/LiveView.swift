@@ -267,7 +267,7 @@ private struct TVChannelGuide: View {
                             category(value.isEmpty ? L10n.text("Ungrouped") : value, value: value)
                         }
                     }.padding(4)
-                }.scrollClipDisabled().tvFocusSection()
+                }.tvFocusSection()
             }
 
             if loading {
@@ -295,7 +295,7 @@ private struct TVChannelGuide: View {
                                     .focused($focusedChannel, equals: channel.id)
                             }
                         }.padding(4)
-                    }.scrollClipDisabled().tvFocusSection()
+                    }.tvFocusSection()
                 }
             }
         }

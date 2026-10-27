@@ -1467,7 +1467,7 @@ struct TVSettingsLayout<Hero: View, List: View>: View {
                     .glassRowInsets()
                     .padding(.vertical, 40)
             }
-            .scrollClipDisabled()
+            
             .tvFocusSection()
         }
         .padding(.horizontal, Layout.gutter)

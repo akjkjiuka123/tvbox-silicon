@@ -119,7 +119,7 @@ struct MusicDownloadsView: View {
                         ForEach(collections) { MusicDownloadedTile(entry: $0, size: Self.tile) }
                     }
                 }
-                .scrollClipDisabled()
+                
             }
             .padding(.top, 24)
             .tvFocusSection()

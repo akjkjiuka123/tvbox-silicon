@@ -275,7 +275,7 @@ struct MobilePlayerView: View {
                     
                 Text((skipped.forward ? "+" : "\u{2212}") + L10n.text("%lld s", Int(skipped.total)))
                     .font(.footnote.weight(.semibold).monospacedDigit())
-                    .contentTransition(.numericText(value: skipped.total))
+                    .contentTransition(.opacity)
             }
             .foregroundStyle(.white)
             .frame(width: 96, height: 96)

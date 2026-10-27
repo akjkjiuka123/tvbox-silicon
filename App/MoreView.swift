@@ -223,7 +223,7 @@ private struct MoreTile: View {
                             .font(.system(size: 26, weight: .bold, design: .rounded))
                             .monospacedDigit().lineLimit(1)
                             .foregroundStyle(.primary)
-                            .contentTransition(.numericText())
+                            .contentTransition(.opacity)
                     }
                 }
                 Spacer(minLength: 0)

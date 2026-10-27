@@ -308,7 +308,7 @@ struct ReleaseNotesView: View {
         #if os(tvOS)
         ScrollView(.horizontal) { cards.padding(.horizontal, Size.margin) }
             .scrollIndicators(.hidden)
-            .scrollClipDisabled()
+            
         #else
         // A mouse wheel can't scroll sideways, so the strip adds dragging and arrows floating at its ends.
         ScrollStrip(overlayArrows: true, arrowCenter: Size.card * 9 / 32) { cards.padding(.horizontal, Size.margin) }

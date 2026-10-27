@@ -471,7 +471,7 @@ struct ChipRow<Content: View>: View {
     var body: some View {
         #if os(tvOS)
         // Unclipped so a focused chip's lift and glow aren't cut at the row's ends.
-        ScrollView(.horizontal, showsIndicators: false) { content.padding(.vertical, 8) }.scrollClipDisabled()
+        ScrollView(.horizontal, showsIndicators: false) { content.padding(.vertical, 8) }
         #else
         // Room inside the strip's clip for the glass chips' edges and hover growth, given back
         // outside so the first chip still lines up with the page.

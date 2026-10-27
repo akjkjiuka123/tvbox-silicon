@@ -478,9 +478,9 @@ private struct TVBoxPlaybackIssue {
 struct TVBoxEpisodeStyle: ButtonStyle {
     var loaded = false
     func makeBody(configuration: Configuration) -> some View {
-        Body(configuration: configuration, loaded: loaded)
+        Content(configuration: configuration, loaded: loaded)
     }
-    struct Body: View {
+    struct Content: View {
         let configuration: ButtonStyleConfiguration
         let loaded: Bool
         // isFocused exists on tvOS and macOS only; a phone has no focus to draw.
