@@ -101,8 +101,10 @@ struct MusicView: View {
         .tabTitle(L10n.text("Music"))
         #if !os(tvOS)
         .toolbar {
-            Button { showsSettings = true } label: { Image(systemName: "slider.horizontal.3") }
-                .accessibilityLabel(L10n.text("Music Settings"))
+            ToolbarItem(placement: .primaryAction) {
+                Button { showsSettings = true } label: { Image(systemName: "slider.horizontal.3") }
+                    .accessibilityLabel(L10n.text("Music Settings"))
+            }
         }
         #endif
         #if os(tvOS)
