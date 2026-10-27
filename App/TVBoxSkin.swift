@@ -758,9 +758,9 @@ struct TVBoxRailStyle: ButtonStyle {
     /// Icons only on a phone: a tighter radius keeps the blue plate inside the narrow rail.
     var compact = false
     func makeBody(configuration: Configuration) -> some View {
-        Body(configuration: configuration, selected: selected, compact: compact)
+        Content(configuration: configuration, selected: selected, compact: compact)
     }
-    struct Body: View {
+    struct Content: View {
         let configuration: ButtonStyleConfiguration
         let selected: Bool
         let compact: Bool
@@ -792,9 +792,9 @@ struct TVBoxRailStyle: ButtonStyle {
 struct TVBoxCategoryStyle: ButtonStyle {
     let selected: Bool
     func makeBody(configuration: Configuration) -> some View {
-        Body(configuration: configuration, selected: selected)
+        Content(configuration: configuration, selected: selected)
     }
-    struct Body: View {
+    struct Content: View {
         let configuration: ButtonStyleConfiguration
         let selected: Bool
         #if os(tvOS)
@@ -823,9 +823,9 @@ struct TVBoxCategoryStyle: ButtonStyle {
 struct TVBoxChipStyle: ButtonStyle {
     var selected = false
     func makeBody(configuration: Configuration) -> some View {
-        Body(configuration: configuration, selected: selected)
+        Content(configuration: configuration, selected: selected)
     }
-    struct Body: View {
+    struct Content: View {
         let configuration: ButtonStyleConfiguration
         let selected: Bool
         #if os(tvOS)
@@ -860,9 +860,9 @@ struct TVBoxChipStyle: ButtonStyle {
 struct TVBoxTileStyle: ButtonStyle {
     var corner: CGFloat = 10
     func makeBody(configuration: Configuration) -> some View {
-        Body(configuration: configuration, corner: corner)
+        Content(configuration: configuration, corner: corner)
     }
-    struct Body: View {
+    struct Content: View {
         let configuration: ButtonStyleConfiguration
         let corner: CGFloat
         #if os(tvOS)

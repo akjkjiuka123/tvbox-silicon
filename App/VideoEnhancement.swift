@@ -363,7 +363,7 @@ struct EnhancedVideoSurface: View {
     #endif
 }
 
-#if !targetEnvironment(simulator)
+#if !targetEnvironment(simulator) && compiler(>=6.2)
 /// The frame pipeline. Everything below runs on `queue`; session starts (which load ML models and can
 /// take longer than a frame) run on `setup` so playback never waits for them.
 @available(macOS 26, iOS 26, tvOS 26, *)

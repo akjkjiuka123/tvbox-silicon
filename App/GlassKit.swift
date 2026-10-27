@@ -326,7 +326,7 @@ extension View {
 
 /// Pointer-aware press and hover feedback for content cards.
 struct LiftButtonStyle: ButtonStyle {
-    func makeBody(configuration: Configuration) -> some View { LiftBody(configuration: configuration) }
+    func makeBody(configuration: Configuration) -> some View { LiftContent(configuration: configuration) }
     struct LiftBody: View {
         let configuration: ButtonStyleConfiguration
         @State private var hovering = false
