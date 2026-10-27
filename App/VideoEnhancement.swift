@@ -39,7 +39,9 @@ enum VideoEnhancement {
         #if targetEnvironment(simulator)
         return false
         #else
+        #if compiler(>=6.2)
         if #available(macOS 26, iOS 26, tvOS 26, *) { return VTLowLatencyFrameInterpolationConfiguration.isSupported }
+        #endif
         return false
         #endif
     }()
@@ -117,7 +119,7 @@ private protocol EnhancementEngine: AnyObject, Sendable {
         layer.isHidden = true
         layer.backgroundColor = nil
         guard VideoEnhancement.canUpscale || VideoEnhancement.canSmooth else { return }
-        #if !targetEnvironment(simulator)
+        #if !targetEnvironment(simulator) && compiler(>=6.2)
         if #available(macOS 26, iOS 26, tvOS 26, *) {
             engine = EnhancementPipeline(renderer: layer.sampleBufferRenderer) { [weak self] status, summary, note, format in
                 Task { @MainActor [weak self] in self?.apply(status, summary: summary, note: note, format: format) }

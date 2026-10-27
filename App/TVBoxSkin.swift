@@ -764,7 +764,11 @@ struct TVBoxRailStyle: ButtonStyle {
         let configuration: ButtonStyleConfiguration
         let selected: Bool
         let compact: Bool
+        #if os(tvOS)
         @Environment(\.isFocused) private var focused
+        #else
+        private var focused: Bool { false }
+        #endif
         var body: some View {
             let radius: CGFloat = compact ? 8 : 10
             configuration.label
@@ -793,7 +797,11 @@ struct TVBoxCategoryStyle: ButtonStyle {
     struct Body: View {
         let configuration: ButtonStyleConfiguration
         let selected: Bool
+        #if os(tvOS)
         @Environment(\.isFocused) private var focused
+        #else
+        private var focused: Bool { false }
+        #endif
         var body: some View {
             configuration.label
                 .font(.system(size: 14, weight: selected ? .semibold : .regular))
@@ -820,7 +828,11 @@ struct TVBoxChipStyle: ButtonStyle {
     struct Body: View {
         let configuration: ButtonStyleConfiguration
         let selected: Bool
+        #if os(tvOS)
         @Environment(\.isFocused) private var focused
+        #else
+        private var focused: Bool { false }
+        #endif
         @Environment(\.isEnabled) private var enabled
         var body: some View {
             configuration.label
@@ -853,7 +865,11 @@ struct TVBoxTileStyle: ButtonStyle {
     struct Body: View {
         let configuration: ButtonStyleConfiguration
         let corner: CGFloat
+        #if os(tvOS)
         @Environment(\.isFocused) private var focused
+        #else
+        private var focused: Bool { false }
+        #endif
         var body: some View {
             configuration.label
                 .overlay {
