@@ -44,6 +44,14 @@ jobs:
           xcodegen --version; mvn -v | head -2
           echo "JAVA_HOME=$(/usr/libexec/java_home)" >> "$GITHUB_ENV"
 
+      - name: Restore incremental build data (DerivedData)
+        uses: actions/cache@v4
+        with:
+          path: build/DerivedData-ios
+          key: ios-derived-${{ github.run_id }}
+          restore-keys: |
+            ios-derived-
+
       - name: Restore prebuilt deps (FFmpeg + JVM runtime)
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
