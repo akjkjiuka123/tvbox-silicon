@@ -1123,8 +1123,10 @@ private struct PlayerLayerView: UIViewRepresentable {
         self.item = item; audio = nil; legible = nil
         guard let item else { return }
         let asset = item.asset
-        let audible = try? await asset.loadMediaSelectionGroup(for: .audible)
-        let subtitles = try? await asset.loadMediaSelectionGroup(for: .legible)
+        // `loadMediaSelectionGroup` is async and returns a non-Sendable group, which Swift 6 refuses to
+        // pass across the actor boundary; the synchronous accessor carries the same information.
+        let audible = asset.mediaSelectionGroup(forMediaCharacteristic: .audible)
+        let subtitles = asset.mediaSelectionGroup(forMediaCharacteristic: .legible)
         guard !Task.isCancelled, self.item === item else { return }
         audio = audible.map { Group(group: $0, options: $0.options) }
         // Forced subtitles only translate foreign speech and come on by themselves; they aren't a choice.

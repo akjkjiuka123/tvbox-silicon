@@ -79,11 +79,15 @@ struct MusicMiniPlayer: View {
 /// there is no way to hide the slot, so pages show the strip themselves (`musicPlayerInset`).
 extension View {
     @ViewBuilder func musicAccessory(enabled: Bool) -> some View {
+        #if compiler(>=6.2)
         if #available(iOS 26.1, *) {
             tabViewBottomAccessory(isEnabled: enabled) { MusicAccessoryContent() }
         } else {
             self
         }
+        #else
+        self
+        #endif
     }
 }
 
