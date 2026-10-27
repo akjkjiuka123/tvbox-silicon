@@ -52,7 +52,7 @@ struct DouyinAccountView: View {
                 }
             }
             #endif
-            if let error { Label(error, systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundStyle(Brand.amber) }
+            if let error { Label(error, systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundColor(Brand.amber) }
         }
         .task(id: attempt) { await run() }
         #if !os(tvOS)
@@ -96,7 +96,7 @@ struct DouyinAccountView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text(L10n.text("Sign In to Douyin")).font(.title2.weight(.bold))
                 Text(L10n.text("Douyin signs in only on its own web page, which Apple TV can't show. Sign in with Yingxia on your iPhone instead:"))
-                    .font(.body).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.body).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
                 VStack(alignment: .leading, spacing: 8) {
                     step(1, L10n.text("On your iPhone, open Yingxia, go to Settings > Douyin, and sign in."))
                     step(2, L10n.text("Scan this code with the iPhone's Camera and open it in Yingxia."))
@@ -152,7 +152,7 @@ struct DouyinSignInBanner: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(L10n.text("Sign In to Douyin")).font(.headline)
                 Text(L10n.text("Douyin answers live searches only for signed-in accounts."))
-                    .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.subheadline).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 12)
             RouteLink { DouyinAccountView() } label: { Text(L10n.text("Sign In")) }.controlButton(prominent: true)
@@ -186,7 +186,7 @@ struct DouyinLoginView: View {
                 LivePlatformMark(platform: .douyin, size: 28)
                 VStack(alignment: .leading, spacing: 1) {
                     Text(L10n.text("Sign In to Douyin")).font(.headline)
-                    Text(L10n.text("Use Douyin's Log In button on the page.")).font(.caption).foregroundStyle(.secondary)
+                    Text(L10n.text("Use Douyin's Log In button on the page.")).font(.caption).foregroundColor(.secondary)
                 }
                 if loading { ProgressView().controlSize(.small).padding(.leading, 4) }
                 Spacer()
@@ -197,7 +197,7 @@ struct DouyinLoginView: View {
             .padding(.horizontal, 16).padding(.vertical, 12)
             if let error {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
-                    .font(.callout).foregroundStyle(Brand.amber)
+                    .font(.callout).foregroundColor(Brand.amber)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16).padding(.bottom, 10)
             }
@@ -285,9 +285,9 @@ struct DouyinHandoffView: View {
                 Image(systemName: sent ? "checkmark.circle.fill" : "appletv.fill")
                     .font(.system(size: 56)).foregroundStyle(sent ? Color.green : Color.secondary)
                 Text(L10n.text("Sign In on Apple TV")).font(.title2.weight(.bold))
-                Text(message).font(.body).foregroundStyle(.secondary).multilineTextAlignment(.center)
+                Text(message).font(.body).foregroundColor(.secondary).multilineTextAlignment(.center)
                 if let error {
-                    Label(error, systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundStyle(Brand.amber).multilineTextAlignment(.center)
+                    Label(error, systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundColor(Brand.amber).multilineTextAlignment(.center)
                 }
                 if sent {
                     Button(L10n.text("Done")) { dismiss() }.controlButton(prominent: true)

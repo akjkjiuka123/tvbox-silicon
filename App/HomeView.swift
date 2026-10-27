@@ -174,7 +174,7 @@ struct HomeView: View {
                 .fixedSize(horizontal: false, vertical: true)
                 .padding(.bottom, 18)
             Text(L10n.text("Connect your subscription to watch on Mac, iPhone, iPad, and Apple TV."))
-                .font(.title3).foregroundStyle(.secondary)
+                .font(.title3).foregroundColor(.secondary)
                 .frame(maxWidth: heroTitle * 10, alignment: .leading)
                 .padding(.bottom, 40)
             Group {
@@ -383,8 +383,8 @@ private struct HomeFavoriteCard: View {
         HStack(spacing: 14) {
             art
             VStack(alignment: .leading, spacing: 3) {
-                Text(title).font(.headline).foregroundStyle(.primary).lineLimit(1)
-                Text(subtitle).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                Text(title).font(.headline).foregroundColor(.primary).lineLimit(1)
+                Text(subtitle).font(.caption).foregroundColor(.secondary).lineLimit(1)
             }
             Spacer(minLength: 0)
         }

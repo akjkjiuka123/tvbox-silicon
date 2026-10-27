@@ -55,7 +55,7 @@ struct WebSignInView<Code: View>: View {
         VStack(spacing: 0) {
             if let error {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
-                    .font(.callout).foregroundStyle(Brand.amber)
+                    .font(.callout).foregroundColor(Brand.amber)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16).padding(.vertical, 10)
             }
@@ -292,11 +292,11 @@ struct SaveCodeButton: View {
             .task { if UserDefaults.standard.bool(forKey: "qaSaveCode") { await save() } }
             #endif
             if let error {
-                Label(error, systemImage: "exclamationmark.triangle.fill").font(.footnote).foregroundStyle(Brand.amber)
+                Label(error, systemImage: "exclamationmark.triangle.fill").font(.footnote).foregroundColor(Brand.amber)
                     .fixedSize(horizontal: false, vertical: true)
             } else if saved {
                 Text(L10n.text("In the %@ app, tap Scan, then choose this photo.", app))
-                    .font(.footnote).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.footnote).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
             }
         }
     }

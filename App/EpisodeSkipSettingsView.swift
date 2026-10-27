@@ -30,7 +30,7 @@ struct EpisodeSkipSettingsView: View {
                         .settingsSwitch()
                         .accessibilityIdentifier("player.skip.enabled")
                     Text(L10n.text("Times apply to this series and all its episodes. Automatic skipping is a global switch. The outro is remembered as time remaining."))
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundColor(.secondary)
                 }
                 Section(L10n.text("Intro ends at")) {
                     timeField(L10n.text("Intro ends at"), text: $intro, identifier: "player.skip.intro")
@@ -46,7 +46,7 @@ struct EpisodeSkipSettingsView: View {
                     }.disabled(session.duration < 120)
                     .accessibilityIdentifier("player.skip.markOutro")
                     Text(L10n.text("Leave a time empty to keep that segment. Format: minutes:seconds."))
-                        .font(.footnote).foregroundStyle(.secondary)
+                        .font(.footnote).foregroundColor(.secondary)
                 }
                 if let issue {
                     Section { Text(issue).foregroundStyle(.orange).accessibilityIdentifier("player.skip.validation") }

@@ -177,7 +177,7 @@ struct MoreView: View {
                     TabBarPreview(bar: tabs.bar)
                     HStack(spacing: 12) {
                         Text(L10n.text("Choose your tabs and their order."))
-                            .font(.subheadline).foregroundStyle(.secondary)
+                            .font(.subheadline).foregroundColor(.secondary)
                             .multilineTextAlignment(.leading)
                         Spacer(minLength: 0)
                         Text(L10n.text("Edit"))

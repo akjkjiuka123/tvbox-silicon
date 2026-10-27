@@ -208,7 +208,7 @@ struct FormLabel: View {
         Label {
             VStack(alignment: .leading, spacing: 2) {
                 Text(title)
-                if let subtitle, !subtitle.isEmpty { Text(subtitle).font(.caption).foregroundStyle(.secondary) }
+                if let subtitle, !subtitle.isEmpty { Text(subtitle).font(.caption).foregroundColor(.secondary) }
             }
         } icon: { SettingsIcon(symbol: symbol, tint: tint) }
     }
@@ -684,8 +684,8 @@ struct FormSettingsView: View {
             VStack(spacing: 4) {
                 AppMark(size: 76).padding(.bottom, 10)
                 Text(L10n.text("Yingxia")).font(.title2.weight(.bold))
-                if let version { Text(version).font(.subheadline).foregroundStyle(.secondary) }
-                Text(Brand.copyright).font(.caption).foregroundStyle(.tertiary)
+                if let version { Text(version).font(.subheadline).foregroundColor(.secondary) }
+                Text(Brand.copyright).font(.caption).foregroundColor(.tertiary)
                 if let title = updates.availableTitle {
                     Button(action: updates.show) {
                         Label(title, systemImage: "gift.fill")
@@ -709,8 +709,8 @@ struct FormSettingsView: View {
                 AppMark(size: FormMetrics.hero)
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L10n.text("Yingxia")).font(.title3.weight(.semibold))
-                    if let version { Text(version).font(.subheadline).foregroundStyle(.secondary) }
-                    Text(Brand.copyright).font(.caption).foregroundStyle(.tertiary)
+                    if let version { Text(version).font(.subheadline).foregroundColor(.secondary) }
+                    Text(Brand.copyright).font(.caption).foregroundColor(.tertiary)
                 }
                 .lineLimit(1)
             }
@@ -1038,18 +1038,18 @@ struct DiagnosticsView: View {
                     Spacer()
                     Text("\(filtered.count) / \(entries.count)").monospacedDigit()
                 }
-                .font(.caption).foregroundStyle(.secondary).padding(.horizontal, DiagnosticGrid.inset).padding(.vertical, 12)
+                .font(.caption).foregroundColor(.secondary).padding(.horizontal, DiagnosticGrid.inset).padding(.vertical, 12)
             }
             .background(SettingsStyle.groupFill, in: RoundedRectangle(cornerRadius: SettingsStyle.radius, style: .continuous))
             .overlay { RoundedRectangle(cornerRadius: SettingsStyle.radius, style: .continuous).strokeBorder(Color.primary.opacity(0.06)) }
             .clipShape(RoundedRectangle(cornerRadius: SettingsStyle.radius, style: .continuous))
             Text(L10n.text("Shows the latest 1,000 events from this run. Export includes retained log files."))
-                .font(.caption).foregroundStyle(.secondary)
+                .font(.caption).foregroundColor(.secondary)
             if dropped > 0 {
                 Label(L10n.text("Log overload: %lld events dropped", dropped), systemImage: "exclamationmark.triangle")
-                    .font(.caption).foregroundStyle(Brand.amber)
+                    .font(.caption).foregroundColor(Brand.amber)
             }
-            if let error { Text(error).font(.caption).foregroundStyle(Brand.rose).selectable() }
+            if let error { Text(error).font(.caption).foregroundColor(Brand.rose).selectable() }
         }
         .padding(Layout.gutter)
         .frame(maxWidth: Layout.maxWidth).frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .top)
@@ -1069,7 +1069,7 @@ struct DiagnosticsView: View {
             #if !os(tvOS)
             Text(L10n.text("Runtime Activity")).font(.title2.weight(.bold))
             #endif
-            Text(L10n.text("Inspect plugin requests and errors.")).font(.subheadline).foregroundStyle(.secondary)
+            Text(L10n.text("Inspect plugin requests and errors.")).font(.subheadline).foregroundColor(.secondary)
         }
     }
     private var actions: some View {
@@ -1241,7 +1241,7 @@ private struct DiagnosticRow: View {
                     Text(entry.date, format: .dateTime.hour().minute().second()).monospacedDigit()
                     Text(entry.level.rawValue.uppercased()).foregroundStyle(entry.level.tint)
                     Text(entry.category)
-                }.font(.caption).foregroundStyle(.secondary)
+                }.font(.caption).foregroundColor(.secondary)
                 Text(entry.message).font(.body).lineLimit(2).multilineTextAlignment(.leading)
             }.padding(.vertical, 18)
             #else
@@ -1310,7 +1310,7 @@ private struct DiagnosticDetail: View {
                 Spacer()
                 Button(L10n.text("OK")) { dismiss() }.controlButton()
             }
-            Text(entry.date.formatted(date: .abbreviated, time: .standard)).font(.caption).foregroundStyle(.secondary)
+            Text(entry.date.formatted(date: .abbreviated, time: .standard)).font(.caption).foregroundColor(.secondary)
             ScrollView {
                 Text(entry.message).font(.system(.body, design: .monospaced)).selectable()
                     .frame(maxWidth: .infinity, alignment: .leading).padding(18)

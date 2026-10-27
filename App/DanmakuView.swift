@@ -248,7 +248,7 @@ struct DanmakuListView: View {
         HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
                 Text(L10n.text("Danmaku")).font(.title2.weight(.bold))
-                Text(L10n.text("%d comments", comments.count)).font(.subheadline).foregroundStyle(.white.opacity(0.6))
+                Text(L10n.text("%d comments", comments.count)).font(.subheadline).foregroundColor(.white.opacity(0.6))
             }
             Spacer()
             Button(action: chosen) {

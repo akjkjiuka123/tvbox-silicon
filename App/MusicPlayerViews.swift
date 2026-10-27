@@ -93,7 +93,7 @@ struct MusicNowPlaying: View {
                         VStack(alignment: .leading, spacing: 3) {
                             Text(music.track?.title ?? "").font(.headline).lineLimit(1)
                             Text([music.track?.artistLine, music.queue.flatMap(queueLine)].compactMap { $0 }.joined(separator: " · "))
-                                .font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                                .font(.subheadline).foregroundColor(.secondary).lineLimit(1)
                         }
                     }
                     .contentShape(Rectangle())
@@ -180,9 +180,9 @@ struct MusicNowPlaying: View {
         // Both services ask to be named when their audio plays.
         if music.failure == nil, let provider = music.selection?.candidate.provider {
             if provider == .gdstudio {
-                Text(L10n.text("Source: GD Music (music.gdstudio.xyz)")).font(.caption2).foregroundStyle(.tertiary).lineLimit(1)
+                Text(L10n.text("Source: GD Music (music.gdstudio.xyz)")).font(.caption2).foregroundColor(.tertiary).lineLimit(1)
             } else if provider == .xinghai {
-                Text(L10n.text("Source: Xinghai (yy.zddyr.top)")).font(.caption2).foregroundStyle(.tertiary).lineLimit(1)
+                Text(L10n.text("Source: Xinghai (yy.zddyr.top)")).font(.caption2).foregroundColor(.tertiary).lineLimit(1)
             }
         }
     }
@@ -350,7 +350,7 @@ struct MusicLyricLines: View {
                     #endif
                     .id(index)
                 }
-                Text(L10n.text("Lyrics from %@", lyrics.platform.name)).font(.caption).foregroundStyle(.tertiary).padding(.top, 12)
+                Text(L10n.text("Lyrics from %@", lyrics.platform.name)).font(.caption).foregroundColor(.tertiary).padding(.top, 12)
             }
             .scrollTargetLayoutIfAvailable()
             .padding(.horizontal, Layout.gutter * 1.5).padding(.vertical, 40)
@@ -391,7 +391,7 @@ struct MusicChannelsView: View {
                                     .frame(width: 26)
                                 VStack(alignment: .leading, spacing: 3) {
                                     Text(row.candidate.name).font(.body.weight(.medium))
-                                    Text(row.detail).font(.caption).foregroundStyle(.secondary)
+                                    Text(row.detail).font(.caption).foregroundColor(.secondary)
                                 }
                                 Spacer()
                                 if current { Image(systemName: "checkmark").foregroundStyle(Brand.accent) }
@@ -491,7 +491,7 @@ struct MusicSettingsView: View {
                         Toggle(isOn: enabled(provider, music: music)) {
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(provider.name)
-                                Text(detail).font(.caption).foregroundStyle(.secondary)
+                                Text(detail).font(.caption).foregroundColor(.secondary)
                             }
                         }
                         .settingsSwitch()

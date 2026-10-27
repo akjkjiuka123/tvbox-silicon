@@ -252,7 +252,7 @@ struct LiveSearchResults: View {
             if let rooms = found[platform] {
                 LiveRoomGrid(rooms: Array(rooms.prefix(8)))
             } else if let failure = failures[platform] {
-                Text(failure).font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                Text(failure).font(.subheadline).foregroundColor(.secondary).lineLimit(2)
             } else {
                 ProgressView().frame(maxWidth: .infinity, alignment: .leading).padding(.vertical, 12)
             }
@@ -290,13 +290,13 @@ struct LiveRoomCard: View {
                     }
                     .overlay(alignment: .bottomLeading) {
                         if favorite {
-                            Image(systemName: "heart.fill").font(.caption).foregroundStyle(Brand.rose)
+                            Image(systemName: "heart.fill").font(.caption).foregroundColor(Brand.rose)
                                 .padding(6).glassSurface(.regular.tint(.black.opacity(0.45)), in: Circle()).padding(8)
                         }
                     }
                 Text(room.title.isEmpty ? room.host : room.title).font(.subheadline.weight(.semibold)).foregroundStyle(.primary)
                     .lineLimit(1).truncationMode(.tail)
-                Text([room.host, room.area].filter { !$0.isEmpty }.joined(separator: " · ")).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                Text([room.host, room.area].filter { !$0.isEmpty }.joined(separator: " · ")).font(.caption).foregroundColor(.secondary).lineLimit(1)
             }
             // Cards in a row share its height; a one-line title leaves the space below, not between.
             .frame(maxHeight: .infinity, alignment: .top)
@@ -425,7 +425,7 @@ struct LivePlatformCard: View {
                     Text(L10n.text("Built-in"))
                 }
             }
-            .font(detailFont).foregroundStyle(.white.opacity(0.8))
+            .font(detailFont).foregroundColor(.white.opacity(0.8))
         }
     }
 

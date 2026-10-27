@@ -261,7 +261,7 @@ struct GlobalSearchView: View {
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(L10n.text("%lld results", model.videoCount)).font(.headline)
                 Text(summaryDetail)
-                    .font(.subheadline).foregroundStyle(.secondary)
+                    .font(.subheadline).foregroundColor(.secondary)
             }
         }
         .monospacedDigit()
@@ -327,14 +327,14 @@ struct GlobalSearchView: View {
     private func searchPoster(_ item: SearchPoster) -> some View {
         VStack(alignment: .leading, spacing: 2) {
             PosterCard(video: item.video)
-            Text(SourceLabel(item.site.name).text).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+            Text(SourceLabel(item.site.name).text).font(.caption).foregroundColor(.secondary).lineLimit(1)
         }
     }
 
     private var idle: some View {
         VStack(alignment: .leading, spacing: idleSpacing) {
             #if os(tvOS)
-            Text(L10n.text("Search all available sources in your subscription.")).font(.body).foregroundStyle(.secondary)
+            Text(L10n.text("Search all available sources in your subscription.")).font(.body).foregroundColor(.secondary)
             if !history.isEmpty {
                 HStack {
                     Text(L10n.text("Recent Searches")).font(.headline)
@@ -359,7 +359,7 @@ struct GlobalSearchView: View {
                         HStack(spacing: 0) {
                             Button { useHistory(item) } label: {
                                 HStack(spacing: 14) {
-                                    Image(systemName: "clock.arrow.circlepath").font(.body).foregroundStyle(.secondary).frame(width: 24)
+                                    Image(systemName: "clock.arrow.circlepath").font(.body).foregroundColor(.secondary).frame(width: 24)
                                     Text(item).font(.body).lineLimit(1)
                                     Spacer(minLength: 0)
                                 }
@@ -410,15 +410,15 @@ struct GlobalSearchView: View {
                     VStack(alignment: .leading, spacing: 6) {
                         let health = store.health(of: result.site)
                         HStack(spacing: 6) { Text(result.site.name).font(.headline); SourceHealthDot(status: health) }
-                        Text(result.error ?? "").font(.caption).foregroundStyle(.secondary)
-                        if health == .failing { Text(health.summary).font(.caption).foregroundStyle(Brand.rose) }
+                        Text(result.error ?? "").font(.caption).foregroundColor(.secondary)
+                        if health == .failing { Text(health.summary).font(.caption).foregroundColor(Brand.rose) }
                     }
                 }
                 // Sources this search left out for failing; the retry below asks them too.
                 ForEach(model.paused) { site in
                     VStack(alignment: .leading, spacing: 6) {
                         HStack(spacing: 6) { Text(site.name).font(.headline); SourceHealthDot(status: .failing) }
-                        Text(pauseNote(site)).font(.caption).foregroundStyle(Brand.rose)
+                        Text(pauseNote(site)).font(.caption).foregroundColor(Brand.rose)
                     }
                 }
             }
@@ -746,7 +746,7 @@ struct RecommendationsView: View {
             }
             if category == nil, !model.items.isEmpty, let loadedSite = model.site {
                 if (loadedSite.raw["indexs"]?.int ?? 0) == 1 {
-                    Text(L10n.text("Choose a title to find it across your sources.")).font(.subheadline).foregroundStyle(.secondary)
+                    Text(L10n.text("Choose a title to find it across your sources.")).font(.subheadline).foregroundColor(.secondary)
                 }
                 LazyVGrid(columns: Layout.posterColumns, spacing: Layout.gridRowSpacing) {
                     ForEach(model.items) { item in
@@ -813,7 +813,7 @@ struct RecommendationsView: View {
         }
         if !browser.videos.isEmpty {
             if isIndex {
-                Text(L10n.text("Choose a title to find it across your sources.")).font(.subheadline).foregroundStyle(.secondary)
+                Text(L10n.text("Choose a title to find it across your sources.")).font(.subheadline).foregroundColor(.secondary)
             }
             LazyVGrid(columns: Layout.posterColumns, spacing: Layout.gridRowSpacing) {
                 ForEach(browser.videos) { video in

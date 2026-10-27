@@ -32,9 +32,9 @@ struct MusicMiniPlayer: View {
             VStack(alignment: .leading, spacing: 1) {
                 Text(music.track?.title ?? "").font(.subheadline.weight(.semibold)).lineLimit(1)
                 if let failure = music.failure {
-                    Text(failure).font(.caption).foregroundStyle(Brand.amber).lineLimit(1)
+                    Text(failure).font(.caption).foregroundColor(Brand.amber).lineLimit(1)
                 } else if !inline {
-                    Text(music.track?.artistLine ?? "").font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text(music.track?.artistLine ?? "").font(.caption).foregroundColor(.secondary).lineLimit(1)
                 }
             }
             .frame(maxWidth: .infinity, alignment: .leading)

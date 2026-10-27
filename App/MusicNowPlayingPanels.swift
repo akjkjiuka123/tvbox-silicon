@@ -37,7 +37,7 @@ struct MusicNowPlayingLyrics: View {
                         .onTapGesture { if lyrics.synced { music.seek(toLyric: line) } }
                         .id(index)
                     }
-                    Text(L10n.text("Lyrics from %@", lyrics.platform.name)).font(.caption).foregroundStyle(.secondary).padding(.top, 8)
+                    Text(L10n.text("Lyrics from %@", lyrics.platform.name)).font(.caption).foregroundColor(.secondary).padding(.top, 8)
                 }
                 .scrollTargetLayoutIfAvailable()
                 .padding(.vertical, 28)
@@ -83,7 +83,7 @@ struct MusicUpNext: View {
                                 MusicArtwork(url: track.artwork, size: 44)
                                 VStack(alignment: .leading, spacing: 2) {
                                     Text(track.title).font(.body.weight(.medium)).lineLimit(1)
-                                    Text(track.artistLine).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                                    Text(track.artistLine).font(.subheadline).foregroundColor(.secondary).lineLimit(1)
                                 }
                                 .frame(maxWidth: .infinity, alignment: .leading)
                                 if let duration = track.duration {

@@ -271,7 +271,7 @@ private struct MusicContinueCard: View {
                     Text(track.title).font(.headline).lineLimit(1)
                     Text([track.artistLine, point.queue.source, L10n.text("Stopped at %@", MusicTime.text(point.position))]
                         .compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
-                        .font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                        .font(.subheadline).foregroundColor(.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 8)
                 Image(systemName: "play.circle.fill").font(.system(size: MusicLayout.art * 0.6)).foregroundStyle(Brand.accent)
@@ -307,7 +307,7 @@ struct MusicTrackRow: View {
                     Text(track.title).font(.headline).lineLimit(1)
                         .foregroundStyle(current ? AnyShapeStyle(Brand.accent) : AnyShapeStyle(.primary))
                     Text([track.artistLine, number == nil ? track.album : nil].compactMap { $0 }.filter { !$0.isEmpty }.joined(separator: " · "))
-                        .font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                        .font(.subheadline).foregroundColor(.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 8)
                 ForEach(track.tags.sorted(), id: \.self) { tag in Pill(text: tag.name) }
@@ -359,7 +359,7 @@ private struct MusicCollectionRow: View {
                 MusicArtwork(url: collection.artwork, size: MusicLayout.art, symbol: collection.kind == .album ? "square.stack" : "music.note.list")
                 VStack(alignment: .leading, spacing: 3) {
                     Text(collection.title).font(.headline).lineLimit(1).foregroundStyle(.primary)
-                    Text(MusicCollectionView.details(collection)).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                    Text(MusicCollectionView.details(collection)).font(.subheadline).foregroundColor(.secondary).lineLimit(1)
                 }
                 Spacer(minLength: 8)
                 Image(systemName: "chevron.right").font(.subheadline.weight(.semibold)).foregroundStyle(.tertiary)
@@ -447,7 +447,7 @@ struct MusicCollectionView: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text(L10n.text(collection.kind == .album ? "Album" : "Playlist")).font(.caption.weight(.semibold)).foregroundStyle(Brand.accent)
                     Text(collection.title).font(.title2.weight(.bold)).lineLimit(2)
-                    Text(Self.details(collection)).font(.subheadline).foregroundStyle(.secondary).lineLimit(3)
+                    Text(Self.details(collection)).font(.subheadline).foregroundColor(.secondary).lineLimit(3)
                 }
             }
             HStack(spacing: 10) {

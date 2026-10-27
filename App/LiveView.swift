@@ -187,7 +187,7 @@ struct ChannelListView: View {
                     }
                 }.padding(.vertical, 4)
             }
-            Text(L10n.text("Channels: %lld", filtered.count)).font(.caption).foregroundStyle(.secondary)
+            Text(L10n.text("Channels: %lld", filtered.count)).font(.caption).foregroundColor(.secondary)
         }
     }
     private func load() async {
@@ -597,7 +597,7 @@ private struct FavoriteEpisodeCard: View {
                     } else {
                         Text(episode.video.videoName).font(.subheadline.weight(.semibold)).foregroundStyle(.primary).lineLimit(1)
                     }
-                    Text(episode.episodeName).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text(episode.episodeName).font(.caption).foregroundColor(.secondary).lineLimit(1)
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
             }
@@ -679,15 +679,15 @@ struct ChannelCard: View {
                 HStack(spacing: 14) {
                     ChannelLogo(channel: channel)
                     VStack(alignment: .leading, spacing: 3) {
-                        Text(channel.name).font(.headline).foregroundStyle(.primary).lineLimit(1)
-                        Text(channel.displayGroup).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        Text(channel.name).font(.headline).foregroundColor(.primary).lineLimit(1)
+                        Text(channel.displayGroup).font(.caption).foregroundColor(.secondary).lineLimit(1)
                     }
                     Spacer(minLength: 0)
                 }.contentShape(Rectangle())
             }.cardButton()
             Button { if drag?.active != true { store.toggleFavorite(channel) } } label: {
                 Image(systemName: favorite ? "heart.fill" : "heart")
-                    .font(.title3).foregroundStyle(favorite ? Brand.rose : .secondary)
+                    .font(.title3).foregroundColor(favorite ? Brand.rose : .secondary)
                     .frame(width: 44, height: 44).contentTransition(.opacity)
             }
             .buttonStyle(.plain)

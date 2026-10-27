@@ -96,8 +96,8 @@ struct MusicCollectionTile: View {
                     .overlay { RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.black.opacity(hovering ? 0.12 : 0)) }
                     .shadow(color: .black.opacity(0.12), radius: 6, y: 3)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(collection.title).font(Self.titleFont).foregroundStyle(.primary).lineLimit(1)
-                    Text(collection.subtitle ?? collection.platform.name).font(Self.subtitleFont).foregroundStyle(.secondary).lineLimit(1)
+                    Text(collection.title).font(Self.titleFont).foregroundColor(.primary).lineLimit(1)
+                    Text(collection.subtitle ?? collection.platform.name).font(Self.subtitleFont).foregroundColor(.secondary).lineLimit(1)
                 }
             }
             .frame(width: size, alignment: .leading)

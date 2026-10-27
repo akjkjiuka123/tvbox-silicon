@@ -58,7 +58,7 @@ struct PlaybackView: View {
                     Text("Playback position").accessibilityIdentifier("player.qa.position")
                         .accessibilityValue("\(session.position)")
                 }
-                .font(.caption2).foregroundStyle(.white)
+                .font(.caption2).foregroundColor(.white)
                 .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .bottomLeading)
                 .allowsHitTesting(false)
             }
@@ -261,7 +261,7 @@ struct PlaybackView: View {
                     .frame(height: 70)
                     .accessibilityHidden(true)
                 Text(L10n.text("Can't play this right now")).font(.title2.weight(.semibold)).padding(.top, 24)
-                Text(error).font(.callout).foregroundStyle(.white.opacity(0.7)).lineSpacing(2)
+                Text(error).font(.callout).foregroundColor(.white.opacity(0.7)).lineSpacing(2)
                     .multilineTextAlignment(.center).frame(maxWidth: 330).padding(.top, 10)
                 GlassGroup(spacing: 12) {
                     HStack(spacing: 12) {
@@ -279,7 +279,7 @@ struct PlaybackView: View {
             .environment(\.colorScheme, .dark)
             #else
             VStack(spacing: 18) {
-                Image(systemName: "exclamationmark.triangle.fill").font(.largeTitle).foregroundStyle(Brand.amber)
+                Image(systemName: "exclamationmark.triangle.fill").font(.largeTitle).foregroundColor(Brand.amber)
                 Text(error).multilineTextAlignment(.center).frame(maxWidth: 420)
                 GlassGroup(spacing: 10) {
                     HStack(spacing: 10) {

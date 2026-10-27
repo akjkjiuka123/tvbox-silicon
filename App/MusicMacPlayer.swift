@@ -299,9 +299,9 @@ struct MusicMacVolume: View {
     var body: some View {
         @TVBindable var music = store.music
         HStack(spacing: 8) {
-            Image(systemName: "speaker.fill").font(.caption).foregroundStyle(.secondary)
+            Image(systemName: "speaker.fill").font(.caption).foregroundColor(.secondary)
             Slider(value: $music.volume, in: 0...1).controlSize(.small)
-            Image(systemName: "speaker.wave.3.fill").font(.caption).foregroundStyle(.secondary)
+            Image(systemName: "speaker.wave.3.fill").font(.caption).foregroundColor(.secondary)
         }
         .accessibilityElement(children: .contain)
         .accessibilityLabel(L10n.text("Volume"))

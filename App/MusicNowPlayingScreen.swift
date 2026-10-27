@@ -85,7 +85,7 @@ struct MusicNowPlayingScreen: View {
             }
             VStack(alignment: .leading, spacing: 2) {
                 Text(music.track?.title ?? "").font(compact ? .headline : .title3.weight(.bold)).lineLimit(1)
-                Text(music.track?.artistLine ?? "").font(compact ? .subheadline : .title3).foregroundStyle(.secondary).lineLimit(1)
+                Text(music.track?.artistLine ?? "").font(compact ? .subheadline : .title3).foregroundColor(.secondary).lineLimit(1)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             Menu {

@@ -228,11 +228,11 @@ struct HistoryCard: View {
                 Text(entry.context.videoName).font(.subheadline.weight(.semibold)).foregroundStyle(.primary).lineLimit(1)
                 if details {
                     Text("\(entry.context.episodeName) · \(SourceLabel(entry.context.sourceName).text)")
-                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        .font(.caption).foregroundColor(.secondary).lineLimit(1)
                     Text(HistoryFormat.status(entry)).font(.caption).monospacedDigit().foregroundStyle(.tertiary).lineLimit(1)
                 } else {
                     // The bar on the poster already says how far; the line names the episode.
-                    Text(entry.context.episodeName).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                    Text(entry.context.episodeName).font(.caption).foregroundColor(.secondary).lineLimit(1)
                 }
             }
             .frame(width: details ? nil : HistoryMetrics.card)

@@ -705,7 +705,7 @@ struct PosterImage: View {
     var body: some View {
         ZStack {
             Color(white: 0.20)
-            Image(systemName: symbol).font(.title2).foregroundStyle(.white.opacity(0.55))
+            Image(systemName: symbol).font(.title2).foregroundColor(.white.opacity(0.55))
             if let bitmap { Color.clear.overlay { Image(decorative: bitmap.image, scale: 1).resizable().scaledToFill() } }
         }
         // A filled cover is wider than its frame; clip its drawing and its hit area, or the overflow
@@ -957,7 +957,7 @@ struct LoadingCard: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(state.title).font(.callout.weight(.semibold)).lineLimit(1)
                     if let detail = state.detail {
-                        Text(detail).font(.caption).foregroundStyle(.secondary).lineLimit(2)
+                        Text(detail).font(.caption).foregroundColor(.secondary).lineLimit(2)
                     }
                 }
                 Spacer(minLength: 16)
@@ -968,7 +968,7 @@ struct LoadingCard: View {
                 ProgressView(value: fraction).progressViewStyle(.linear).tint(Brand.accent)
             }
             if explains, let reason = state.reason {
-                Text(reason).font(.caption).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                Text(reason).font(.caption).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
             }
         }
         .padding(.horizontal, 18).padding(.vertical, 14)
@@ -1002,7 +1002,7 @@ struct ErrorStateCard: View {
                 .accessibilityHidden(true)
             VStack(spacing: 10) {
                 Text(title).font(.title2.weight(.semibold)).foregroundStyle(.primary)
-                Text(message).font(.body).foregroundStyle(.secondary)
+                Text(message).font(.body).foregroundColor(.secondary)
                     .fixedSize(horizontal: false, vertical: true)
             }
             .multilineTextAlignment(.center)
@@ -1020,7 +1020,7 @@ struct ErrorStateCard: View {
                         Text(L10n.text(showsDetails ? "Hide details" : "Show details"))
                         Image(systemName: showsDetails ? "chevron.up" : "chevron.down").font(.caption2.weight(.semibold))
                     }
-                    .font(.callout).foregroundStyle(.secondary)
+                    .font(.callout).foregroundColor(.secondary)
                     .padding(.vertical, 6).contentShape(Rectangle())
                 }
                 #if os(tvOS)
@@ -1230,7 +1230,7 @@ private struct ChromeButtonStyle: ButtonStyle {
     @Environment(\.isEnabled) private var enabled
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.headline).foregroundStyle(.white)
+            .font(.headline).foregroundColor(.white)
             .frame(width: 44, height: 44)
             .glassSurface(.regular.interactive(), in: Circle())
             .contentShape(Circle())

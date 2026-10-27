@@ -181,12 +181,12 @@ struct CatalogDanmakuSettingsView: View {
                         .settingsSwitch()
                         .accessibilityIdentifier("danmaku.automatic")
                     Text(L10n.text("Matching comments appear automatically. If none match or the service is unavailable, the video stays clear."))
-                        .font(.caption).foregroundStyle(.secondary)
-                    Text(status).font(.caption).foregroundStyle(.secondary).accessibilityIdentifier("danmaku.status")
+                        .font(.caption).foregroundColor(.secondary)
+                    Text(status).font(.caption).foregroundColor(.secondary).accessibilityIdentifier("danmaku.status")
                     Button(L10n.text("Retry automatic matching")) { model.retryAutomatic() }.disabled(model.context == nil)
                     if !model.track.isEmpty {
                         Text(model.track).font(.subheadline)
-                        Text(model.source + (model.fromCache ? " · " + L10n.text("From local cache") : "")).font(.caption).foregroundStyle(.secondary)
+                        Text(model.source + (model.fromCache ? " · " + L10n.text("From local cache") : "")).font(.caption).foregroundColor(.secondary)
                         Text(L10n.text("Loaded %lld comments", model.comments.count)).foregroundStyle(.secondary)
                         HStack {
                             Text(L10n.text("Opacity"))
@@ -200,14 +200,14 @@ struct CatalogDanmakuSettingsView: View {
                             Text(L10n.text("Time Offset: %@ s", String(format: "%+.1f", model.offset)))
                         }
                         Text(L10n.text("A positive offset shows comments later. Playback controls stay available."))
-                            .font(.caption).foregroundStyle(.secondary)
+                            .font(.caption).foregroundColor(.secondary)
                         Button(L10n.text("Clear Danmaku"), role: .destructive) { work?.cancel(); busy = false; model.clear(keepingContext: true) }
                     }
                 }
                 Section {
                     Toggle(L10n.text("Find official episodes for dmku"), isOn: $officialLookup).settingsSwitch()
                     Text(L10n.text("Automatically checks Dandanplay, iQIYI and Tencent Video. The first matching track with comments is used. Official public episode pages are sent to dmku, or to danmu.zxz.ee when dmku has none; stream URLs and playback headers are never sent."))
-                        .font(.caption).foregroundStyle(.secondary)
+                        .font(.caption).foregroundColor(.secondary)
                     HStack {
                         TextField(L10n.text("Video title"), text: $keyword).onSubmit { search() }.accessibilityIdentifier("danmaku.keyword")
                         Button(L10n.text("Search")) { search() }.disabled(busy || keyword.trimmingCharacters(in: .whitespaces).isEmpty).accessibilityIdentifier("danmaku.search")
@@ -225,7 +225,7 @@ struct CatalogDanmakuSettingsView: View {
                             Button { select(anime) } label: {
                                 VStack(alignment: .leading, spacing: 4) {
                                     Text(anime.title)
-                                    if !anime.type.isEmpty { Text(anime.type).font(.caption).foregroundStyle(.secondary) }
+                                    if !anime.type.isEmpty { Text(anime.type).font(.caption).foregroundColor(.secondary) }
                                 }
                             }.disabled(busy).accessibilityIdentifier("danmaku.anime." + anime.id)
                         }

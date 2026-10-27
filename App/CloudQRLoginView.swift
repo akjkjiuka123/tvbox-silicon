@@ -59,7 +59,7 @@ struct CloudQRLoginView: View {
                 Text(title).font(.title2.weight(.bold))
                 #endif
                 Text(L10n.text(scanPrompt, name))
-                    .font(.body).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.body).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             status
             #if os(iOS)
@@ -88,7 +88,7 @@ struct CloudQRLoginView: View {
                 // Baidu serves its code as an image.
                 AsyncImage(url: address) { phase in
                     if let image = phase.image { image.interpolation(.none).resizable().scaledToFit() }
-                    else if phase.error != nil { Image(systemName: "exclamationmark.triangle").font(.largeTitle).foregroundStyle(.black.opacity(0.5)) }
+                    else if phase.error != nil { Image(systemName: "exclamationmark.triangle").font(.largeTitle).foregroundColor(.black.opacity(0.5)) }
                     else { ProgressView().tint(.black) }
                 }
                 .accessibilityLabel(L10n.text("Sign-in code"))

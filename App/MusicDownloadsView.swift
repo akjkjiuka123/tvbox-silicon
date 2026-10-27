@@ -231,7 +231,7 @@ struct MusicDownloadedCollectionView: View {
                     Text(L10n.text(collection.kind == .album ? "Album" : "Playlist")).font(.caption.weight(.semibold)).foregroundStyle(Brand.accent)
                     Text(collection.title).font(.title2.weight(.bold)).lineLimit(2)
                     Text([collection.subtitle, L10n.text("%lld songs", tracks.count)].compactMap { $0 }.joined(separator: " · "))
-                        .font(.subheadline).foregroundStyle(.secondary).lineLimit(2)
+                        .font(.subheadline).foregroundColor(.secondary).lineLimit(2)
                 }
             }
             HStack(spacing: 10) {
@@ -275,7 +275,7 @@ private struct MusicDownloadedTile: View {
                     .overlay { RoundedRectangle(cornerRadius: 12, style: .continuous).fill(.black.opacity(hovering ? 0.12 : 0)) }
                     .shadow(color: .black.opacity(0.12), radius: 6, y: 3)
                 VStack(alignment: .leading, spacing: 2) {
-                    Text(collection.title).font(Self.titleFont).foregroundStyle(.primary).lineLimit(1)
+                    Text(collection.title).font(Self.titleFont).foregroundColor(.primary).lineLimit(1)
                     Text(L10n.text("%lld songs", saved)).font(Self.subtitleFont).monospacedDigit().foregroundStyle(.secondary).lineLimit(1)
                 }
             }

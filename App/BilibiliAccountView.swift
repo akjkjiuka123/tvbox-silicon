@@ -83,11 +83,11 @@ struct BilibiliCodeSignIn: View {
                 #if os(iOS)
                 // In the sign-in sheet, under its title.
                 Text(L10n.text("Open the %@ app on another phone, scan this code, and confirm the sign-in.", L10n.text("Bilibili")))
-                    .font(.body).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.body).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
                 #else
                 Text(L10n.text("Sign In to Bilibili")).font(.title2.weight(.bold))
                 Text(L10n.text("Open the Bilibili app on your phone, scan this code, and confirm the sign-in. Without signing in, videos play at up to 1080P and anime and films at 480P."))
-                    .font(.body).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.body).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
                 #endif
             }
             status
@@ -181,7 +181,7 @@ struct BilibiliSignInBanner: View {
             VStack(alignment: .leading, spacing: 4) {
                 Text(L10n.text("Sign In to Bilibili")).font(.headline)
                 Text(L10n.text("See your following feed, favorites, watch later and history, and play in higher quality."))
-                    .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.subheadline).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
             }
             Spacer(minLength: 12)
             RouteLink { BilibiliAccountView() } label: { Text(L10n.text("Sign In")) }.controlButton(prominent: true)

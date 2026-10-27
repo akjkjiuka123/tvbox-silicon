@@ -245,7 +245,7 @@ private struct StorageCard: View {
             }
             HStack(alignment: .firstTextBaseline, spacing: 8) {
                 Text(DownloadFormat.size(downloads)).font(.system(.title, design: .rounded).weight(.bold)).monospacedDigit()
-                Text(L10n.text("used by downloads")).font(.subheadline).foregroundStyle(.secondary)
+                Text(L10n.text("used by downloads")).font(.subheadline).foregroundColor(.secondary)
             }
             if capacity > 0 {
                 GeometryReader { proxy in
@@ -268,7 +268,7 @@ private struct StorageCard: View {
                 .font(.caption)
             }
             #if os(tvOS)
-            Text(L10n.text("tvOS may remove downloads when Apple TV runs low on storage.")).font(.caption).foregroundStyle(.secondary)
+            Text(L10n.text("tvOS may remove downloads when Apple TV runs low on storage.")).font(.caption).foregroundColor(.secondary)
             #endif
         }
         .padding(DownloadMetrics.thumb > 60 ? 28 : 18)
@@ -304,7 +304,7 @@ private struct QueueRow: View {
             VStack(alignment: .leading, spacing: 6) {
                 HStack(alignment: .firstTextBaseline, spacing: 8) {
                     Text(item.title).font(.headline).lineLimit(1)
-                    Text(item.episode).font(.subheadline).foregroundStyle(.secondary).lineLimit(1)
+                    Text(item.episode).font(.subheadline).foregroundColor(.secondary).lineLimit(1)
                     if let quality = item.quality { Pill(text: quality) }
                 }
                 ProgressView(value: item.fraction)
@@ -386,7 +386,7 @@ private struct ShowPanel: View {
                 VStack(alignment: .leading, spacing: 3) {
                     Text(show.title).font(.headline).lineLimit(2)
                     Text([SourceLabel(show.sourceName).text, show.items.count == 1 ? L10n.text("1 episode") : L10n.text("%lld episodes", show.items.count), DownloadFormat.size(show.size)].joined(separator: " · "))
-                        .font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                        .font(.caption).foregroundColor(.secondary).lineLimit(1)
                 }
                 LazyVGrid(columns: [GridItem(.adaptive(minimum: DownloadMetrics.episodeMin), spacing: 8)], spacing: DownloadMetrics.thumb > 60 ? 12 : 4) {
                     ForEach(show.items) { item in episode(item) }
@@ -499,7 +499,7 @@ struct DownloadPicker: View {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(L10n.text("Download Episodes")).font(.title2.weight(.bold))
                     Text(video.name).font(.headline).lineLimit(2)
-                    if !flag.isEmpty { Text(SourceLabel(flag).text).font(.subheadline).foregroundStyle(.secondary).lineLimit(1) }
+                    if !flag.isEmpty { Text(SourceLabel(flag).text).font(.subheadline).foregroundColor(.secondary).lineLimit(1) }
                 }
                 Spacer(minLength: 0)
             }
@@ -578,7 +578,7 @@ struct DownloadPicker: View {
                 Text(episode.name).lineLimit(1)
                 Spacer(minLength: 6)
                 if let existing, locked {
-                    Text(existing.status == .completed ? L10n.text("Downloaded") : L10n.text("In Queue")).font(.caption).foregroundStyle(.secondary)
+                    Text(existing.status == .completed ? L10n.text("Downloaded") : L10n.text("In Queue")).font(.caption).foregroundColor(.secondary)
                 }
             }
             #if !os(tvOS)

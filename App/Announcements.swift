@@ -186,11 +186,11 @@ struct MessagesView: View {
                 Text(message.title.text()).font(.headline)
                 Spacer(minLength: 8)
                 if let date = message.start.flatMap(MessageFeed.Message.date) {
-                    Text(date, format: .dateTime.month().day()).font(.footnote).foregroundStyle(.secondary)
+                    Text(date, format: .dateTime.month().day()).font(.footnote).foregroundColor(.secondary)
                 }
             }
             Text(message.body.text())
-                .font(.subheadline).foregroundStyle(.secondary)
+                .font(.subheadline).foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             #if !os(tvOS)
             if let link = message.link {

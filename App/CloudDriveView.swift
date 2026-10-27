@@ -52,8 +52,8 @@ struct CloudDriveView: View {
                 }
             }
             }
-            if let notice { Label(notice, systemImage: "checkmark.circle.fill").font(.callout).foregroundStyle(.green) }
-            if let error { Label(error, systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundStyle(Brand.rose) }
+            if let notice { Label(notice, systemImage: "checkmark.circle.fill").font(.callout).foregroundColor(.green) }
+            if let error { Label(error, systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundColor(Brand.rose) }
         }
         .task { do { accounts = try CloudDriveAccounts.load() } catch { self.error = error.localizedDescription } }
         .sheet(item: $login) { provider in
@@ -109,7 +109,7 @@ struct CloudLoginView: View {
                     .background(provider.tint.gradient, in: RoundedRectangle(cornerRadius: 7, style: .continuous))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(L10n.text(provider == .quark ? "Sign In to Quark" : "Sign In to UC")).font(.headline)
-                    Text(provider.url.host ?? "").font(.caption).foregroundStyle(.secondary)
+                    Text(provider.url.host ?? "").font(.caption).foregroundColor(.secondary)
                 }
                 if loading {
                     ProgressView().controlSize(.small).padding(.leading, 4)
@@ -127,7 +127,7 @@ struct CloudLoginView: View {
             .padding(.horizontal, 16).padding(.vertical, 12)
             if let error {
                 Label(error, systemImage: "exclamationmark.triangle.fill")
-                    .font(.callout).foregroundStyle(Brand.amber)
+                    .font(.callout).foregroundColor(Brand.amber)
                     .frame(maxWidth: .infinity, alignment: .leading)
                     .padding(.horizontal, 16).padding(.bottom, 10)
             }
@@ -267,7 +267,7 @@ struct CloudDriveView: View {
                     }
                 }
             }
-            if let error { Label(error, systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundStyle(Brand.rose) }
+            if let error { Label(error, systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundColor(Brand.rose) }
         }
         .task { reload() }
         #if os(iOS)

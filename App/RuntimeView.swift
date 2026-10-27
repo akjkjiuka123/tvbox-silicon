@@ -32,7 +32,7 @@ struct RuntimeView: View {
                     if let report, report.status != 0 || report.needsAndroidNativeRuntime {
                         Label(report.status != 0 ? report.message : L10n.text("This plugin requires Android native libraries"),
                               systemImage: "exclamationmark.triangle.fill")
-                            .font(.callout).foregroundStyle(Brand.amber)
+                            .font(.callout).foregroundColor(Brand.amber)
                     }
                 } else {
                     SettingsRow(symbol: "shippingbox.fill", tint: .gray, title: L10n.text("Import a subscription with a spider field first."))
@@ -44,7 +44,7 @@ struct RuntimeView: View {
             if busy {
                 HStack(spacing: 8) { ProgressView().controlSize(.small); Text(L10n.text("Working…")).foregroundStyle(.secondary); ElapsedTime() }
             }
-            if let error { Label(error, systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundStyle(Brand.amber) }
+            if let error { Label(error, systemImage: "exclamationmark.triangle.fill").font(.callout).foregroundColor(Brand.amber) }
         }
     }
     private var probeSummary: String? {

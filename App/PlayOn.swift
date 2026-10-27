@@ -147,7 +147,7 @@ struct PlayOnIncoming: View {
                     #endif
                 VStack(alignment: .leading, spacing: 4) {
                     Text(incoming.title).font(.headline).lineLimit(1)
-                    Text(L10n.text("From %@", incoming.sender)).font(.callout).foregroundStyle(.secondary)
+                    Text(L10n.text("From %@", incoming.sender)).font(.callout).foregroundColor(.secondary)
                 }
             }
             .padding(.horizontal, Self.spacing * 1.8).padding(.vertical, Self.spacing * 1.1)

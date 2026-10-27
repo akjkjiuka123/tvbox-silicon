@@ -46,7 +46,7 @@ struct PluginSignInView: View {
                 VStack(alignment: .leading, spacing: 10) {
                     Text(L10n.text("Sign In to %@", name)).font(.title2.weight(.bold))
                     Text(L10n.text("%@ needs this account for the line you chose. The video plays once you confirm.", prompt.source))
-                        .font(.body).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                        .font(.body).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
                 if expired {
                     Label(L10n.text("This code has expired."), systemImage: "clock.badge.exclamationmark").foregroundStyle(.secondary)
@@ -56,7 +56,7 @@ struct PluginSignInView: View {
                         .accessibilityIdentifier("pluginSignIn.web")
                     VStack(alignment: .leading, spacing: 16) {
                         Text(L10n.text("Or scan this code with the %@ app on another phone.", name))
-                            .font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                            .font(.subheadline).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
                         code
                         SaveCodeButton(text: prompt.content, image: prompt.content == nil ? prompt.image : nil, app: name)
                     }
@@ -85,9 +85,9 @@ struct PluginSignInView: View {
             VStack(alignment: .leading, spacing: 10) {
                 Text(L10n.text("Sign In to %@", name)).font(.title2.weight(.bold))
                 Text(L10n.text("Open the %@ app on your phone, scan this code, and confirm the sign-in.", name))
-                    .font(.body).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    .font(.body).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
                 Text(L10n.text("%@ needs this account for the line you chose. The video plays once you confirm.", prompt.source))
-                    .font(.callout).foregroundStyle(.tertiary).fixedSize(horizontal: false, vertical: true)
+                    .font(.callout).foregroundColor(.tertiary).fixedSize(horizontal: false, vertical: true)
             }
             if expired {
                 Label(L10n.text("This code has expired."), systemImage: "clock.badge.exclamationmark").foregroundStyle(.secondary)
@@ -114,7 +114,7 @@ struct PluginSignInView: View {
                 } else if let address = prompt.image {
                     AsyncImage(url: address) { phase in
                         if let image = phase.image { image.interpolation(.none).resizable().scaledToFit() }
-                        else if phase.error != nil { Image(systemName: "exclamationmark.triangle").font(.largeTitle).foregroundStyle(.black.opacity(0.5)) }
+                        else if phase.error != nil { Image(systemName: "exclamationmark.triangle").font(.largeTitle).foregroundColor(.black.opacity(0.5)) }
                         else { ProgressView().tint(.black) }
                     }
                     .accessibilityLabel(L10n.text("Sign-in code"))

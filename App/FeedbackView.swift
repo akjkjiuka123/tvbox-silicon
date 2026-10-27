@@ -176,7 +176,7 @@ private struct FeedbackPage: View {
                 .padding(.bottom, 8)
             Text(L10n.text("Help Make Yingxia Better")).font(compact ? .title2.weight(.bold) : .title.weight(.bold))
             Text(L10n.text("Report a problem or share an idea. It goes straight to the developer."))
-                .font(compact ? .body : .title3).foregroundStyle(.secondary)
+                .font(compact ? .body : .title3).foregroundColor(.secondary)
         }
         .multilineTextAlignment(.center)
         .frame(maxWidth: .infinity)
@@ -236,7 +236,7 @@ private struct FeedbackPage: View {
                 Spacer()
                 if sending { ProgressView().controlSize(.small) }
                 #if os(macOS)
-                Text(verbatim: "⌘↩").font(.callout).foregroundStyle(.tertiary)
+                Text(verbatim: "⌘↩").font(.callout).foregroundColor(.tertiary)
                 #endif
                 Button(action: send) {
                     Label(sending ? L10n.text("Sending…") : L10n.text("Send"), systemImage: "paperplane.fill").padding(.horizontal, 6)
@@ -276,7 +276,7 @@ private struct FeedbackPage: View {
                     .background { Self.card.fill(Self.fill) }
                     .overlay { Self.card.strokeBorder(Color.primary.opacity(0.08)) }
             }
-            Text(FeedbackView.contextNote).font(compact ? .footnote : .callout).foregroundStyle(.secondary)
+            Text(FeedbackView.contextNote).font(compact ? .footnote : .callout).foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
         }
         .padding(.horizontal, 4)
@@ -298,7 +298,7 @@ private struct FeedbackPage: View {
                 }
                 VStack(alignment: .leading, spacing: 8) { app; system; model; lang }
             }
-            Label(FeedbackView.note, systemImage: "globe").font(compact ? .footnote : .callout).foregroundStyle(.secondary)
+            Label(FeedbackView.note, systemImage: "globe").font(compact ? .footnote : .callout).foregroundColor(.secondary)
                 .fixedSize(horizontal: false, vertical: true)
             Link(destination: Support.telegram) {
                 Label(L10n.text("Prefer to chat? Join the Telegram group."), systemImage: "paperplane")
@@ -334,7 +334,7 @@ private struct FeedbackPage: View {
                 .shadow(color: .green.opacity(0.45), radius: 18, y: 6)
                 .padding(.bottom, 4)
             Text(L10n.text("Thank You!")).font(.title2.weight(.bold))
-            Text(L10n.text("Your feedback is now issue #%lld on GitHub.", issue.number)).font(compact ? .body : .title3).foregroundStyle(.secondary)
+            Text(L10n.text("Your feedback is now issue #%lld on GitHub.", issue.number)).font(compact ? .body : .title3).foregroundColor(.secondary)
             ViewThatFits(in: .horizontal) {
                 HStack(spacing: 10) { another; open }
                 VStack(spacing: 10) { open; another }
@@ -387,7 +387,7 @@ private struct FeedbackKindCard: View {
                 }
                 VStack(alignment: .leading, spacing: 2) {
                     Text(kind.title).font(compact ? .subheadline.weight(.semibold) : .headline).lineLimit(1)
-                    if !compact { Text(kind.blurb).font(.callout).foregroundStyle(.secondary).lineLimit(1) }
+                    if !compact { Text(kind.blurb).font(.callout).foregroundColor(.secondary).lineLimit(1) }
                 }
             }
             .padding(compact ? 12 : 14)

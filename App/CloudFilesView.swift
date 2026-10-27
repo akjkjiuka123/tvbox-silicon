@@ -380,8 +380,8 @@ struct FileRowLabel: View {
                 .background(tint.gradient, in: RoundedRectangle(cornerRadius: tile * 0.26, style: .continuous))
                 .accessibilityHidden(true)
             VStack(alignment: .leading, spacing: 2) {
-                Text(title).font(titleFont).foregroundStyle(.primary).lineLimit(2).multilineTextAlignment(.leading)
-                if !subtitle.isEmpty { Text(subtitle).font(detailFont).foregroundStyle(.secondary).lineLimit(1) }
+                Text(title).font(titleFont).foregroundColor(.primary).lineLimit(2).multilineTextAlignment(.leading)
+                if !subtitle.isEmpty { Text(subtitle).font(detailFont).foregroundColor(.secondary).lineLimit(1) }
             }
             Spacer(minLength: 8)
             #if !os(iOS)

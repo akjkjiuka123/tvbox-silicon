@@ -222,7 +222,7 @@ struct SiteCard: View {
                     Text(label.parts[0]).font(.headline).lineLimit(1)
                         .foregroundStyle(focused ? Color.black : runs ? Color.primary : Color.secondary)
                     if runs { SourceHealthDot(status: store.health(of: site)) }
-                    if dimmed { Text(L10n.text("Hidden")).font(.caption).foregroundStyle(.secondary).lineLimit(1) }
+                    if dimmed { Text(L10n.text("Hidden")).font(.caption).foregroundColor(.secondary).lineLimit(1) }
                 }
                 if !detail.isEmpty {
                     Text(detail).font(.subheadline).lineLimit(1)
@@ -379,7 +379,7 @@ struct SourceOrderCard: View {
                 IconTile(symbol: "arrow.up.arrow.down", tint: Brand.indigo, size: 40)
                 VStack(alignment: .leading, spacing: 3) {
                     Text(L10n.text("Custom Search Order")).font(.headline)
-                    Text(detail).font(.subheadline).foregroundStyle(.secondary).fixedSize(horizontal: false, vertical: true)
+                    Text(detail).font(.subheadline).foregroundColor(.secondary).fixedSize(horizontal: false, vertical: true)
                 }
                 Spacer(minLength: 8)
                 Toggle(L10n.text("Custom Search Order"), isOn: enabled).labelsHidden().toggleStyle(.switch).settingsSwitch()
@@ -479,7 +479,7 @@ private struct SourceOrderRow: View {
                     Text(label.parts[0]).font(title).lineLimit(1)
                     SourceHealthDot(status: store.health(of: site))
                 }
-                if !detail.isEmpty { Text(detail).font(caption).foregroundStyle(.secondary).lineLimit(1) }
+                if !detail.isEmpty { Text(detail).font(caption).foregroundColor(.secondary).lineLimit(1) }
             }
             Spacer(minLength: 8)
             #if os(macOS)
@@ -670,7 +670,7 @@ struct SiteView: View {
                         if site.isBilibili && !BilibiliAccount.load().signedIn { BilibiliSignInBanner() }
                         if !browser.categories.isEmpty { categoryBar } else if initialLoading { ChipSkeletonRow() }
                         if isIndex && !browser.videos.isEmpty {
-                            Text(L10n.text("Choose a title to find it across your sources.")).font(.subheadline).foregroundStyle(.secondary)
+                            Text(L10n.text("Choose a title to find it across your sources.")).font(.subheadline).foregroundColor(.secondary)
                         }
                         if browser.busy {
                             LoadingCard { .source(site, origin: origin, title: L10n.text("Loading source content…")) }
@@ -971,7 +971,7 @@ struct VideoDetailView: View {
                     VStack(alignment: .leading, spacing: 3) {
                         Text(L10n.text("Couldn't play %@", EpisodeRow.title(issue.episode.name)))
                             .font(.headline).lineLimit(2)
-                        Text(issue.message).font(.subheadline).foregroundStyle(.secondary)
+                        Text(issue.message).font(.subheadline).foregroundColor(.secondary)
                             .fixedSize(horizontal: false, vertical: true).selectable()
                     }
                     HStack(spacing: 8) {
@@ -1216,7 +1216,7 @@ struct VideoDetailView: View {
                                 Text(video.name).font(.system(size: heroTitleSize, weight: .bold))
                                     .lineLimit(3).minimumScaleFactor(0.7).fixedSize(horizontal: false, vertical: true)
                                 if !video.remarks.isEmpty {
-                                    Text(video.remarks).font(.title3).foregroundStyle(.white.opacity(0.75)).lineLimit(2)
+                                    Text(video.remarks).font(.title3).foregroundColor(.white.opacity(0.75)).lineLimit(2)
                                 }
                                 playControl.padding(.top, 6)
                             }
@@ -1249,7 +1249,7 @@ struct VideoDetailView: View {
                     Text(video.name).font(.system(size: heroTitleSize, weight: .bold))
                         .lineLimit(3).minimumScaleFactor(0.7).fixedSize(horizontal: false, vertical: true)
                     if !video.remarks.isEmpty {
-                        Text(video.remarks).font(.title3).foregroundStyle(.secondary).lineLimit(2)
+                        Text(video.remarks).font(.title3).foregroundColor(.secondary).lineLimit(2)
                     }
                     Spacer(minLength: 12)
                     playControl
@@ -1278,7 +1278,7 @@ struct VideoDetailView: View {
                     MinHeightLayout(minHeight: posterWidth * 1.5) {
                         VStack(alignment: .leading, spacing: 12) {
                             Text(video.name).font(.title3.weight(.bold)).fixedSize(horizontal: false, vertical: true)
-                            if !video.remarks.isEmpty { Text(video.remarks).font(.subheadline).foregroundStyle(.secondary) }
+                            if !video.remarks.isEmpty { Text(video.remarks).font(.subheadline).foregroundColor(.secondary) }
                             Spacer(minLength: 0)
                             playControl
                         }
@@ -1302,7 +1302,7 @@ struct VideoDetailView: View {
                         Text("\(items.count)").font(.subheadline).monospacedDigit().foregroundStyle(.secondary)
                         Spacer(minLength: 8)
                         if flags.count == 1, !activeFlag.isEmpty {
-                            Text(SourceLabel(activeFlag).text).font(.caption).foregroundStyle(.secondary).lineLimit(1)
+                            Text(SourceLabel(activeFlag).text).font(.caption).foregroundColor(.secondary).lineLimit(1)
                         }
                     }
                     flagPicker
