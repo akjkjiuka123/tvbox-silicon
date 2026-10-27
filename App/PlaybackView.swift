@@ -427,7 +427,8 @@ import Perception
     /// The video's codec and size, for reports of sound without a picture (a codec the decoder
     /// refuses, such as HEVC tagged `hev1` in MP4, plays its audio only).
     private static func recordVideoFormat(_ item: AVPlayerItem) async {
-        guard let tracks = try? await item.asset.loadTracks(withMediaType: .video) else { return }
+        nonisolated(unsafe) let loaded = try? await item.asset.loadTracks(withMediaType: .video)
+        guard let tracks = loaded else { return }
         if tracks.isEmpty { Diagnostics.shared.record(.info, "player", "video none"); return }
         for track in tracks {
             let formats = (try? await track.load(.formatDescriptions)) ?? []
@@ -973,7 +974,7 @@ extension PlaybackSession {
         }
         return progress
     }
-    private static func rate(_ bytesPerSecond: Double) -> String {
+    nonisolated private static func rate(_ bytesPerSecond: Double) -> String {
         let formatter = ByteCountFormatter()
         formatter.countStyle = .file
         formatter.allowsNonnumericFormatting = false // "0 KB", not "Zero KB"
