@@ -66,6 +66,8 @@ workflows:
         script: |
           set -euxo pipefail
           Scripts/sync-apple-javahost.sh ios
+          echo "--- JavaHost after sync ---"
+          ls -R build/AppleRuntime/iphoneos/Resources/JavaHost | head -20 || true
 
       - name: FFmpeg xcframework guard
         script: |
