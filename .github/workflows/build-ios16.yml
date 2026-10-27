@@ -90,6 +90,7 @@ jobs:
 
       - name: Build iOS app
         run: |
+          set +e
           set -uo pipefail
           rm -f build-swift.log
           xcodebuild -project TVBox.xcodeproj -scheme TVBox-iOS \
