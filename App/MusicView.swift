@@ -58,7 +58,7 @@ struct MusicView: View {
             autoPlayQuery = search.kind == .songs || search.kind == .top ? query.trimmingCharacters(in: .whitespacesAndNewlines) : nil
             search.search(query, kind: Self.searchKind, immediately: true); playDirectHitIfReady()
         }
-        .onChange(of: search.busy) {
+        .onChange(of: search.busy)  { _ in
             playDirectHitIfReady()
             #if DEBUG
             if !search.busy, UserDefaults.standard.bool(forKey: "qaMusicOpen"), qaOpened == nil { qaOpened = search.collections.first }
