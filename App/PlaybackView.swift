@@ -426,14 +426,16 @@ import Perception
 
     /// The video's codec and size, for reports of sound without a picture (a codec the decoder
     /// refuses, such as HEVC tagged `hev1` in MP4, plays its audio only).
-    private static func recordVideoFormat(_ item: AVPlayerItem) async {
-        nonisolated(unsafe) let loaded = try? await item.asset.loadTracks(withMediaType: .video)
-        guard let tracks = loaded else { return }
-        if tracks.isEmpty { Diagnostics.shared.record(.info, "player", "video none"); return }
+    @MainActor
+    private static func recordVideoFormat(_ item: AVPlayerItem) {
+        // `loadTracks` is async and hands back a non-Sendable [AVAssetTrack], which Swift 6 will not let
+        // cross an actor boundary. `AVPlayerItem.tracks` gives the same information synchronously.
+        let tracks = item.tracks.compactMap(\.assetTrack)
+        guard !tracks.isEmpty else { Diagnostics.shared.record(.info, "player", "video none"); return }
         for track in tracks {
-            let formats = (try? await track.load(.formatDescriptions)) ?? []
-            let size = (try? await track.load(.naturalSize)) ?? .zero
-            let playable = (try? await track.load(.isPlayable)) ?? false
+            let formats = (track.formatDescriptions as? [CMFormatDescription]) ?? []
+            let size = track.naturalSize
+            let playable = track.isPlayable
             let codecs = formats.map { format -> String in
                 let code = CMFormatDescriptionGetMediaSubType(format)
                 return String(decoding: [24, 16, 8, 0].map { UInt8((code >> $0) & 0xff) }, as: UTF8.self)
@@ -461,7 +463,7 @@ import Perception
                     self.restorePositionIfNeeded(item)
                     self.loading = self.pendingResume != nil || self.restoringPosition
                     Diagnostics.shared.record(.info, "player", "ready host=\(self.transfer.host ?? channel.url.host() ?? "-")")
-                    Task { await Self.recordVideoFormat(item) }
+                    Task { @MainActor in Self.recordVideoFormat(item) }
                 }
                 if status == .failed {
                     if self.retryRange(after: failure, channel: channel, url: url, generation: activeGeneration) { return }
