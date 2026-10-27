@@ -5,6 +5,25 @@ import TVCore
 import Perception
 
 extension View {
+    /// `presentationBackground` is iOS 16.4; before that the sheet keeps the system background.
+    @ViewBuilder func presentationBackdropIfAvailable<C: View>(@ViewBuilder _ content: @escaping () -> C) -> some View {
+        if #available(iOS 16.4, tvOS 16.4, macOS 13.3, *) {
+            self.presentationBackground(content)
+        } else {
+            self
+        }
+    }
+
+    /// `scrollPosition(id:anchor:)` is iOS 17; before that the list keeps its own place.
+    @ViewBuilder func scrollPositionIfAvailable(id: Binding<Int?>, anchor: UnitPoint = .center) -> some View {
+        if #available(iOS 17, tvOS 17, macOS 14, *) {
+            self.scrollPosition(id: id, anchor: anchor)
+        } else {
+            self
+        }
+    }
+
+
     /// `scrollTargetLayout()` is iOS 17; before that the grid simply scrolls without snapping.
     @ViewBuilder func scrollTargetLayoutIfAvailable() -> some View {
         if #available(iOS 17, tvOS 17, macOS 14, *) {

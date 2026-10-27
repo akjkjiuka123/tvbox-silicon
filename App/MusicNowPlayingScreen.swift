@@ -53,7 +53,7 @@ struct MusicNowPlayingScreen: View {
         .background { backdrop.ignoresSafeArea() }
         .environment(\.colorScheme, .dark)
         .presentationDragIndicator(.visible)
-        .presentationBackground { backdrop }
+        .presentationBackdropIfAvailable { backdrop }
         .task(id: music.track?.artwork) {
             guard let url = music.track?.artwork, let color = await PosterPalette.average(url) else { return }
             withAnimation(.easeInOut(duration: 0.6)) { tint = color }

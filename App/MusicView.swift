@@ -23,7 +23,7 @@ struct MusicView: View {
 
     var body: some View {
         let search = store.musicSearch
-        ScrollView {
+        ScrollView(.vertical, showsIndicators: true) {
             LazyVStack(alignment: .leading, spacing: MusicLayout.rowSpacing) {
                 #if os(tvOS)
                 let typed = query.trimmingCharacters(in: .whitespacesAndNewlines)
