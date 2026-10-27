@@ -236,7 +236,7 @@ private struct FeedbackPage: View {
                 Spacer()
                 if sending { ProgressView().controlSize(.small) }
                 #if os(macOS)
-                Text(verbatim: "⌘↩").font(.callout).foregroundColor(.tertiary)
+                Text(verbatim: "⌘↩").font(.callout).foregroundColor(.secondary)
                 #endif
                 Button(action: send) {
                     Label(sending ? L10n.text("Sending…") : L10n.text("Send"), systemImage: "paperplane.fill").padding(.horizontal, 6)

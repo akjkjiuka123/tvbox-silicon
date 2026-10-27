@@ -685,7 +685,7 @@ struct FormSettingsView: View {
                 AppMark(size: 76).padding(.bottom, 10)
                 Text(L10n.text("Yingxia")).font(.title2.weight(.bold))
                 if let version { Text(version).font(.subheadline).foregroundColor(.secondary) }
-                Text(Brand.copyright).font(.caption).foregroundColor(.tertiary)
+                Text(Brand.copyright).font(.caption).foregroundColor(.secondary)
                 if let title = updates.availableTitle {
                     Button(action: updates.show) {
                         Label(title, systemImage: "gift.fill")
@@ -710,7 +710,7 @@ struct FormSettingsView: View {
                 VStack(alignment: .leading, spacing: 2) {
                     Text(L10n.text("Yingxia")).font(.title3.weight(.semibold))
                     if let version { Text(version).font(.subheadline).foregroundColor(.secondary) }
-                    Text(Brand.copyright).font(.caption).foregroundColor(.tertiary)
+                    Text(Brand.copyright).font(.caption).foregroundColor(.secondary)
                 }
                 .lineLimit(1)
             }
