@@ -1,0 +1,133 @@
+name: Build iOS16 IPA
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    timeout-minutes: 150
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: |
+          set -x
+          ls /Applications | grep -i xcode || true
+          for c in Xcode_16.4 Xcode_16.3 Xcode_16.2 Xcode_16.1 Xcode_16.0 Xcode_16; do
+            if [ -d "/Applications/$c.app" ]; then
+              sudo xcode-select -s "/Applications/$c.app"; echo "picked $c"; break
+            fi
+          done
+          xcodebuild -version
+          swift --version
+
+      - name: Tools
+        run: |
+          set -euxo pipefail
+          brew list xcodegen >/dev/null 2>&1 || brew install xcodegen || true
+          brew list maven    >/dev/null 2>&1 || brew install maven    || true
+          brew list autoconf >/dev/null 2>&1 || brew install autoconf || true
+          brew list automake >/dev/null 2>&1 || brew install automake || true
+          brew list libtool  >/dev/null 2>&1 || brew install libtool  || true
+          xcodegen --version; mvn -v | head -2
+          echo "JAVA_HOME=$(/usr/libexec/java_home)" >> "$GITHUB_ENV"
+
+      - name: FFmpeg
+        run: |
+          set -euxo pipefail
+          if [ -f build/FFmpeg/FFmpeg.xcframework/Info.plist ]; then echo cached; else Scripts/build-apple-ffmpeg.sh; fi
+
+      - name: Java host
+        run: |
+          set -euxo pipefail
+          Scripts/build-java-host.sh
+
+      - name: Mac-only host dirs
+        run: |
+          set -euxo pipefail
+          mkdir -p build/ScriptHost build/PythonHost
+          touch build/ScriptHost/.keep build/PythonHost/.keep
+
+      - name: Apple runtime (JVM + interpreter)
+        run: |
+          set -euxo pipefail
+          if [ -f build/AppleRuntime/iphoneos/lib/libTVAppleRuntime.a ]; then echo cached; else Scripts/package-apple-runtime.sh ios; fi
+
+      - name: Sync Java host into the runtime
+        run: |
+          set -euxo pipefail
+          Scripts/sync-apple-javahost.sh ios
+          echo "--- JavaHost after sync ---"
+          ls -R build/AppleRuntime/iphoneos/Resources/JavaHost | head -20 || true
+
+      - name: FFmpeg xcframework guard
+        run: |
+          set -uo pipefail
+          {
+            echo "pwd=$PWD"
+            link="$PWD/Vendor/FFmpeg/FFmpeg.xcframework"
+            ls -ld "$link" || true
+            target=$(realpath "$link" 2>/dev/null || true)
+            echo "resolved=$target"
+            if [ -z "$target" ] || [ ! -f "$target/Info.plist" ]; then
+              echo "rebuilding FFmpeg"
+              Scripts/build-apple-ffmpeg.sh || true
+              target=$(realpath "$link" 2>/dev/null || true)
+            fi
+            find build -maxdepth 3 -name '*.xcframework' -print 2>/dev/null || true
+          } > ffmpeg-guard.log 2>&1
+          cat ffmpeg-guard.log
+          exit 0
+
+      - name: Xcode project
+        run: |
+          set -uo pipefail
+          xcodegen generate > xcodegen.log 2>&1
+          echo "xcodegen exit=$?"
+          tail -30 xcodegen.log || true
+          exit 0
+
+      - name: Build iOS app
+        run: |
+          set -uo pipefail
+          rm -f build-swift.log
+          xcodebuild -project TVBox.xcodeproj -scheme TVBox-iOS \
+            -skipMacroValidation -skipPackagePluginValidation \
+            -destination 'generic/platform=iOS' \
+            -derivedDataPath build/DerivedData-ios \
+            CODE_SIGN_IDENTITY="-" CODE_SIGNING_REQUIRED=YES \
+            AD_HOC_CODE_SIGNING_ALLOWED=YES \
+            CODE_SIGNING_ALLOWED=YES build > build-swift.log 2>&1
+          echo "xcodebuild exit=$?"
+          grep -E "error:|BUILD (FAILED|SUCCEEDED)" build-swift.log | head -80 || true
+          exit 0
+
+      - name: Package IPA
+        run: |
+          set -uo pipefail
+          APP=$(find build/DerivedData-ios/Build/Products -maxdepth 4 -name '*.app' 2>/dev/null | head -1)
+          if [ -z "$APP" ]; then echo "no app produced"; exit 0; fi
+          echo "app: $APP"
+          du -sh "$APP" || true
+          ls "$APP" | head -20 || true
+          EXE=$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$APP/Info.plist" 2>/dev/null || echo "")
+          echo "executable: $EXE"
+          if [ -n "$EXE" ] && [ ! -f "$APP/$EXE" ]; then echo "ERROR: app binary missing"; exit 0; fi
+          rm -rf Payload && mkdir -p Payload
+          ditto "$APP" "Payload/$(basename "$APP")"
+          zip -qry Yingxia-ios16.ipa Payload
+          ls -lh Yingxia-ios16.ipa
+          unzip -l Yingxia-ios16.ipa | tail -5
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: ios-build-output
+          path: |
+            Yingxia-ios16.ipa
+            build-swift.log
+            ffmpeg-guard.log
+            xcodegen.log
+          retention-days: 14
+          if-no-files-found: warn
