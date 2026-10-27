@@ -99,14 +99,7 @@ struct MusicView: View {
         .onPlayPauseCommand { store.music.toggle() }
         #endif
         .tabTitle(L10n.text("Music"))
-        #if !os(tvOS)
-        .toolbar {
-            ToolbarItem(placement: .primaryAction) {
-                Button { showsSettings = true } label: { Image(systemName: "slider.horizontal.3") }
-                    .accessibilityLabel(L10n.text("Music Settings"))
-            }
-        }
-        #endif
+        .modifier(MusicSettingsToolbarButton(isPresented: $showsSettings))
         #if os(tvOS)
         .fullScreenCover(isPresented: $showsSettings) { MusicSettingsView() }
         #else
@@ -475,5 +468,23 @@ struct MusicCollectionView: View {
         defer { loading = false }
         do { tracks = try await source.tracks(of: collection) }
         catch { self.error = MusicProviderError(error).localizedDescription + " (" + MusicProviderError(error).detail + ")" }
+    }
+}
+
+/// 放在 ViewModifier 里，避免在超大 body 里对 `.toolbar` 做泛型推断（会报 ambiguous use）。
+private struct MusicSettingsToolbarButton: ViewModifier {
+    @Binding var isPresented: Bool
+
+    func body(content: Content) -> some View {
+        #if os(tvOS)
+        content
+        #else
+        content.toolbar {
+            ToolbarItem(placement: .primaryAction) {
+                Button { isPresented = true } label: { Image(systemName: "slider.horizontal.3") }
+                    .accessibilityLabel(L10n.text("Music Settings"))
+            }
+        }
+        #endif
     }
 }
