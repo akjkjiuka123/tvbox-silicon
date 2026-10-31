@@ -1,5 +1,5 @@
 {
- "spider": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/yoursmile_spider.dat",
+ "spider": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/yoursmile_spider.jar",
  "wallpaper": "https://akjk01.cc/hg/wallpaper.jpg",
  "logo": "",
  "sites": [
@@ -12,7 +12,7 @@
    "quickSearch": 1,
    "filterable": 1,
    "ext": "",
-   "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/hg_client32.dat"
+   "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/hg_client32.jar"
   },
   {
    "key": "cxkj",
@@ -89,7 +89,7 @@
    "quickSearch": 1,
    "changeable": 0,
    "ext": "Guazi",
-   "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/yoursmile_site.dat"
+   "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/yoursmile_site.jar"
   },
   {
    "key": "金牌",
@@ -220,7 +220,7 @@
    "quickSearch": 1,
    "changeable": 1,
    "ext": "AppV7Dsx",
-   "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/yoursmile_site.dat"
+   "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/yoursmile_site.jar"
   },
   {
    "key": "虎牙",
