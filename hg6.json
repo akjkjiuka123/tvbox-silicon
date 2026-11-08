@@ -1,0 +1,10 @@
+{
+  "spider": "",
+  "sites": [
+    {"key":"hongguo_hgjar","name":"红果1080P","type":3,"api":"csp_HgClient","searchable":1,"quickSearch":1,"filterable":1,"ext":"","jar":"https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/hg.jar"},
+    {"key":"fanqie_novel","name":"番茄小说·听书","type":3,"api":"csp_FanqieSpider","searchable":1,"quickSearch":1,"filterable":1,"jar":"https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/fq14.jar"}
+  ],
+  "lives": [], "parses": [],
+  "flags": ["youku","qq","iqiyi","qiyi","letv","sohu","tudou","pptv","mgtv","wasu","bilibili"],
+  "rules": [], "ads": []
+}
