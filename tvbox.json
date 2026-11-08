@@ -4,8 +4,18 @@
   "logo": "",
   "sites": [
     {
+      "key": "fanqie_novel",
+      "name": "番茄小说·听书",
+      "type": 3,
+      "api": "csp_FanqieSpider",
+      "searchable": 1,
+      "quickSearch": 1,
+      "filterable": 1,
+      "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/fq7.jar"
+    },
+    {
       "key": "hongguo_hgjar",
-      "name": "红果1080P(本地解密)",
+      "name": "红果1080P",
       "type": 3,
       "api": "csp_HgClient",
       "searchable": 1,
