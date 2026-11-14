@@ -3,24 +3,14 @@
   "sites": [
     {
       "key": "hongguo_hgjar",
-      "name": "红果1080P",
+      "name": "红果",
       "type": 3,
       "api": "csp_HgClient",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 1,
       "ext": "",
-      "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/hg.jar?v=202611082313"
-    },
-    {
-      "key": "fanqie_novel",
-      "name": "番茄小说·听书",
-      "type": 3,
-      "api": "csp_FanqieSpider",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1,
-      "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/fq7.jar?v=202611082313"
+      "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/hg_client33.jar"
     }
   ],
   "lives": [],
