@@ -3,14 +3,14 @@
   "sites": [
     {
       "key": "hongguo_hgjar",
-      "name": "红果",
+      "name": "绾㈡灉",
       "type": 3,
       "api": "csp_HgClient",
       "searchable": 1,
       "quickSearch": 1,
       "filterable": 1,
       "ext": "",
-      "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/hg_client35.jar"
+      "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/hg_client36.jar"
     }
   ],
   "lives": [],
