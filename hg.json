@@ -1,33 +1,33 @@
 {
-  "spider": "",
-  "sites": [
-    {
-      "key": "hongguo_hgjar",
-      "name": "红果",
-      "type": 3,
-      "api": "csp_HgClient",
-      "searchable": 1,
-      "quickSearch": 1,
-      "filterable": 1,
-      "ext": "",
-      "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/hg_spider.jar?v=51"
-    }
-  ],
-  "lives": [],
-  "parses": [],
-  "flags": [
-    "youku",
-    "qq",
-    "iqiyi",
-    "qiyi",
-    "letv",
-    "sohu",
-    "tudou",
-    "pptv",
-    "mgtv",
-    "wasu",
-    "bilibili"
-  ],
-  "rules": [],
-  "ads": []
+ "spider": "",
+ "sites": [
+  {
+   "key": "hongguo_hgjar",
+   "name": "红果",
+   "type": 3,
+   "api": "csp_HgClient",
+   "searchable": 1,
+   "quickSearch": 1,
+   "filterable": 1,
+   "ext": "",
+   "jar": "https://gh-proxy.com/https://raw.githubusercontent.com/akjkjiuka123/tvbox-silicon/main/jar/hg_spider.jar?v=52"
+  }
+ ],
+ "lives": [],
+ "parses": [],
+ "flags": [
+  "youku",
+  "qq",
+  "iqiyi",
+  "qiyi",
+  "letv",
+  "sohu",
+  "tudou",
+  "pptv",
+  "mgtv",
+  "wasu",
+  "bilibili"
+ ],
+ "rules": [],
+ "ads": []
 }
